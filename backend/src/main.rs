@@ -1,15 +1,38 @@
 use std::{net::IpAddr, str::FromStr, sync::Arc};
 
-use clap::Parser;
 use sqlx::PgPool;
 use anyhow::{Context, Result};
+use clap::{Parser, Subcommand};
 
-
+mod seeds;
 mod config;
 mod router;
 mod community;
 mod error;
 use crate::config::Config;
+
+#[derive(Parser)]
+#[command(name = "petall")]
+struct Cli {
+    #[command(flatten)]
+    config: config::Config,
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    Seed {
+        #[arg(long, default_value_t = 5)]
+        communities: usize,
+        #[arg(long, default_value_t = 5)]
+        managers: usize,
+        #[arg(long, default_value_t = 5)]
+        users: usize,
+        #[arg(long, default_value_t = 10)]
+        energy_transfers: usize,
+    }
+}
 
 #[derive(Clone)]
 pub struct AppState {
@@ -20,7 +43,8 @@ pub struct AppState {
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
-    let config = config::Config::parse();
+    let cli = Cli::parse();
+    let config = cli.config;
 
     let pg_options = sqlx::postgres::PgConnectOptions::new()
         .host(&config.postgres_host)
@@ -37,6 +61,21 @@ async fn main() -> Result<()> {
         .run(&pg_pool)
         .await
         .context("Failed to run migrations")?;
+
+    if let Some(Commands::Seed {communities, managers, users, energy_transfers }) = cli.command {
+        let community_ids = seeds::seed_community(&pg_pool, communities).await?;
+      
+        let _manager_ids = seeds::seed_manager(&pg_pool, &community_ids, managers).await?;
+
+        let _users_ids = seeds::seed_user(&pg_pool, &community_ids, users).await?;
+        
+        let _energy_transfer = seeds::seed_energytransfer(
+            &pg_pool,
+            &community_ids,
+            &_users_ids,
+            energy_transfers
+        ).await?;
+    };
 
     // save pgpool somewhere!!!!!
 
