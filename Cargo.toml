@@ -1,0 +1,12 @@
+[package]
+name = "petal"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.99"
+clap = { version = "4.5.45", features = ["derive", "env"] }
+dotenv = "0.15.0"
+postgres-types = "0.2.9"
+sqlx = { version = "0.8.6", features = ["chrono", "postgres", "runtime-tokio", "uuid"] }
+tokio = { version = "1.47.1", features = ["full"] }
