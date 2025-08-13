@@ -1,0 +1,29 @@
+meta {
+  name: Register
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/community/register
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "entity": "portos"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    let data = res.getBody();
+    bru.setEnvVar("community_id", data.id);
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+}

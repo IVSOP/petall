@@ -20,15 +20,14 @@ pub struct AppState {
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
-
     let config = config::Config::parse();
 
     let pg_options = sqlx::postgres::PgConnectOptions::new()
-        .host(&config.pg_host)
-        .port(config.pg_port)
-        .username(&config.pg_user)
-        .password(&config.pg_password)
-        .database(&config.pg_database);
+        .host(&config.postgres_host)
+        .port(config.postgres_port)
+        .username(&config.postgres_user)
+        .password(&config.postgres_password)
+        .database(&config.postgres_db);
 
     let pg_pool = PgPool::connect_with(pg_options)
         .await

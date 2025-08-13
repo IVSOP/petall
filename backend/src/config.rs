@@ -4,15 +4,15 @@ use clap::Parser;
 #[derive(Parser)]
 pub struct Config {
     #[arg(long, env)]
-    pub pg_host: String,
+    pub postgres_host: String,
     #[arg(long, env, default_value_t = 5432)]
-    pub pg_port: u16,
+    pub postgres_port: u16,
     #[arg(long, env)]
-    pub pg_user: String,
+    pub postgres_user: String,
     #[arg(long, env)]
-    pub pg_password: String,
+    pub postgres_password: String,
     #[arg(long, env)]
-    pub pg_database: String,
+    pub postgres_db: String,
     #[arg(long, env)]
     pub bind_ip: String,
     #[arg(long, env, default_value_t = 8080)]
