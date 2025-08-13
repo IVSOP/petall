@@ -1,8 +1,21 @@
+use std::{net::IpAddr, str::FromStr, sync::Arc};
+
 use clap::Parser;
 use sqlx::PgPool;
 use anyhow::{Context, Result};
 
+
 mod config;
+mod router;
+mod community;
+mod error;
+use crate::config::Config;
+
+#[derive(Clone)]
+pub struct AppState {
+    pub pg_pool: PgPool,
+    pub config: Arc<Config>,
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -28,10 +41,20 @@ async fn main() -> Result<()> {
 
     // save pgpool somewhere!!!!!
 
-    // tokio::select! {
-    //     _ = axum::serve(listener, router::router(state)) => {}
-    //     _ = tokio::signal::ctrl_c() => {}
-    // }
+    let addr = (IpAddr::from_str(&config.bind_ip).unwrap(), config.bind_port);
+    let listener = tokio::net::TcpListener::bind(addr)
+        .await
+        .expect("Failed to bind to port");
+
+    let state = AppState {
+        pg_pool,
+        config: Arc::new(config),
+    };
+
+    tokio::select! {
+        _ = axum::serve(listener, router::router(state)) => {}
+        _ = tokio::signal::ctrl_c() => {}
+    }
 
     Ok(())
 }
