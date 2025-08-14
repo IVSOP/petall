@@ -11,6 +11,7 @@ mod community;
 mod error;
 mod user;
 mod user_community;
+mod manager;
 use crate::config::Config;
 
 #[derive(Parser)]

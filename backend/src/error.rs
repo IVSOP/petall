@@ -22,6 +22,8 @@ pub enum AppError {
     UserNotFoundId(Uuid),
     // #[error("user not found using email: {0}")]
     // UserNotFoundEmail(String),
+    #[error("manager not found using ID: {0}")]
+    ManagerNotFoundId(Uuid),
     // #[error("invalid password")]
     // InvalidPassword,
     // #[error("invalid token")]
@@ -79,6 +81,11 @@ impl IntoResponse for AppError {
             //     format!("User not found with email: {}", email),
             //     None,
             // ),
+            AppError::ManagerNotFoundId(id) => (
+                StatusCode::NOT_FOUND,
+                format!("Manager not found with id: {}", id),
+                None,
+            ),
             // AppError::InvalidPassword => (
             //     StatusCode::UNAUTHORIZED,
             //     "Invalid password".to_string(),

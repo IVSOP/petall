@@ -1,6 +1,6 @@
 use crate::community::Community;
 use crate::error::{AppResult, AppError};
-use crate::{community, user, user_community, AppState};
+use crate::{community, manager, user, user_community, AppState};
 use axum::{extract::{State, Path}, response::IntoResponse, routing::{get, post}, Json, Router, debug_handler};
 use tower_http::trace::TraceLayer;
 use uuid::Uuid;
@@ -12,6 +12,7 @@ pub fn router(state: AppState) -> Router {
         .route("/community/register", post(register_community))
         .route("/user/{user_id}", get(get_user))
         .route("/user/communities/{user_id}", get(get_user_communities))
+        .route("/manager/{manager_id}", get(get_manager))
         .with_state(state)
         .layer(TraceLayer::new_for_http())
 }
@@ -28,6 +29,7 @@ struct CommunityRegisterResponse {
     entity: String,
 }
 
+#[debug_handler]
 pub async fn get_community(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -109,4 +111,16 @@ pub async fn get_user_communities(
     }
 
     Ok(Json(res))
+}
+
+#[debug_handler]
+pub async fn get_manager(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> AppResult<impl IntoResponse> {
+    if let Some(manager) = manager::get_manager_by_id(id, &state).await? {
+        Ok(Json(manager))
+    } else {
+        Err(AppError::ManagerNotFoundId(id))
+    }
 }
