@@ -4,4 +4,4 @@ CREATE TABLE IF NOT EXISTS "community" (
 	PRIMARY KEY("id")
 );
 
-CREATE INDEX IF NOT EXISTS community_entity_idx ON community (entity);
+CREATE INDEX IF NOT EXISTS "community_entity_idx" ON "community" ("entity");
