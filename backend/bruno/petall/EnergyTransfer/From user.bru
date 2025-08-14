@@ -1,0 +1,24 @@
+meta {
+  name: From user
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/energytransfer/:community_id/userfrom/:user_id?page={{energy_page}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  page: {{energy_page}}
+}
+
+params:path {
+  user_id: {{user_id}}
+  community_id: {{community_id}}
+}
+
+settings {
+  encodeUrl: true
+}

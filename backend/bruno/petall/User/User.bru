@@ -1,0 +1,19 @@
+meta {
+  name: User
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/user/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: {{user_id}}
+}
+
+settings {
+  encodeUrl: true
+}
