@@ -1,6 +1,6 @@
 use crate::community::Community;
 use crate::error::{AppResult, AppError};
-use crate::{community, manager, user, user_community, AppState};
+use crate::{community, manager, manager_community, user, user_community, AppState};
 use axum::{extract::{State, Path}, response::IntoResponse, routing::{get, post}, Json, Router, debug_handler};
 use tower_http::trace::TraceLayer;
 use uuid::Uuid;
@@ -13,6 +13,7 @@ pub fn router(state: AppState) -> Router {
         .route("/user/{user_id}", get(get_user))
         .route("/user/communities/{user_id}", get(get_user_communities))
         .route("/manager/{manager_id}", get(get_manager))
+        .route("/manager/communities/{manager_id}", get(get_manager_communities))
         .with_state(state)
         .layer(TraceLayer::new_for_http())
 }
@@ -123,4 +124,27 @@ pub async fn get_manager(
     } else {
         Err(AppError::ManagerNotFoundId(id))
     }
+}
+
+#[debug_handler]
+pub async fn get_manager_communities(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> AppResult<impl IntoResponse> {
+
+    // TODO: validate that the user exists?
+
+    let manager_communities = manager_community::get_communities_by_manager(id, &state).await?;
+
+    let mut res: Vec<Community> = Vec::new();
+
+    for manager_community in manager_communities.iter() {
+        if let Some(community) = community::get_community_by_id(manager_community.community_id, &state).await? {            
+            res.push(community);
+        } else {
+            // FIX: O que fazer quando há erro a ir buscar a comunidade??
+        }
+    }
+
+    Ok(Json(res))
 }
