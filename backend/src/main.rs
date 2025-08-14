@@ -4,7 +4,7 @@ use sqlx::PgPool;
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 
-mod seeds;
+mod seed;
 mod config;
 mod router;
 mod community;
@@ -23,14 +23,18 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Seed {
-        #[arg(long, default_value_t = 5)]
+        #[arg(long, default_value_t = 10)]
         communities: usize,
         #[arg(long, default_value_t = 5)]
         managers: usize,
         #[arg(long, default_value_t = 5)]
         users: usize,
-        #[arg(long, default_value_t = 10)]
+        #[arg(long, default_value_t = 50)]
         energy_transfers: usize,
+        #[arg(long, default_value_t = 6)]
+        communities_per_user: usize,
+        #[arg(long, default_value_t = 6)]
+        communities_per_manager: usize,
     }
 }
 
@@ -62,20 +66,51 @@ async fn main() -> Result<()> {
         .await
         .context("Failed to run migrations")?;
 
-    if let Some(Commands::Seed {communities, managers, users, energy_transfers }) = cli.command {
-        let community_ids = seeds::seed_community(&pg_pool, communities).await?;
-      
-        let _manager_ids = seeds::seed_manager(&pg_pool, &community_ids, managers).await?;
+    if let Some(Commands::Seed {
+        communities,
+        managers,
+        users,
+        energy_transfers,
+        communities_per_user,
+        communities_per_manager
+    }) = cli.command {
 
-        let _users_ids = seeds::seed_user(&pg_pool, &community_ids, users).await?;
-        
-        let _energy_transfer = seeds::seed_energytransfer(
+        let community_ids = seed::seed_community(
+            &pg_pool,
+            communities
+        ).await?;
+
+        let manager_ids = seed::seed_manager(
+            &pg_pool,
+            managers
+        ).await?;
+
+        let users_ids = seed::seed_user(
+            &pg_pool,
+            users
+        ).await?;
+
+        seed::seed_energytransfer(
             &pg_pool,
             &community_ids,
-            &_users_ids,
+            &users_ids,
             energy_transfers
         ).await?;
-    };
+
+        seed::seed_user_community(
+            &pg_pool,
+            &users_ids,
+            &community_ids,
+            communities_per_user
+        ).await?;
+
+        seed::seed_manager_community(
+            &pg_pool,
+            &manager_ids,
+            &community_ids,
+            communities_per_manager
+        ).await?;
+    }
 
     // save pgpool somewhere!!!!!
 
