@@ -9,6 +9,8 @@ mod config;
 mod router;
 mod community;
 mod error;
+mod user;
+mod user_community;
 use crate::config::Config;
 
 #[derive(Parser)]
@@ -49,6 +51,7 @@ async fn main() -> Result<()> {
     dotenv::dotenv().ok();
     let cli = Cli::parse();
     let config = cli.config;
+
 
     let pg_options = sqlx::postgres::PgConnectOptions::new()
         .host(&config.postgres_host)
@@ -110,9 +113,9 @@ async fn main() -> Result<()> {
             &community_ids,
             communities_per_manager
         ).await?;
-    }
 
-    // save pgpool somewhere!!!!!
+        println!("Finished seeding");
+    }
 
     let addr = (IpAddr::from_str(&config.bind_ip).unwrap(), config.bind_port);
     let listener = tokio::net::TcpListener::bind(addr)

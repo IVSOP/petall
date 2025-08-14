@@ -6,6 +6,8 @@ use thiserror::Error;
 use uuid::Uuid;
 use tracing::error;
 
+// FIX: porque é que o impl IntoResponse é preciso???
+
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("community not found: {0}")]
@@ -16,6 +18,10 @@ pub enum AppError {
     SqlxError(#[from] sqlx::error::Error),
     #[error(transparent)]
     ValidationError(#[from] validator::ValidationErrors),
+    #[error("user not found using ID: {0}")]
+    UserNotFoundId(Uuid),
+    // #[error("user not found using email: {0}")]
+    // UserNotFoundEmail(String),
     // #[error("invalid password")]
     // InvalidPassword,
     // #[error("invalid token")]
@@ -63,6 +69,16 @@ impl IntoResponse for AppError {
                 "Validation error".to_string(),
                 serde_json::to_value(err).ok(),
             ),
+            AppError::UserNotFoundId(id) => (
+                StatusCode::NOT_FOUND,
+                format!("User not found with id: {}", id),
+                None,
+            ),
+            // AppError::UserNotFoundEmail(email) => (
+            //     StatusCode::NOT_FOUND,
+            //     format!("User not found with email: {}", email),
+            //     None,
+            // ),
             // AppError::InvalidPassword => (
             //     StatusCode::UNAUTHORIZED,
             //     "Invalid password".to_string(),

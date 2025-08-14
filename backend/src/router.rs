@@ -1,19 +1,20 @@
+use crate::community::Community;
 use crate::error::{AppResult, AppError};
-use crate::{community, AppState};
+use crate::{community, user, user_community, AppState};
 use axum::{extract::{State, Path}, response::IntoResponse, routing::{get, post}, Json, Router, debug_handler};
 use tower_http::trace::TraceLayer;
 use uuid::Uuid;
 use validator::Validate;
 
-
 pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/community/{id}", get(get_community))
         .route("/community/register", post(register_community))
+        .route("/user/{user_id}", get(get_user))
+        .route("/user/communities/{user_id}", get(get_user_communities))
         .with_state(state)
         .layer(TraceLayer::new_for_http())
 }
-
 
 #[derive(serde::Deserialize, Validate)]
 pub struct CommunityRegisterRequest {
@@ -61,4 +62,51 @@ async fn register_community(
             entity: community.entity,
         }),
     ))
+}
+
+#[debug_handler]
+pub async fn get_user(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> AppResult<impl IntoResponse> {
+    if let Some(user) = user::get_user_by_id(id, &state).await? {
+        Ok(Json(user))
+    } else {
+        Err(AppError::UserNotFoundId(id))
+    }
+}
+
+// #[debug_handler]
+// pub async fn get_user_from_email(
+//     State(state): State<AppState>,
+//     Path(email): Path<String>,
+// ) -> AppResult<impl IntoResponse> {
+//     if let Some(user) = user::get_user_by_email(&email, &state).await? {
+//         Ok(Json(user))
+//     } else {
+//         Err(AppError::UserNotFoundEmail(email))
+//     }
+// }
+
+#[debug_handler]
+pub async fn get_user_communities(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> AppResult<impl IntoResponse> {
+
+    // TODO: validate that the user exists?
+
+    let user_communities = user_community::get_communities_by_user(id, &state).await?;
+
+    let mut res: Vec<Community> = Vec::new();
+
+    for user_community in user_communities.iter() {
+        if let Some(community) = community::get_community_by_id(user_community.community_id, &state).await? {            
+            res.push(community);
+        } else {
+            // FIX: O que fazer quando há erro a ir buscar a comunidade??
+        }
+    }
+
+    Ok(Json(res))
 }

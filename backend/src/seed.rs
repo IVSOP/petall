@@ -118,7 +118,7 @@ pub async fn seed_energytransfer(
         let community = communities.into_iter().choose(&mut rng).unwrap();
         let energy_wh = BigDecimal::from_str(&rng.random_range(10.0..5000.0).to_string())?;
 
-        let start = (Utc::now() - Duration::days(rng.random_range(0..30))).naive_utc();
+        let start = (Utc::now() - Duration::days(rng.random_range(0..30))).naive_utc() - Duration::minutes(rng.random_range(10..120));
         let end = start + Duration::minutes(rng.random_range(10..120));
 
         let user_from = users.into_iter().choose(&mut rng).unwrap();
