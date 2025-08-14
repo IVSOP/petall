@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS "manager" (
-    "id" UUID NOT NULL UNIQUE,
-    "community" UUID NOT NULL,
-    PRIMARY KEY("id", "community")
+	"id" UUID NOT NULL UNIQUE,
+	"name" VARCHAR(255) NOT NULL,
+	"email" VARCHAR(255) NOT NULL,
+	PRIMARY KEY("id")
 );

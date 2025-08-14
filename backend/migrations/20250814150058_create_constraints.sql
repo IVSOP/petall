@@ -1,0 +1,18 @@
+ALTER TABLE "energytransfer"
+ADD FOREIGN KEY("user_to") REFERENCES "user"("id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "energytransfer"
+ADD FOREIGN KEY("community") REFERENCES "community"("id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "user"
+ADD FOREIGN KEY("id") REFERENCES "user-community"("user_id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "user-community"
+ADD FOREIGN KEY("community_id") REFERENCES "community"("id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "manager-community"
+ADD FOREIGN KEY("manager_id") REFERENCES "manager"("id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "manager-community"
+ADD FOREIGN KEY("community_id") REFERENCES "community"("id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
