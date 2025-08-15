@@ -1,4 +1,4 @@
-use crate::{error::AppResult, AppState};
+use crate::AppState;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -9,26 +9,20 @@ pub struct Manager {
     pub email: String,
 }
 
-pub async fn get_manager_by_id(id: Uuid, state: &AppState) -> AppResult<Option<Manager>> {
-    Ok(
-        sqlx::query_as!(
-            Manager,
-            r#"SELECT * FROM "manager" WHERE id = $1"#,
-            id
-        )
-        .fetch_optional(&state.pg_pool)
-        .await?,
-    )
-}
+impl AppState {
+    pub async fn get_manager_by_id(&self, id: Uuid) -> sqlx::Result<Option<Manager>> {
+        sqlx::query_as!(Manager, r#"SELECT * FROM "manager" WHERE id = $1"#, id)
+            .fetch_optional(&self.pg_pool)
+            .await
+    }
 
-pub async fn _get_manager_by_email(email: &str, state: &AppState) -> AppResult<Option<Manager>> {
-    Ok(
+    pub async fn _get_manager_by_email(&self, email: &str) -> sqlx::Result<Option<Manager>> {
         sqlx::query_as!(
             Manager,
             r#"SELECT * FROM "manager" WHERE email = $1"#,
             email
         )
-        .fetch_optional(&state.pg_pool)
-        .await?,
-    )
+        .fetch_optional(&self.pg_pool)
+        .await
+    }
 }

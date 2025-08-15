@@ -1,8 +1,0 @@
-CREATE TABLE IF NOT EXISTS "user" (
-	"id" UUID NOT NULL UNIQUE,
-	"name" VARCHAR(255) NOT NULL,
-	"email" VARCHAR(255) NOT NULL UNIQUE,
-	PRIMARY KEY("id")
-);
-
-CREATE INDEX IF NOT EXISTS "user_email_idx" ON "user" ("email");

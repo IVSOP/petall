@@ -3,13 +3,16 @@
 ## Run Postgres
 
 ```
-docker compose -f docker/docker-compose.yml up -d
-docker compose -f docker/docker-compose.yml down
+cd backend
+docker compose up -d
+docker compose down
 ```
 
 ## Run Backend Server
 
+Copy `.env.example` to `.env` and setup variables.
+
 ```
 cd backend
-cargo run
+cargo run -- run
 ```

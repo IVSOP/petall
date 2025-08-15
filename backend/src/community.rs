@@ -1,5 +1,5 @@
+use crate::AppState;
 use crate::router::CommunityRegisterRequest;
-use crate::{error::AppResult, AppState};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -9,44 +9,45 @@ pub struct Community {
     pub entity: String,
 }
 
-pub async fn get_community_by_entity(entity: String, state: &AppState) -> AppResult<Option<Community>> {
-    Ok(
+impl AppState {
+    pub async fn get_community_by_entity(&self, entity: String) -> sqlx::Result<Option<Community>> {
         sqlx::query_as!(
             Community,
             "SELECT * FROM community WHERE entity = $1",
             entity
         )
-        .fetch_optional(&state.pg_pool)
-        .await?,
-    )
-}
+        .fetch_optional(&self.pg_pool)
+        .await
+    }
 
-pub async fn get_community_by_id(id: Uuid, state: &AppState) -> AppResult<Option<Community>> {
-    Ok(
+    pub async fn get_community_by_id(&self, id: Uuid) -> sqlx::Result<Option<Community>> {
         sqlx::query_as!(
             Community,
             "SELECT id, entity FROM community WHERE id = $1",
             id
         )
-        .fetch_optional(&state.pg_pool)
-        .await?,
-    )
-}
+        .fetch_optional(&self.pg_pool)
+        .await
+    }
 
-pub async fn register_community(community_request: CommunityRegisterRequest, state: &AppState) -> AppResult<Community> {
+    pub async fn register_community(
+        &self,
+        community_request: CommunityRegisterRequest,
+    ) -> sqlx::Result<Community> {
+        // TODO: make the database create this uuid
+        let community: Community = Community {
+            id: Uuid::new_v4(),
+            entity: community_request.entity,
+        };
 
-    let community: Community = Community {
-        id: Uuid::new_v4(),
-        entity: community_request.entity,
-    };
+        sqlx::query!(
+            "INSERT INTO community (id, entity) VALUES ($1, $2)",
+            community.id,
+            community.entity,
+        )
+        .execute(&self.pg_pool)
+        .await?;
 
-    sqlx::query!(
-        "INSERT INTO community (id, entity) VALUES ($1, $2)",
-        community.id,
-        community.entity,
-    )
-    .execute(&state.pg_pool)
-    .await?;
-
-    Ok(community)
+        Ok(community)
+    }
 }

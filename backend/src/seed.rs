@@ -1,17 +1,63 @@
-use uuid::Uuid;
-use sqlx::postgres::PgPool;
-use names::Generator;
-use fake::{faker::internet::en::FreeEmail, Fake};
-use chrono::{Duration, Utc};
-use rand::{seq::IteratorRandom, Rng};
 use bigdecimal::BigDecimal;
+use chrono::{Duration, Utc};
+use fake::{Fake, faker::internet::en::FreeEmail};
+use names::Generator;
+use rand::{Rng, seq::IteratorRandom};
+use sqlx::postgres::PgPool;
 use std::str::FromStr;
+use uuid::Uuid;
 
+#[derive(Debug, Clone, clap::Parser)]
+pub struct SeedSettings {
+    #[arg(long, default_value_t = 10)]
+    communities: usize,
+    #[arg(long, default_value_t = 5)]
+    managers: usize,
+    #[arg(long, default_value_t = 5)]
+    users: usize,
+    #[arg(long, default_value_t = 50)]
+    energy_transfers: usize,
+    #[arg(long, default_value_t = 6)]
+    communities_per_user: usize,
+    #[arg(long, default_value_t = 6)]
+    communities_per_manager: usize,
+}
 
-pub async fn seed_community(
-    pool: &PgPool,
-    count: usize
-) -> anyhow::Result<Vec<Uuid>> {
+pub async fn run_seed(pg_pool: &PgPool, seed_settings: SeedSettings) -> anyhow::Result<()> {
+    let community_ids = seed_community(pg_pool, seed_settings.communities).await?;
+
+    let manager_ids = seed_manager(pg_pool, seed_settings.managers).await?;
+
+    let users_ids = seed_user(pg_pool, seed_settings.users).await?;
+
+    seed_energytransfer(
+        pg_pool,
+        &community_ids,
+        &users_ids,
+        seed_settings.energy_transfers,
+    )
+    .await?;
+
+    seed_user_community(
+        pg_pool,
+        &users_ids,
+        &community_ids,
+        seed_settings.communities_per_user,
+    )
+    .await?;
+
+    seed_manager_community(
+        pg_pool,
+        &manager_ids,
+        &community_ids,
+        seed_settings.communities_per_manager,
+    )
+    .await?;
+
+    Ok(())
+}
+
+async fn seed_community(pool: &PgPool, count: usize) -> anyhow::Result<Vec<Uuid>> {
     let mut generator = Generator::default();
     let mut community_ids = Vec::new();
 
@@ -39,10 +85,7 @@ pub async fn seed_community(
     Ok(community_ids)
 }
 
-pub async fn seed_user(
-    pool: &PgPool,
-    count: usize
-) -> anyhow::Result<Vec<Uuid>> {
+async fn seed_user(pool: &PgPool, count: usize) -> anyhow::Result<Vec<Uuid>> {
     let mut generator = Generator::default();
     let mut user_ids = Vec::new();
 
@@ -72,10 +115,7 @@ pub async fn seed_user(
     Ok(user_ids)
 }
 
-pub async fn seed_manager(
-    pool: &PgPool,
-    count: usize
-) -> anyhow::Result<Vec<Uuid>> {
+async fn seed_manager(pool: &PgPool, count: usize) -> anyhow::Result<Vec<Uuid>> {
     let mut generator = Generator::default();
     let mut manager_ids = Vec::new();
 
@@ -105,11 +145,11 @@ pub async fn seed_manager(
     Ok(manager_ids)
 }
 
-pub async fn seed_energytransfer(
+async fn seed_energytransfer(
     pool: &PgPool,
     communities: &Vec<Uuid>,
     users: &Vec<Uuid>,
-    count: usize
+    count: usize,
 ) -> anyhow::Result<()> {
     let mut rng = rand::rng();
 
@@ -118,7 +158,8 @@ pub async fn seed_energytransfer(
         let community = communities.into_iter().choose(&mut rng).unwrap();
         let energy_wh = BigDecimal::from_str(&rng.random_range(10.0..5000.0).to_string())?;
 
-        let start = (Utc::now() - Duration::days(rng.random_range(0..30))).naive_utc() - Duration::minutes(rng.random_range(10..120));
+        let start = (Utc::now() - Duration::days(rng.random_range(0..30))).naive_utc()
+            - Duration::minutes(rng.random_range(10..120));
         let end = start + Duration::minutes(rng.random_range(10..120));
 
         let user_from = users.into_iter().choose(&mut rng).unwrap();
@@ -149,7 +190,7 @@ pub async fn seed_energytransfer(
     Ok(())
 }
 
-pub async fn seed_user_community(
+async fn seed_user_community(
     pool: &PgPool,
     users: &Vec<Uuid>,
     communities: &Vec<Uuid>,
@@ -159,9 +200,7 @@ pub async fn seed_user_community(
     let mut inserted_pairs = Vec::new();
 
     for &user_id in users {
-        let selected_communities: Vec<_> = communities
-            .iter()
-            .choose_multiple(&mut rng, count);
+        let selected_communities: Vec<_> = communities.iter().choose_multiple(&mut rng, count);
 
         for community_id in selected_communities {
             let result = sqlx::query!(
@@ -185,7 +224,7 @@ pub async fn seed_user_community(
     Ok(inserted_pairs)
 }
 
-pub async fn seed_manager_community(
+async fn seed_manager_community(
     pool: &PgPool,
     managers: &Vec<Uuid>,
     communities: &Vec<Uuid>,
@@ -195,9 +234,7 @@ pub async fn seed_manager_community(
     let mut inserted_pairs = Vec::new();
 
     for &manager_id in managers {
-        let selected_communities: Vec<_> = communities
-            .iter()
-            .choose_multiple(&mut rng, count);
+        let selected_communities: Vec<_> = communities.iter().choose_multiple(&mut rng, count);
 
         for community_id in selected_communities {
             let result = sqlx::query!(

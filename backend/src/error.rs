@@ -1,12 +1,10 @@
+use axum::Json;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use axum::Json;
 use serde::Serialize;
 use thiserror::Error;
-use uuid::Uuid;
 use tracing::error;
-
-// FIX: porque é que o impl IntoResponse é preciso???
+use uuid::Uuid;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -43,14 +41,6 @@ impl IntoResponse for AppError {
             details: Option<serde_json::Value>,
         }
 
-        let internal_server_error = || {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                String::from("Internal server error"),
-                None,
-            )
-        };
-
         let (status, error, details) = match &self {
             AppError::CommunityNotFound(id) => (
                 StatusCode::NOT_FOUND,
@@ -64,8 +54,12 @@ impl IntoResponse for AppError {
             ),
             AppError::SqlxError(err) => {
                 error!(error = ?err, "Database error occurred");
-                internal_server_error()
-            },
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    String::from("Internal server error"),
+                    None,
+                )
+            }
             AppError::ValidationError(err) => (
                 StatusCode::BAD_REQUEST,
                 "Validation error".to_string(),
@@ -76,31 +70,11 @@ impl IntoResponse for AppError {
                 format!("User not found with id: {}", id),
                 None,
             ),
-            // AppError::UserNotFoundEmail(email) => (
-            //     StatusCode::NOT_FOUND,
-            //     format!("User not found with email: {}", email),
-            //     None,
-            // ),
             AppError::ManagerNotFoundId(id) => (
                 StatusCode::NOT_FOUND,
                 format!("Manager not found with id: {}", id),
                 None,
             ),
-            // AppError::InvalidPassword => (
-            //     StatusCode::UNAUTHORIZED,
-            //     "Invalid password".to_string(),
-            //     None,
-            // ),
-            // AppError::InvalidToken => (
-            //     StatusCode::UNAUTHORIZED,
-            //     "Invalid refresh token".to_string(),
-            //     None,
-            // ),
-            // AppError::Unauthorized => (
-            //     StatusCode::UNAUTHORIZED,
-            //     "Unauthorized".to_string(),
-            //     None,
-            // ),
         };
 
         let body = ErrorBody { error, details };

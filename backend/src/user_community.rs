@@ -1,4 +1,4 @@
-use crate::{error::AppResult, AppState};
+use crate::AppState;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -8,15 +8,15 @@ pub struct UserCommunity {
     pub community_id: Uuid,
 }
 
-// WARN: vec may be empty
-pub async fn get_communities_by_user(user_id: Uuid, state: &AppState) -> AppResult<Vec<UserCommunity>> {
-    Ok(
+impl AppState {
+    // WARN: vec may be empty
+    pub async fn get_communities_by_user(&self, user_id: Uuid) -> sqlx::Result<Vec<UserCommunity>> {
         sqlx::query_as!(
             UserCommunity,
             r#"SELECT * FROM "user-community" WHERE user_id = $1"#,
             user_id
         )
-        .fetch_all(&state.pg_pool)
-        .await?,
-    )
+        .fetch_all(&self.pg_pool)
+        .await
+    }
 }
