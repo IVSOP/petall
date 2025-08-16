@@ -8,12 +8,9 @@ use crate::seed::SeedSettings;
 
 mod community;
 mod error;
-mod manager;
-mod manager_community;
+mod participant;
 mod router;
 mod seed;
-mod user;
-mod user_community;
 
 #[derive(Parser)]
 pub struct DatabaseConfig {

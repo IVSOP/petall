@@ -15,13 +15,8 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/community/{id}", get(get_community))
         .route("/community/register", post(register_community))
-        .route("/user/{user_id}", get(get_user))
-        .route("/user/communities/{user_id}", get(get_user_communities))
-        .route("/manager/{manager_id}", get(get_manager))
-        .route(
-            "/manager/communities/{manager_id}",
-            get(get_manager_communities),
-        )
+        .route("/participant/{participant_id}", get(get_participant))
+        .route("/participant/communities/{participant_id}", get(get_participant_communities))
         .with_state(state)
         .layer(TraceLayer::new_for_http())
 }
@@ -30,6 +25,7 @@ pub fn router(state: AppState) -> Router {
 pub struct CommunityRegisterRequest {
     #[validate(length(min = 3, max = 50))]
     pub entity: String,
+    pub supplier: Uuid,
 }
 
 #[derive(serde::Serialize)]
@@ -74,80 +70,31 @@ async fn register_community(
 }
 
 #[debug_handler]
-pub async fn get_user(
+pub async fn get_participant(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> AppResult<impl IntoResponse> {
-    if let Some(user) = state.get_user_by_id(id).await? {
-        Ok(Json(user))
+    if let Some(participant) = state.get_participant_by_id(id).await? {
+        Ok(Json(participant))
     } else {
-        Err(AppError::UserNotFoundId(id))
+        Err(AppError::ParticipantNotFoundId(id))
     }
 }
 
-// #[debug_handler]
-// pub async fn get_user_from_email(
-//     State(state): State<AppState>,
-//     Path(email): Path<String>,
-// ) -> AppResult<impl IntoResponse> {
-//     if let Some(user) = user::get_user_by_email(&email, &state).await? {
-//         Ok(Json(user))
-//     } else {
-//         Err(AppError::UserNotFoundEmail(email))
-//     }
-// }
-
 #[debug_handler]
-pub async fn get_user_communities(
+pub async fn get_participant_communities(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> AppResult<impl IntoResponse> {
     // TODO: validate that the user exists?
 
-    let user_communities = state.get_communities_by_user(id).await?;
+    let participant_communities = state.get_participant_communities(id).await?;
 
     let mut res: Vec<Community> = Vec::new();
 
-    for user_community in user_communities.iter() {
+    for participant_community in participant_communities.iter() {
         if let Some(community) = state
-            .get_community_by_id(user_community.community_id)
-            .await?
-        {
-            res.push(community);
-        } else {
-            // FIX: O que fazer quando há erro a ir buscar a comunidade??
-        }
-    }
-
-    Ok(Json(res))
-}
-
-#[debug_handler]
-pub async fn get_manager(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> AppResult<impl IntoResponse> {
-    if let Some(manager) = state.get_manager_by_id(id).await? {
-        Ok(Json(manager))
-    } else {
-        Err(AppError::ManagerNotFoundId(id))
-    }
-}
-
-#[debug_handler]
-pub async fn get_manager_communities(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> AppResult<impl IntoResponse> {
-    // TODO: validate that the user exists?
-
-    let manager_communities = state.get_communities_by_manager(id).await?;
-
-    let mut res: Vec<Community> = Vec::new();
-
-    for manager_community in manager_communities.iter() {
-        if let Some(community) = state
-            .get_community_by_id(manager_community.community_id)
+            .get_community_by_id(participant_community.community_id)
             .await?
         {
             res.push(community);

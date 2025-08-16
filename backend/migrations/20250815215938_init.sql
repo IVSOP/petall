@@ -1,72 +1,62 @@
-CREATE TABLE IF NOT EXISTS "manager" (
-	"id" UUID NOT NULL UNIQUE,
-	"name" VARCHAR(255) NOT NULL,
-	"email" VARCHAR(255) NOT NULL UNIQUE,
-	PRIMARY KEY("id")
+CREATE TYPE participant_role AS ENUM (
+    'manager',
+    'supplier',
+    'user'
 );
 
-CREATE INDEX IF NOT EXISTS "manager_email_idx" ON "manager" ("email");
-
-CREATE TABLE IF NOT EXISTS "user" (
-	"id" UUID NOT NULL UNIQUE,
-	"name" VARCHAR(255) NOT NULL,
-	"email" VARCHAR(255) NOT NULL UNIQUE,
-	PRIMARY KEY("id")
+CREATE TABLE IF NOT EXISTS "participant" (
+    "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "role" participant_role NOT NULL,
+    "name" VARCHAR(255) NOT NULL,
+    "email" VARCHAR(255) NOT NULL UNIQUE
 );
 
-CREATE INDEX IF NOT EXISTS "user_email_idx" ON "user" ("email");
+CREATE INDEX IF NOT EXISTS "participant_email_idx" ON "participant" ("email");
 
 CREATE TABLE IF NOT EXISTS "community" (
-	"id" UUID NOT NULL UNIQUE,
+	"id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 	"entity" VARCHAR(255) NOT NULL UNIQUE,
-	PRIMARY KEY("id")
+	"supplier" UUID NOT NULL,
+	CONSTRAINT fk_supplier
+        FOREIGN KEY ("supplier") 
+        REFERENCES "participant"("id")
+        ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS "community_entity_idx" ON "community" ("entity");
 
+CREATE TABLE IF NOT EXISTS "participant_community" (
+    "participant_id" UUID NOT NULL,
+    "community_id" UUID NOT NULL,
+    PRIMARY KEY ("participant_id", "community_id"),
+    CONSTRAINT fk_participant
+        FOREIGN KEY ("participant_id") 
+        REFERENCES "participant"("id")
+        ON DELETE CASCADE,
+    CONSTRAINT fk_community
+        FOREIGN KEY ("community_id") 
+        REFERENCES "community"("id")
+        ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS "energytransfer" (
-	"id" UUID NOT NULL UNIQUE,
-	"user_from" UUID NOT NULL,
-	"user_to" UUID NOT NULL,
+	"id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	"participant_from" UUID NOT NULL,
+	"participant_to" UUID NOT NULL,
 	"community" UUID NOT NULL,
-	"energy_wh" DECIMAL NOT NULL,
+	"energy_wh" NUMERIC(11,2) NOT NULL,
 	"start" TIMESTAMP NOT NULL,
 	"end" TIMESTAMP NOT NULL,
-	PRIMARY KEY("id")
+	CONSTRAINT fk_participant_from
+		FOREIGN KEY ("participant_from")
+		REFERENCES "participant"("id")
+		ON DELETE CASCADE,
+	CONSTRAINT fk_participant_to
+		FOREIGN KEY ("participant_to")
+		REFERENCES "participant"("id")
+		ON DELETE CASCADE,
+	CONSTRAINT fk_community
+		FOREIGN KEY ("community")
+		REFERENCES "community"("id")
+		ON DELETE CASCADE
 );
-
-CREATE TABLE IF NOT EXISTS "user-community" (
-	"user_id" UUID NOT NULL,
-	"community_id" UUID NOT NULL,
-	PRIMARY KEY("user_id", "community_id")
-);
-
-CREATE TABLE IF NOT EXISTS "manager-community" (
-	"manager_id" UUID NOT NULL,
-	"community_id" UUID NOT NULL,
-	PRIMARY KEY("manager_id", "community_id")
-);
-
-ALTER TABLE "energytransfer"
-ADD FOREIGN KEY("user_to") REFERENCES "user"("id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-
-ALTER TABLE "energytransfer"
-ADD FOREIGN KEY("community") REFERENCES "community"("id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-
-ALTER TABLE "user-community"
-ADD FOREIGN KEY("user_id") REFERENCES "user"("id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-
-ALTER TABLE "user-community"
-ADD FOREIGN KEY("community_id") REFERENCES "community"("id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-
-ALTER TABLE "manager-community"
-ADD FOREIGN KEY("manager_id") REFERENCES "manager"("id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-
-ALTER TABLE "manager-community"
-ADD FOREIGN KEY("community_id") REFERENCES "community"("id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;

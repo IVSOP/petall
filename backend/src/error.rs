@@ -16,12 +16,12 @@ pub enum AppError {
     SqlxError(#[from] sqlx::error::Error),
     #[error(transparent)]
     ValidationError(#[from] validator::ValidationErrors),
-    #[error("user not found using ID: {0}")]
-    UserNotFoundId(Uuid),
+    #[error("participant not found using ID: {0}")]
+    ParticipantNotFoundId(Uuid),
     // #[error("user not found using email: {0}")]
     // UserNotFoundEmail(String),
-    #[error("manager not found using ID: {0}")]
-    ManagerNotFoundId(Uuid),
+    // #[error("manager not found using ID: {0}")]
+    // ManagerNotFoundId(Uuid),
     // #[error("invalid password")]
     // InvalidPassword,
     // #[error("invalid token")]
@@ -65,14 +65,9 @@ impl IntoResponse for AppError {
                 "Validation error".to_string(),
                 serde_json::to_value(err).ok(),
             ),
-            AppError::UserNotFoundId(id) => (
+            AppError::ParticipantNotFoundId(id) => (
                 StatusCode::NOT_FOUND,
-                format!("User not found with id: {}", id),
-                None,
-            ),
-            AppError::ManagerNotFoundId(id) => (
-                StatusCode::NOT_FOUND,
-                format!("Manager not found with id: {}", id),
+                format!("Participant not found with id: {}", id),
                 None,
             ),
         };
