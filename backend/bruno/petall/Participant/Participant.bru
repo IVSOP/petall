@@ -1,17 +1,17 @@
 meta {
-  name: User
+  name: Participant
   type: http
   seq: 1
 }
 
 get {
-  url: {{host}}/user/:id
+  url: {{host}}/participant/:id
   body: none
   auth: inherit
 }
 
 params:path {
-  id: {{user_id}}
+  id: {{participant_id}}
 }
 
 settings {

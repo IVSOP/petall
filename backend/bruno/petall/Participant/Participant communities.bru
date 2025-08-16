@@ -1,17 +1,17 @@
 meta {
-  name: Manager communities
+  name: Participant communities
   type: http
   seq: 2
 }
 
 get {
-  url: {{host}}/manager/communities/:id
+  url: {{host}}/participant/communities/:id
   body: none
   auth: inherit
 }
 
 params:path {
-  id: {{manager_id}}
+  id: {{participant_id}}
 }
 
 settings {

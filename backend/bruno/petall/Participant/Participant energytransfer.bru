@@ -1,0 +1,27 @@
+meta {
+  name: Participant energytransfer
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/energytransfer/:community_id/:participant_id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  community_id: {{community_id}}
+  participant_id: {{participant_id}}
+}
+
+body:json {
+  {
+    "page": 1
+    
+  }
+}
+
+settings {
+  encodeUrl: true
+}
