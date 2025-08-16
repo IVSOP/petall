@@ -11,7 +11,7 @@ pub struct Community {
 }
 
 impl AppState {
-    pub async fn get_community_by_entity(&self, entity: String) -> sqlx::Result<Option<Community>> {
+    pub async fn get_community_by_entity(&self, entity: &String) -> sqlx::Result<Option<Community>> {
         sqlx::query_as!(
             Community,
             r#"
@@ -24,7 +24,7 @@ impl AppState {
         .await
     }
 
-    pub async fn get_community_by_id(&self, id: Uuid) -> sqlx::Result<Option<Community>> {
+    pub async fn get_community_by_id(&self, id: &Uuid) -> sqlx::Result<Option<Community>> {
         sqlx::query_as!(
             Community,
             r#"
@@ -41,20 +41,18 @@ impl AppState {
         &self,
         community_request: CommunityRegisterRequest,
     ) -> sqlx::Result<Community> {
-        Ok(
-            sqlx::query_as!(
-                Community,
-                r#"
-                INSERT INTO community
-                (entity, supplier)
-                VALUES ($1, $2)
-                RETURNING *
-                "#,
-                community_request.entity,
-                community_request.supplier,
-            )
-            .fetch_one(&self.pg_pool)
-            .await?
+        sqlx::query_as!(
+            Community,
+            r#"
+            INSERT INTO community
+            (entity, supplier)
+            VALUES ($1, $2)
+            RETURNING *
+            "#,
+            community_request.entity,
+            community_request.supplier,
         )
+        .fetch_one(&self.pg_pool)
+        .await
     }
 }

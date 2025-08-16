@@ -18,12 +18,16 @@ pub struct SeedSettings {
     managers: usize,
     #[arg(long, default_value_t = 3)]
     suppliers: usize,
-    #[arg(long, default_value_t = 3)]
+    #[arg(long, default_value_t = 1)]
     communities_per_supplier: usize,
-    #[arg(long, default_value_t = 5)]
+    #[arg(long, default_value_t = 2)]
     communities_per_user: usize,
     #[arg(long, default_value_t = 5)]
     communities_per_manager: usize,
+    #[arg(long, default_value_t = 1)]
+    enery_transfer_days: i64,
+    #[arg(long, default_value_t = 15)]
+    enery_transfer_interval: i64,
 }
 
 pub async fn run_seed(pg_pool: &PgPool, seed_settings: SeedSettings) -> anyhow::Result<()> {
@@ -71,6 +75,8 @@ pub async fn run_seed(pg_pool: &PgPool, seed_settings: SeedSettings) -> anyhow::
         pg_pool,
         &supplier_communities_map,
         &mut community_users_map,
+        &seed_settings.enery_transfer_days,
+        &seed_settings.enery_transfer_interval,
     ).await?;
 
     Ok(())
@@ -177,12 +183,14 @@ pub async fn seed_energytransfer(
     pool: &PgPool,
     supplier_communities: &HashMap<Uuid, Vec<Uuid>>,
     community_participant_map: &mut HashMap<Uuid, Vec<Uuid>>,
+    energy_transfer_days: &i64,
+    energy_transfer_interval: &i64,
 ) -> anyhow::Result<()> {
     let mut rng = rand::rng();
     let mut community_supplier: HashMap<Uuid, Uuid> = HashMap::new();
 
     let start = Utc::now().naive_utc();
-    let end = (Utc::now() + Duration::days(1)).naive_utc();
+    let end = (Utc::now() + Duration::days(*energy_transfer_days)).naive_utc();
 
     for (k, v) in supplier_communities {
         for community in v {
@@ -192,22 +200,19 @@ pub async fn seed_energytransfer(
 
     for (community, participants) in community_participant_map.iter_mut() {
         let mut current = start;
+        if participants.len() % 2 == 1 {
+            participants.push(
+                *community_supplier.get(community)
+                    .expect("No supplier found for community"))
+        }
 
         while current < end {
             participants.shuffle(&mut rng);
 
             for chunk in participants.chunks(2) {
-                let mut rng = rand::rng();
                 let energy_wh = BigDecimal::from_str(
                     &rng.random_range(10.0..5000.0).to_string()
                 ).unwrap();
-
-                let participant_to = if chunk.len() == 2 {
-                   chunk[1]
-                } else {
-                    *community_supplier.get(community)
-                        .expect("No supplier found for community")
-                };
 
                 sqlx::query!(
                     r#"
@@ -217,17 +222,17 @@ pub async fn seed_energytransfer(
                     "#,
                     Uuid::new_v4(),
                     chunk[0],
-                    participant_to,
+                    chunk[1],
                     community,
                     energy_wh,
                     current,
-                    current + Duration::minutes(15),
+                    current + Duration::minutes(*energy_transfer_interval),
                 )
                 .execute(pool)
                 .await
                 .unwrap();
             }
-            current += Duration::minutes(15);
+            current += Duration::minutes(*energy_transfer_interval);
         }
     }
 

@@ -28,18 +28,12 @@ pub struct CommunityRegisterRequest {
     pub supplier: Uuid,
 }
 
-#[derive(serde::Serialize)]
-struct CommunityRegisterResponse {
-    id: Uuid,
-    entity: String,
-}
-
 #[debug_handler]
 pub async fn get_community(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> AppResult<impl IntoResponse> {
-    if let Some(community) = state.get_community_by_id(id).await? {
+    if let Some(community) = state.get_community_by_id(&id).await? {
         Ok(Json(community))
     } else {
         Err(AppError::CommunityNotFound(id))
@@ -51,22 +45,11 @@ async fn register_community(
     State(state): State<AppState>,
     Json(request): Json<CommunityRegisterRequest>,
 ) -> AppResult<impl IntoResponse> {
-    request.validate()?;
-
-    if let Some(_) = state
-        .get_community_by_entity(request.entity.clone())
-        .await?
-    {
-        // entity already exists
-        return Err(AppError::CommunityEntityAlreadyInUse(request.entity));
+    if state.get_community_by_entity(&request.entity).await?.is_some() {
+        Err(AppError::CommunityEntityAlreadyInUse(request.entity))
+    } else {
+        Ok(Json(state.register_community(request).await?))
     }
-
-    let community = state.register_community(request).await?;
-
-    Ok(Json(CommunityRegisterResponse {
-        id: community.id,
-        entity: community.entity,
-    }))
 }
 
 #[debug_handler]
@@ -74,7 +57,7 @@ pub async fn get_participant(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> AppResult<impl IntoResponse> {
-    if let Some(participant) = state.get_participant_by_id(id).await? {
+    if let Some(participant) = state.get_participant_by_id(&id).await? {
         Ok(Json(participant))
     } else {
         Err(AppError::ParticipantNotFoundId(id))
@@ -86,22 +69,23 @@ pub async fn get_participant_communities(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> AppResult<impl IntoResponse> {
-    // TODO: validate that the user exists?
+    if state.get_participant_by_id(&id).await?.is_none() {
+        return Err(AppError::ParticipantNotFoundId(id));
+    } 
 
-    let participant_communities = state.get_participant_communities(id).await?;
+    let mut communities: Vec<Community> = Vec::new();
+    let participant_communities = state.get_participant_communities(&id).await?;
 
-    let mut res: Vec<Community> = Vec::new();
-
-    for participant_community in participant_communities.iter() {
+    for pc in &participant_communities {
         if let Some(community) = state
-            .get_community_by_id(participant_community.community_id)
+            .get_community_by_id(&pc.community_id)
             .await?
         {
-            res.push(community);
+            communities.push(community);
         } else {
-            // FIX: O que fazer quando há erro a ir buscar a comunidade??
+            return Err(AppError::CommunityNotFound(pc.community_id));
         }
     }
 
-    Ok(Json(res))
+    Ok(Json(communities))
 }
