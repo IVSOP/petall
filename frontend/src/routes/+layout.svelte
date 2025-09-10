@@ -1,10 +1,11 @@
 <script lang="ts">
 	import '../app.css';
+	import type { LayoutProps } from './$types';
 	import favicon from '$lib/assets/favicon.svg';
 	import * as NavigationMenu from '$lib/components/ui/navigation-menu/index.js';
 	import Avatar from '../components/Avatar.svelte';
 
-	let { children } = $props();
+	let { data, children }: LayoutProps = $props();
 </script>
 
 <svelte:head>
@@ -25,7 +26,7 @@
 				<NavigationMenu.Root>
 					<NavigationMenu.List>
 						<NavigationMenu.Item>
-							<Avatar image="https://github.com/DigoqueDigo.png" />
+							<Avatar participant={data.participant} image={data.image} />
 						</NavigationMenu.Item>
 					</NavigationMenu.List>
 				</NavigationMenu.Root>

@@ -2,7 +2,8 @@
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 
-	let { image } = $props();
+	// TODO: participant object should have image
+	let { participant, image } = $props();
 </script>
 
 <DropdownMenu.Root>
@@ -14,7 +15,7 @@
 	</DropdownMenu.Trigger>
 	<DropdownMenu.Content>
 		<DropdownMenu.Group>
-			<DropdownMenu.Label>NomeQualquer</DropdownMenu.Label>
+			<DropdownMenu.Label>{participant.name}</DropdownMenu.Label>
 			<DropdownMenu.Separator />
             <DropdownMenu.Item>
 				<a href="/profile" class="w-full">Profile</a>
