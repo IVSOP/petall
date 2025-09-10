@@ -4,22 +4,26 @@
 	const { community } = $props();
 </script>
 
-<Card.Root>
-	<Card.Header>
-		<Card.Title>{community.entity}</Card.Title>
-		<Card.Description>Comunidade energética</Card.Description>
-	</Card.Header>
-	<Card.Content>
-		<p>ID: {community.id}</p>
-		{#if community.supplier}
-			<p>Fornecedor: {community.supplier.name || community.supplier}</p>
-		{/if}
-	</Card.Content>
-	<Card.Footer>
-		<p class="text-sm text-muted-foreground">
-            <!-- por a hora da ultima transferencia?-->
-			Última atualização: {new Date().toLocaleDateString()}
-		</p>
-	</Card.Footer>
-</Card.Root>
-
+<a
+	href={`/community/${community.id}`}
+	class="block transform rounded-md transition-transform duration-300 hover:scale-102 hover:shadow-lg"
+>
+	<Card.Root>
+		<Card.Header>
+			<Card.Title>{community.entity}</Card.Title>
+			<Card.Description>Comunidade energética</Card.Description>
+		</Card.Header>
+		<Card.Content>
+			<p>ID: {community.id}</p>
+			{#if community.supplier}
+				<p>Fornecedor: {community.supplier.name || community.supplier}</p>
+			{/if}
+		</Card.Content>
+		<Card.Footer>
+			<p class="text-sm text-muted-foreground">
+				<!-- por a hora da ultima transferencia?-->
+				Última atualização: {new Date().toLocaleDateString()}
+			</p>
+		</Card.Footer>
+	</Card.Root>
+</a>
