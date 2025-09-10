@@ -13,7 +13,7 @@
 
 <div class="flex min-h-screen flex-col bg-background">
 	<div class="border-y bg-muted/60">
-		<div class="container mx-auto px-4 py-5">
+		<div class="container mx-auto px-3 py-2">
 			<div class="flex justify-between">
 				<NavigationMenu.Root>
 					<NavigationMenu.List>
