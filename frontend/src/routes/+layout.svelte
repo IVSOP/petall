@@ -18,13 +18,7 @@
 				<NavigationMenu.Root>
 					<NavigationMenu.List>
 						<NavigationMenu.Item>
-							<NavigationMenu.Link href="#">PETALL</NavigationMenu.Link>
-						</NavigationMenu.Item>
-						<NavigationMenu.Item>
-							<NavigationMenu.Link href="#">Área de Cliente</NavigationMenu.Link>
-						</NavigationMenu.Item>
-						<NavigationMenu.Item>
-							<NavigationMenu.Link href="#">Comunidades</NavigationMenu.Link>
+							<NavigationMenu.Link href="/">PETALL</NavigationMenu.Link>
 						</NavigationMenu.Item>
 					</NavigationMenu.List>
 				</NavigationMenu.Root>

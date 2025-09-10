@@ -7,19 +7,24 @@
 
 <DropdownMenu.Root>
 	<DropdownMenu.Trigger>
-		<Avatar.Root>
-			<Avatar.Image src={image} alt="@shadcn" />
-			<Avatar.Fallback>CN</Avatar.Fallback>
+		<Avatar.Root class="cursor-pointer hover:ring-2 hover:ring-gray-300 hover:scale-105 transition">
+			<Avatar.Image src={image} />
+			<Avatar.Fallback>A</Avatar.Fallback>
 		</Avatar.Root>
 	</DropdownMenu.Trigger>
 	<DropdownMenu.Content>
 		<DropdownMenu.Group>
-			<DropdownMenu.Label>My Account</DropdownMenu.Label>
+			<DropdownMenu.Label>NomeQualquer</DropdownMenu.Label>
 			<DropdownMenu.Separator />
-			<DropdownMenu.Item>Profile</DropdownMenu.Item>
-			<DropdownMenu.Item>Billing</DropdownMenu.Item>
-			<DropdownMenu.Item>Team</DropdownMenu.Item>
-			<DropdownMenu.Item>Subscription</DropdownMenu.Item>
+            <DropdownMenu.Item>
+				<a href="/profile" class="w-full">Profile</a>
+			</DropdownMenu.Item>
+			<DropdownMenu.Item>
+				<a href="/change-password" class="w-full">Change Password</a>
+            </DropdownMenu.Item>
+			<DropdownMenu.Item>
+				<a href="/logout" class="w-full">Logout</a>
+            </DropdownMenu.Item>
 		</DropdownMenu.Group>
 	</DropdownMenu.Content>
 </DropdownMenu.Root>
