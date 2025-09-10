@@ -40,6 +40,8 @@ pub struct CommunityRegisterRequest {
 pub struct EnergyTransferQuery {
     #[validate(range(min = 1))]
     pub page: u32,
+    #[validate(range(min = 1))]
+    pub size: u32,
 }
 
 #[debug_handler]

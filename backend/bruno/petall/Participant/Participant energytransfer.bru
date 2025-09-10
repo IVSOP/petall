@@ -5,21 +5,19 @@ meta {
 }
 
 get {
-  url: {{host}}/energytransfer/:community_id/:participant_id
+  url: {{host}}/community/:community_id/energytransfer/:participant_id?page=1&size=10
   body: json
   auth: inherit
 }
 
-params:path {
-  community_id: {{community_id}}
-  participant_id: {{participant_id}}
+params:query {
+  page: 1
+  size: 10
 }
 
-body:json {
-  {
-    "page": 1
-    
-  }
+params:path {
+  participant_id: {{participant_id}}
+  community_id: {{community_id}}
 }
 
 settings {
