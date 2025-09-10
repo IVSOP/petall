@@ -5,8 +5,6 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-const TRANSFERS_PER_PAGE: u32 = 10;
-
 #[derive(Debug, Deserialize, Serialize, sqlx::Type)]
 #[sqlx(type_name = "participant_role", rename_all = "lowercase")]
 pub enum ParticipantRole {
@@ -102,8 +100,8 @@ impl AppState {
             "#,
             participant_id,
             community_id,
-            TRANSFERS_PER_PAGE as i64,
-            (TRANSFERS_PER_PAGE * (query.page - 1)) as i64
+            query.size as i64,
+            (query.size * (query.page - 1)) as i64
         )
         .fetch_all(&self.pg_pool)
         .await

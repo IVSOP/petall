@@ -5,47 +5,42 @@
 	import * as Chart from '$lib/components/ui/chart/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 
-	const chartData = [
-		{ month: 'January', visitors: 186 },
-		{ month: 'February', visitors: 205 },
-		{ month: 'March', visitors: -207 },
-		{ month: 'April', visitors: 173 },
-		{ month: 'May', visitors: -209 },
-		{ month: 'June', visitors: 500 }
-	];
+	let { energyTransfers = [], participant_id = '' } = $props();
 
 	const chartConfig = {
-		visitors: { label: 'Visitors' }
+		energy_wh: { label: 'Energy WH' }
 	} satisfies Chart.ChartConfig;
 </script>
 
 <Card.Root>
-	<Card.Header>
-		<Card.Title>Bar Chart - Negative</Card.Title>
-		<Card.Description>January - June 2024</Card.Description>
+	<Card.Header class="flex items-center gap-2 space-y-0 border-b sm:flex-row">
+		<div class="grid flex-1 gap-1 text-center sm:text-left">
+			<Card.Title>Transferências de Energia</Card.Title>
+			<Card.Description>January - June 2024</Card.Description>
+		</div>
 	</Card.Header>
 	<Card.Content>
 		<Chart.Container config={chartConfig}>
 			<BarChart
 				labels={{
 					offset: 5,
-					value: (d) => d.month,
+					value: (d) => d.start,
 					fill: (d) => {
-						if (d.visitors > 0) {
+						if (d.energy_wh > 0) {
 							return 'var(--chart-1)';
-						} else if (d.visitors < 0) {
+						} else if (d.energy_wh < 0) {
 							return 'var(--chart-2)';
 						}
 					}
 				}}
-				data={chartData}
+				data={energyTransfers}
 				xScale={scaleBand().padding(0.25)}
-				x="month"
-				y="visitors"
+				x="start"
+				y="energy_wh"
 				yNice={4}
 				yBaseline={0}
 				cRange={['var(--chart-1)', 'var(--chart-2)']}
-				c={(d) => (d.visitors > 0 ? 'var(--chart-1)' : 'var(--chart-2)')}
+				c={(d) => (d.energy_wh > 0 ? 'var(--chart-1)' : 'var(--chart-2)')}
 				axis={false}
 				props={{
 					bars: { stroke: 'none', radius: 0 },
@@ -59,6 +54,7 @@
 			</BarChart>
 		</Chart.Container>
 	</Card.Content>
+
 	<Card.Footer>
 		<div class="flex w-full items-start gap-2 text-sm">
 			<div class="grid gap-2">

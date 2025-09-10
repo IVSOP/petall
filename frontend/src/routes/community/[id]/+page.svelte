@@ -1,20 +1,15 @@
-<script>
+<script lang="ts">
+	import type { PageProps } from './$types';
 	import EnergyChart from '../../../components/EnergyChart.svelte';
+	import EnergyTable from '../../../components/EnergyTable.svelte';
+	import { columns } from './columns.js';
 
-	const { data } = $props();
+	const { data }: PageProps = $props();
 </script>
 
-<p>
-	<span class="font-medium">Comunidade:</span>
-	{JSON.stringify(data.community)}
-</p>
-<p>
-	<span class="font-medium">Energia:</span>
-	{JSON.stringify(data.energyTransfers)}
-</p>
-
 <div class="container">
-	<EnergyChart></EnergyChart>
-
-	<div class="font-medium">Informações Diárias</div>
+	<div class="grid grid-cols-1 gap-4">
+		<EnergyChart energyTransfers={data.energyTransfers} participant_id={data.participantId} />
+		<EnergyTable data={data.energyTransfers} {columns} />
+	</div>
 </div>
