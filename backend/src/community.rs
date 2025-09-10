@@ -11,7 +11,10 @@ pub struct Community {
 }
 
 impl AppState {
-    pub async fn get_community_by_entity(&self, entity: &String) -> sqlx::Result<Option<Community>> {
+    pub async fn get_community_by_entity(
+        &self,
+        entity: &String,
+    ) -> sqlx::Result<Option<Community>> {
         sqlx::query_as!(
             Community,
             r#"

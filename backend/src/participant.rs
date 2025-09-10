@@ -1,8 +1,8 @@
-use crate::{AppState};
-use serde::{Deserialize, Serialize};
+use crate::AppState;
 use crate::router::EnergyTransferQuery;
 use bigdecimal::BigDecimal;
 use chrono::NaiveDateTime;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 const TRANSFERS_PER_PAGE: u32 = 10;
@@ -54,7 +54,10 @@ impl AppState {
         .await
     }
 
-    pub async fn _get_participant_by_email(&self, email: &str) -> sqlx::Result<Option<Participant>> {
+    pub async fn _get_participant_by_email(
+        &self,
+        email: &str,
+    ) -> sqlx::Result<Option<Participant>> {
         sqlx::query_as!(
             Participant,
             r#"
@@ -67,7 +70,10 @@ impl AppState {
         .await
     }
 
-    pub async fn get_participant_communities(&self, participant_id: &Uuid) -> sqlx::Result<Vec<ParticipantCommunity>> {
+    pub async fn get_participant_communities(
+        &self,
+        participant_id: &Uuid,
+    ) -> sqlx::Result<Vec<ParticipantCommunity>> {
         sqlx::query_as!(
             ParticipantCommunity,
             r#"
@@ -80,7 +86,12 @@ impl AppState {
         .await
     }
 
-    pub async fn get_participant_energytransfer(&self, participant_id: &Uuid, community_id: &Uuid, query: EnergyTransferQuery) -> sqlx::Result<Vec<EnergyTransfer>> {
+    pub async fn get_participant_energytransfer(
+        &self,
+        participant_id: &Uuid,
+        community_id: &Uuid,
+        query: EnergyTransferQuery,
+    ) -> sqlx::Result<Vec<EnergyTransfer>> {
         sqlx::query_as!(
             EnergyTransfer,
             r#"

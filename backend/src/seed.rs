@@ -1,3 +1,4 @@
+use crate::participant::ParticipantRole;
 use bigdecimal::BigDecimal;
 use chrono::{Duration, Utc};
 use fake::{Fake, faker::internet::en::FreeEmail};
@@ -5,10 +6,9 @@ use names::Generator;
 use rand::seq::SliceRandom;
 use rand::{Rng, seq::IteratorRandom};
 use sqlx::postgres::PgPool;
-use std::str::FromStr;
 use std::collections::HashMap;
+use std::str::FromStr;
 use uuid::Uuid;
-use crate::participant::ParticipantRole;
 
 #[derive(Debug, Clone, clap::Parser)]
 pub struct SeedSettings {
@@ -31,45 +31,46 @@ pub struct SeedSettings {
 }
 
 pub async fn run_seed(pg_pool: &PgPool, seed_settings: SeedSettings) -> anyhow::Result<()> {
-    let users_ids = seed_participant(
-        pg_pool,
-        &ParticipantRole::User,
-        &seed_settings.users,
-    ).await?;
+    let users_ids = seed_participant(pg_pool, &ParticipantRole::User, &seed_settings.users).await?;
 
-    let manager_ids = seed_participant(
-        pg_pool,
-        &ParticipantRole::Manager,
-        &seed_settings.managers,
-    ).await?;
+    let manager_ids =
+        seed_participant(pg_pool, &ParticipantRole::Manager, &seed_settings.managers).await?;
 
     let supplier_ids = seed_participant(
         pg_pool,
         &ParticipantRole::Supplier,
         &seed_settings.suppliers,
-    ).await?;
+    )
+    .await?;
 
     let supplier_communities_map = seed_community(
         pg_pool,
         &supplier_ids,
         &seed_settings.communities_per_supplier,
-    ).await?;
+    )
+    .await?;
 
-    let community_ids: Vec<Uuid> = supplier_communities_map.values().flatten().cloned().collect();
+    let community_ids: Vec<Uuid> = supplier_communities_map
+        .values()
+        .flatten()
+        .cloned()
+        .collect();
 
     let mut community_users_map = seed_participant_community(
         pg_pool,
         &users_ids,
         &community_ids,
         &seed_settings.communities_per_user,
-    ).await?;
+    )
+    .await?;
 
     seed_participant_community(
         pg_pool,
         &manager_ids,
         &community_ids,
         &seed_settings.communities_per_manager,
-    ).await?;
+    )
+    .await?;
 
     seed_energytransfer(
         pg_pool,
@@ -77,7 +78,8 @@ pub async fn run_seed(pg_pool: &PgPool, seed_settings: SeedSettings) -> anyhow::
         &mut community_users_map,
         &seed_settings.enery_transfer_days,
         &seed_settings.enery_transfer_interval,
-    ).await?;
+    )
+    .await?;
 
     Ok(())
 }
@@ -105,13 +107,12 @@ pub async fn seed_participant(
                 email
             )
             .fetch_one(pool)
-            .await?
+            .await?,
         )
     }
 
     Ok(participant_ids)
 }
-
 
 pub async fn seed_community(
     pool: &PgPool,
@@ -146,13 +147,12 @@ pub async fn seed_community(
     Ok(supplier_communities_map)
 }
 
-
 pub async fn seed_participant_community(
     pool: &PgPool,
     participants: &Vec<Uuid>,
     communities: &Vec<Uuid>,
     count: &usize,
-) -> anyhow::Result<HashMap<Uuid, Vec<Uuid>>> {  
+) -> anyhow::Result<HashMap<Uuid, Vec<Uuid>>> {
     let mut rng = rand::rng();
     let mut community_participant_map: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
 
@@ -202,17 +202,18 @@ pub async fn seed_energytransfer(
         let mut current = start;
         if participants.len() % 2 == 1 {
             participants.push(
-                *community_supplier.get(community)
-                    .expect("No supplier found for community"))
+                *community_supplier
+                    .get(community)
+                    .expect("No supplier found for community"),
+            )
         }
 
         while current < end {
             participants.shuffle(&mut rng);
 
             for chunk in participants.chunks(2) {
-                let energy_wh = BigDecimal::from_str(
-                    &rng.random_range(10.0..5000.0).to_string()
-                ).unwrap();
+                let energy_wh =
+                    BigDecimal::from_str(&rng.random_range(10.0..5000.0).to_string()).unwrap();
 
                 sqlx::query!(
                     r#"
