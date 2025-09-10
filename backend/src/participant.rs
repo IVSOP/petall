@@ -33,6 +33,7 @@ pub struct EnergyTransfer {
     pub participant_from: Uuid,
     pub participant_to: Uuid,
     pub community: Uuid,
+    #[serde(with = "bigdecimal::serde::json_num")]
     pub energy_wh: BigDecimal,
     pub start: NaiveDateTime,
     pub end: NaiveDateTime,

@@ -13,7 +13,6 @@ export const load: PageLoad = async ({ fetch, params }) => {
 	).then((res) => res.json());
 
 	energyTransfers.forEach((item) => {
-		item.energy_wh = Number(item.energy_wh);
 		if (participantId == item.participant_to) {
 			item.energy_wh = -item.energy_wh;
 		}
