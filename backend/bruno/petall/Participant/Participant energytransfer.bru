@@ -5,14 +5,18 @@ meta {
 }
 
 get {
-  url: {{host}}/community/:community_id/energytransfer/:participant_id?page=1&size=10
+  url: {{host}}/community/:community_id/energytransfer/:participant_id?page=1&size=20&order_by=energy_wh&order_dir=DESC&start=2025-08-16T17:34:20.662245&end=2025-08-18T11:18:20.662245
   body: json
   auth: inherit
 }
 
 params:query {
   page: 1
-  size: 10
+  size: 20
+  order_by: energy_wh
+  order_dir: DESC
+  start: 2025-08-16T17:34:20.662245
+  end: 2025-08-18T11:18:20.662245
 }
 
 params:path {

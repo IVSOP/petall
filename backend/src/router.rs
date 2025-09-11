@@ -8,9 +8,27 @@ use axum::{
     response::IntoResponse,
     routing::{get, post},
 };
+use chrono::NaiveDateTime;
 use tower_http::trace::TraceLayer;
 use uuid::Uuid;
-use validator::Validate;
+use validator::{Validate, ValidationError};
+
+fn default_order_by() -> String { "start".to_string() }
+fn default_order_dir() -> String { "ASC".to_string() }
+
+fn validate_order_dir(value: &str) -> Result<(), ValidationError> {
+    match value {
+        "ASC" | "DESC" => Ok(()),
+        _ => Err(ValidationError::new("invalid_order_dir")),
+    }
+}
+
+fn validate_order_by(value: &str) -> Result<(), ValidationError> {
+    match value {
+        "start" | "end" | "energy_wh" => Ok(()),
+        _ => Err(ValidationError::new("invalid_order_dir")),
+    }
+}
 
 pub fn router(state: AppState) -> Router {
     Router::new()
@@ -42,6 +60,14 @@ pub struct EnergyTransferQuery {
     pub page: u32,
     #[validate(range(min = 1))]
     pub size: u32,
+    #[serde(default = "default_order_by")]
+    #[validate(custom(function = "validate_order_by"))]
+    pub order_by: String,
+    #[serde(default = "default_order_dir")]
+    #[validate(custom(function = "validate_order_dir"))]
+    pub order_dir: String, 
+    pub start: Option<NaiveDateTime>,
+    pub end: Option<NaiveDateTime>,
 }
 
 #[debug_handler]

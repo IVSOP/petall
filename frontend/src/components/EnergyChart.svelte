@@ -43,7 +43,7 @@
 				c={(d) => (d.energy_wh > 0 ? 'var(--chart-1)' : 'var(--chart-2)')}
 				axis={false}
 				props={{
-					bars: { stroke: 'none', radius: 0 },
+					bars: { stroke: 'none', radius: 10 },
 					highlight: { area: { fill: 'none' } },
 					xAxis: { format: (d) => d.slice(0, 3) }
 				}}
