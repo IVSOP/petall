@@ -96,13 +96,14 @@ impl AppState {
             r#"
             SELECT id, participant_from, participant_to, community, energy_wh, start, "end"
             FROM energytransfer
-            WHERE (participant_from = $1 OR participant_to = $1) AND community = $2
-            "#,
+            WHERE (participant_from = "#,
         );
-
-        query_builder
-            .push_bind(participant_id)
-            .push_bind(community_id);
+        // using $N was not working
+        query_builder.push_bind(participant_id);
+        query_builder.push(" OR participant_to = ");
+        query_builder.push_bind(participant_id);
+        query_builder.push(") AND community = ");
+        query_builder.push_bind(community_id);
 
         if let Some(start) = query.start {
             query_builder.push(" AND start >= ");

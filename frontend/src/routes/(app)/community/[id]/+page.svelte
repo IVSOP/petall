@@ -9,7 +9,7 @@
 
 <div class="container">
 	<div class="grid grid-cols-1 gap-4">
-		<EnergyChart energyTransfers={data.energyTransfers} participant_id={data.participantId} />
+		<!-- <EnergyChart energyTransfers={data.energyTransfers} participant_id={data.participantId} /> -->
 		<EnergyTable data={data.energyTransfers} {columns} />
 	</div>
 </div>

@@ -9,7 +9,7 @@ export const load: PageLoad = async ({ fetch, params }) => {
 	const community: Community = await fetch(`/api/community/${params.id}`).then((res) => res.json());
 
 	const energyTransfers: EnergyTransfer[] = await fetch(
-		`/api/community/${params.id}/energytransfer/${participantId}?page=1&size=20`
+		`/api/community/${params.id}/energytransfer/${participantId}?size=1&orderDir=desc`
 	).then((res) => res.json());
 
 	energyTransfers.forEach((item) => {
