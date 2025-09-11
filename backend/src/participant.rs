@@ -1,8 +1,9 @@
 use crate::AppState;
-use crate::router::EnergyTransferQuery;
+use crate::router::{EnergyTransferQuery, OrderDirection};
 use bigdecimal::BigDecimal;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+use sqlx::QueryBuilder;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize, sqlx::Type)]
@@ -91,36 +92,38 @@ impl AppState {
         community_id: &Uuid,
         query: EnergyTransferQuery,
     ) -> sqlx::Result<Vec<EnergyTransfer>> {
-        let mut qb = sqlx::QueryBuilder::new(
+        let mut query_builder = QueryBuilder::new(
             r#"
             SELECT id, participant_from, participant_to, community, energy_wh, start, "end"
             FROM energytransfer
-            WHERE (participant_from = 
+            WHERE (participant_from = $1 OR participant_to = $1) AND community = $2
             "#,
         );
 
-        qb.push_bind(participant_id)
-            .push(r#" OR participant_to = "#).push_bind(participant_id)
-            .push(r#") AND community = "#).push_bind(community_id);
+        query_builder
+            .push_bind(participant_id)
+            .push_bind(community_id);
 
         if let Some(start) = query.start {
-            qb.push(r#" AND start >= "#).push_bind(start);
+            query_builder.push(" AND start >= ");
+            query_builder.push_bind(start);
         }
 
         if let Some(end) = query.end {
-            qb.push(r#" AND "end" <= "#).push_bind(end);
+            query_builder.push(" AND \"end\" <= ");
+            query_builder.push_bind(end);
         }
 
-        qb.push(format!(
-            r#" ORDER BY {} {} LIMIT {} OFFSET {}"#,
-            query.order_by,
-            query.order_dir,
-            query.size,
-            (query.page.saturating_sub(1) * query.size)
-        ));
+        let order_dir = match query.order_dir {
+            OrderDirection::Ascending => "ASC",
+            OrderDirection::Descending => "DESC",
+        };
 
-        qb.build_query_as::<EnergyTransfer>()
+        query_builder.push(format!(" ORDER BY start {}", order_dir));
+
+        query_builder
+            .build_query_as::<EnergyTransfer>()
             .fetch_all(&self.pg_pool)
-            .await    
+            .await
     }
 }

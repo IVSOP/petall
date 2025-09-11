@@ -9,26 +9,10 @@ use axum::{
     routing::{get, post},
 };
 use chrono::NaiveDateTime;
+use serde::Deserialize;
 use tower_http::trace::TraceLayer;
 use uuid::Uuid;
-use validator::{Validate, ValidationError};
-
-fn default_order_by() -> String { "start".to_string() }
-fn default_order_dir() -> String { "ASC".to_string() }
-
-fn validate_order_dir(value: &str) -> Result<(), ValidationError> {
-    match value {
-        "ASC" | "DESC" => Ok(()),
-        _ => Err(ValidationError::new("invalid_order_dir")),
-    }
-}
-
-fn validate_order_by(value: &str) -> Result<(), ValidationError> {
-    match value {
-        "start" | "end" | "energy_wh" => Ok(()),
-        _ => Err(ValidationError::new("invalid_order_dir")),
-    }
-}
+use validator::Validate;
 
 pub fn router(state: AppState) -> Router {
     Router::new()
@@ -47,25 +31,28 @@ pub fn router(state: AppState) -> Router {
         .layer(TraceLayer::new_for_http())
 }
 
-#[derive(serde::Deserialize, Validate)]
+#[derive(Deserialize, Validate)]
 pub struct CommunityRegisterRequest {
     #[validate(length(min = 3, max = 50))]
     pub entity: String,
     pub supplier: Uuid,
 }
 
-#[derive(serde::Deserialize, Validate)]
+#[derive(Deserialize, Default)]
+pub enum OrderDirection {
+    #[serde(rename = "asc")]
+    Ascending,
+    #[serde(rename = "desc")]
+    #[default]
+    Descending,
+}
+
+#[derive(Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
 pub struct EnergyTransferQuery {
-    #[validate(range(min = 1))]
-    pub page: u32,
-    #[validate(range(min = 1))]
+    #[validate(range(min = 1, max = 100))]
     pub size: u32,
-    #[serde(default = "default_order_by")]
-    #[validate(custom(function = "validate_order_by"))]
-    pub order_by: String,
-    #[serde(default = "default_order_dir")]
-    #[validate(custom(function = "validate_order_dir"))]
-    pub order_dir: String, 
+    pub order_dir: OrderDirection,
     pub start: Option<NaiveDateTime>,
     pub end: Option<NaiveDateTime>,
 }
@@ -141,6 +128,7 @@ pub async fn get_participant_energytransfer(
     Query(query): Query<EnergyTransferQuery>,
 ) -> AppResult<impl IntoResponse> {
     query.validate()?;
+    // TODO: Change this to a EXISTS query
     if state
         .get_participant_by_id(&participant_id)
         .await?
@@ -153,9 +141,9 @@ pub async fn get_participant_energytransfer(
         return Err(AppError::CommunityNotFound(community_id));
     }
 
-    Ok(Json(
-        state
-            .get_participant_energytransfer(&participant_id, &community_id, query)
-            .await?,
-    ))
+    let energy_transfer = state
+        .get_participant_energytransfer(&participant_id, &community_id, query)
+        .await?;
+
+    Ok(Json(energy_transfer))
 }
