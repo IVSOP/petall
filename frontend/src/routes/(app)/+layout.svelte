@@ -1,9 +1,9 @@
 <script lang="ts">
-	import '../app.css';
-	import type { LayoutProps } from './$types';
+	import '../../app.css';
+	import type { LayoutProps } from '../$types';
 	import favicon from '$lib/assets/favicon.svg';
 	import * as NavigationMenu from '$lib/components/ui/navigation-menu/index.js';
-	import Avatar from '../components/Avatar.svelte';
+	import Avatar from '../../components/Avatar.svelte';
 
 	let { data, children }: LayoutProps = $props();
 </script>
@@ -19,7 +19,7 @@
 				<NavigationMenu.Root>
 					<NavigationMenu.List>
 						<NavigationMenu.Item>
-							<NavigationMenu.Link href="/">PETALL</NavigationMenu.Link>
+							<NavigationMenu.Link href="/">PeTall</NavigationMenu.Link>
 						</NavigationMenu.Item>
 					</NavigationMenu.List>
 				</NavigationMenu.Root>

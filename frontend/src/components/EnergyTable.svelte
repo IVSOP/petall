@@ -23,7 +23,7 @@
 <Card.Root>
 	<Card.Header class="flex items-center gap-2 space-y-0 border-b sm:flex-row">
 		<div class="grid flex-1 gap-1 text-center sm:text-left">
-			<Card.Title>Informações Detalhadas</Card.Title>
+			<Card.Title>Detailed Information</Card.Title>
 		</div>
 	</Card.Header>
 	<Card.Content>

@@ -8,7 +8,7 @@
 
 <DropdownMenu.Root>
 	<DropdownMenu.Trigger>
-		<Avatar.Root class="cursor-pointer hover:ring-2 hover:ring-gray-300 hover:scale-105 transition">
+		<Avatar.Root class="cursor-pointer transition hover:scale-105 hover:ring-2 hover:ring-gray-300">
 			<Avatar.Image src={image} />
 			<Avatar.Fallback>A</Avatar.Fallback>
 		</Avatar.Root>
@@ -17,15 +17,15 @@
 		<DropdownMenu.Group>
 			<DropdownMenu.Label>{participant.name}</DropdownMenu.Label>
 			<DropdownMenu.Separator />
-            <DropdownMenu.Item>
+			<DropdownMenu.Item>
 				<a href="/profile" class="w-full">Profile</a>
 			</DropdownMenu.Item>
 			<DropdownMenu.Item>
 				<a href="/change-password" class="w-full">Change Password</a>
-            </DropdownMenu.Item>
+			</DropdownMenu.Item>
 			<DropdownMenu.Item>
 				<a href="/logout" class="w-full">Logout</a>
-            </DropdownMenu.Item>
+			</DropdownMenu.Item>
 		</DropdownMenu.Group>
 	</DropdownMenu.Content>
 </DropdownMenu.Root>

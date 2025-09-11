@@ -11,7 +11,7 @@
 	<Card.Root>
 		<Card.Header>
 			<Card.Title>{community.entity}</Card.Title>
-			<Card.Description>Comunidade energética</Card.Description>
+			<Card.Description>Energy Comunity</Card.Description>
 		</Card.Header>
 		<Card.Content>
 			<p>ID: {community.id}</p>
@@ -21,8 +21,7 @@
 		</Card.Content>
 		<Card.Footer>
 			<p class="text-sm text-muted-foreground">
-				<!-- por a hora da ultima transferencia?-->
-				Última atualização: {new Date().toLocaleDateString()}
+				Last Update: {new Date().toLocaleDateString()}
 			</p>
 		</Card.Footer>
 	</Card.Root>

@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
-	import EnergyChart from '../../../components/EnergyChart.svelte';
-	import EnergyTable from '../../../components/EnergyTable.svelte';
-	import { columns } from './columns.js';
+	import EnergyChart from '../../../../components/EnergyChart.svelte';
+	import EnergyTable from '../../../../components/EnergyTable.svelte';
+	import { columns } from './columns';
 
 	const { data }: PageProps = $props();
 </script>

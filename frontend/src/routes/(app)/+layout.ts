@@ -10,6 +10,6 @@ export const load: LayoutLoad = async ({ fetch }) => {
 
 	return {
 		participant,
-		"image": "https://github.com/DigoqueDigo.png"
+		image: 'https://github.com/DigoqueDigo.png'
 	};
 };

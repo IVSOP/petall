@@ -1,5 +1,5 @@
 <script>
-	import CommunityCard from '../components/CommunityCard.svelte';
+	import CommunityCard from '../../components/CommunityCard.svelte';
 
 	const { data } = $props();
 </script>

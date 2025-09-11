@@ -15,7 +15,7 @@
 <Card.Root>
 	<Card.Header class="flex items-center gap-2 space-y-0 border-b sm:flex-row">
 		<div class="grid flex-1 gap-1 text-center sm:text-left">
-			<Card.Title>Transferências de Energia</Card.Title>
+			<Card.Title>Energy Transfers</Card.Title>
 			<Card.Description>January - June 2024</Card.Description>
 		</div>
 	</Card.Header>
