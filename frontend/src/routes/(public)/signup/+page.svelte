@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '../../../app.css';
-	import RegisterForm from '../../../components/RegisterForm.svelte';
+	import SignUpForm from '../../../components/SignUpForm.svelte';
 	import GalleryVerticalEndIcon from '@lucide/svelte/icons/gallery-vertical-end';
 </script>
 
@@ -14,6 +14,6 @@
 			</div>
 			PeTall
 		</a>
-		<RegisterForm />
+		<SignUpForm />
 	</div>
 </div>
