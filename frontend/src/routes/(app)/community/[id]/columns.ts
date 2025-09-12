@@ -1,14 +1,28 @@
 import type { EnergyTransfer } from '$lib';
 import type { ColumnDef } from '@tanstack/table-core';
+import { createRawSnippet } from 'svelte';
+import { renderComponent } from '$lib/components/ui/data-table/index.js';
+import { renderSnippet } from '$lib/components/ui/data-table/index.js';
+import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 
 export const columns: ColumnDef<EnergyTransfer>[] = [
 	{
-		accessorKey: 'participant_from',
-		header: 'From'
-	},
-	{
-		accessorKey: 'participant_to',
-		header: 'To'
+		id: 'select',
+		header: ({ table }) =>
+			renderComponent(Checkbox, {
+				checked: table.getIsAllPageRowsSelected(),
+				indeterminate: table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected(),
+				onCheckedChange: (value) => table.toggleAllPageRowsSelected(!!value),
+				'aria-label': 'Select all'
+			}),
+		cell: ({ row }) =>
+			renderComponent(Checkbox, {
+				checked: row.getIsSelected(),
+				onCheckedChange: (value) => row.toggleSelected(!!value),
+				'aria-label': 'Select row'
+			}),
+		enableSorting: false,
+		enableHiding: false
 	},
 	{
 		accessorKey: 'start',
@@ -20,6 +34,37 @@ export const columns: ColumnDef<EnergyTransfer>[] = [
 	},
 	{
 		accessorKey: 'energy_wh',
-		header: 'Energy WH'
+		header: () => {
+			const energyHeaderSnippet = createRawSnippet(() => ({
+				render: () => `<div class="text-right">Energy (Wh)</div>`
+			}));
+			return renderSnippet(energyHeaderSnippet, '');
+		},
+		cell: ({ row }) => {
+			const formatter = new Intl.NumberFormat('en-US', {
+				minimumFractionDigits: 2,
+				maximumFractionDigits: 2
+			});
+
+			const energyCellSnippet = createRawSnippet<[string]>((getEnergyWh) => {
+				const energy_wh = getEnergyWh();
+				const colorClass = parseFloat(energy_wh) < 0 ? 'bg-red-100' : 'bg-green-100';
+				const textColorClass = parseFloat(energy_wh) < 0 ? 'text-red-500' : 'text-green-500';
+
+				return {
+					render: () => {
+						return `
+						<div class="box-content flex justify-end">
+							<div class="inline-block text-right font-medium ${colorClass} ${textColorClass} py-1.5 px-3 rounded-md text-sm">${energy_wh}</div>
+						</div>`;
+					}
+				};
+			});
+
+			return renderSnippet(
+				energyCellSnippet,
+				formatter.format(parseFloat(row.getValue('energy_wh')))
+			);
+		}
 	}
 ];

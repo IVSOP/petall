@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
-	import EnergyChart from '../../../../components/EnergyChart.svelte';
 	import EnergyTable from '../../../../components/EnergyTable.svelte';
 	import { columns } from './columns';
 
