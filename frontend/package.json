@@ -38,6 +38,7 @@
 		"vite": "^7.0.4"
 	},
 	"dependencies": {
+		"apexcharts": "^5.3.5",
 		"d3": "^7.9.0",
 		"d3-array": "^3.2.4",
 		"d3-scale": "^4.0.2",

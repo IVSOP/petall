@@ -5,7 +5,7 @@
 	import * as Chart from '$lib/components/ui/chart/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 
-	let { energyTransfers = [], participant_id = '' } = $props();
+    let { energyTransfers = [], participant_id = '' } = $props();
 
 	const chartConfig = {
 		energy_wh: { label: 'Energy WH' }
@@ -20,7 +20,7 @@
 		</div>
 	</Card.Header>
 	<Card.Content>
-		<Chart.Container config={chartConfig}>
+		<!-- <Chart.Container config={chartConfig}>
 			<BarChart
 				labels={{
 					offset: 5,
@@ -52,7 +52,9 @@
 					<Chart.Tooltip hideLabel hideIndicator nameKey="visitors" />
 				{/snippet}
 			</BarChart>
-		</Chart.Container>
+		</Chart.Container> -->
+
+        
 	</Card.Content>
 
 	<Card.Footer>
