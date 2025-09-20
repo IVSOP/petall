@@ -11,7 +11,7 @@ pub enum AppError {
     #[error("community not found: {0}")]
     CommunityNotFound(Uuid),
     #[error("community entity already in use: {0}")]
-    CommunityEntityAlreadyInUse(String),
+    CommunityNameAlreadyInUse(String),
     #[error(transparent)]
     SqlxError(#[from] sqlx::error::Error),
     #[error(transparent)]
@@ -47,9 +47,9 @@ impl IntoResponse for AppError {
                 format!("Community not found: {}", id),
                 None,
             ),
-            AppError::CommunityEntityAlreadyInUse(entity) => (
+            AppError::CommunityNameAlreadyInUse(name) => (
                 StatusCode::BAD_REQUEST,
-                format!("Community entity already in use: {}", entity),
+                format!("Community name already in use: {}", name),
                 None,
             ),
             AppError::SqlxError(err) => {

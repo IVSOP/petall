@@ -9,33 +9,44 @@ use uuid::Uuid;
 #[derive(Debug, Deserialize, Serialize, sqlx::Type)]
 #[sqlx(type_name = "participant_role", rename_all = "lowercase")]
 pub enum ParticipantRole {
-    Manager,
-    Supplier,
     User,
+    Manager,
+    UserManager,
 }
 
 #[derive(Debug, Deserialize, Serialize, sqlx::Type)]
 pub struct Participant {
     pub id: Uuid,
-    pub role: ParticipantRole,
-    pub name: String,
     pub email: String,
+    pub name: String,
+    pub supplier: Uuid,
+    pub password: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, sqlx::Type)]
+pub struct ParticipantAlias {
+    pub participant: Uuid,
+    pub alias: Uuid,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ParticipantCommunity {
-    pub participant_id: Uuid,
-    pub community_id: Uuid,
+    pub participant: Uuid,
+    pub community: Uuid,
+    pub role: ParticipantRole,
 }
 
 #[derive(Debug, Deserialize, Serialize, sqlx::FromRow)]
 pub struct EnergyTransfer {
     pub id: Uuid,
-    pub participant_from: Uuid,
-    pub participant_to: Uuid,
+    pub participant: Uuid,
     pub community: Uuid,
     #[serde(with = "bigdecimal::serde::json_num")]
-    pub energy_wh: BigDecimal,
+    pub generated: BigDecimal,
+    #[serde(with = "bigdecimal::serde::json_num")]
+    pub consumed: BigDecimal,
+    #[serde(with = "bigdecimal::serde::json_num")]
+    pub coeficient: BigDecimal,
     pub start: NaiveDateTime,
     pub end: NaiveDateTime,
 }
@@ -45,7 +56,7 @@ impl AppState {
         sqlx::query_as!(
             Participant,
             r#"
-            SELECT id, role as "role: ParticipantRole", name, email FROM "participant"
+            SELECT * FROM "participant"
             WHERE id = $1
             "#,
             id,
@@ -61,7 +72,7 @@ impl AppState {
         sqlx::query_as!(
             Participant,
             r#"
-            SELECT id, role as "role: ParticipantRole", name, email FROM "participant"
+            SELECT * FROM "participant"
             WHERE email = $1
             "#,
             email
@@ -72,15 +83,15 @@ impl AppState {
 
     pub async fn get_participant_communities(
         &self,
-        participant_id: &Uuid,
+        participant: &Uuid,
     ) -> sqlx::Result<Vec<ParticipantCommunity>> {
         sqlx::query_as!(
             ParticipantCommunity,
             r#"
-            SELECT * FROM "participant_community"
-            WHERE participant_id = $1
+            SELECT participant, community, role as "role: ParticipantRole" FROM "participant_community"
+            WHERE participant = $1
             "#,
-            participant_id
+            participant
         )
         .fetch_all(&self.pg_pool)
         .await
@@ -94,11 +105,11 @@ impl AppState {
     ) -> sqlx::Result<Vec<EnergyTransfer>> {
         let mut query_builder = QueryBuilder::new(
             r#"
-            SELECT id, participant_from, participant_to, community, energy_wh, start, "end"
+            SELECT id, participant, community, generated, consument, coeficient, start, "end"
             FROM energytransfer
             WHERE (participant_from = "#,
         );
-        // using $N was not working
+
         query_builder.push_bind(participant_id);
         query_builder.push(" OR participant_to = ");
         query_builder.push_bind(participant_id);

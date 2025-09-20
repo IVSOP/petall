@@ -34,8 +34,7 @@ pub fn router(state: AppState) -> Router {
 #[derive(Deserialize, Validate)]
 pub struct CommunityRegisterRequest {
     #[validate(length(min = 3, max = 50))]
-    pub entity: String,
-    pub supplier: Uuid,
+    pub name: String,
 }
 
 #[derive(Deserialize, Default)]
@@ -76,11 +75,11 @@ async fn register_community(
 ) -> AppResult<impl IntoResponse> {
     request.validate()?;
     if state
-        .get_community_by_entity(&request.entity)
+        .get_community_by_name(&request.name)
         .await?
         .is_some()
     {
-        Err(AppError::CommunityEntityAlreadyInUse(request.entity))
+        Err(AppError::CommunityNameAlreadyInUse(request.name))
     } else {
         Ok(Json(state.register_community(request).await?))
     }
@@ -111,10 +110,10 @@ pub async fn get_participant_communities(
     let participant_communities = state.get_participant_communities(&id).await?;
 
     for pc in &participant_communities {
-        if let Some(community) = state.get_community_by_id(&pc.community_id).await? {
+        if let Some(community) = state.get_community_by_id(&pc.community).await? {
             communities.push(community);
         } else {
-            return Err(AppError::CommunityNotFound(pc.community_id));
+            return Err(AppError::CommunityNotFound(pc.community));
         }
     }
 

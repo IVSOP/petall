@@ -6,22 +6,22 @@ use uuid::Uuid;
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Community {
     pub id: Uuid,
-    pub entity: String,
-    pub supplier: Uuid,
+    pub name: String,
+    pub image: Uuid,
 }
 
 impl AppState {
-    pub async fn get_community_by_entity(
+    pub async fn get_community_by_name(
         &self,
-        entity: &String,
+        name: &String,
     ) -> sqlx::Result<Option<Community>> {
         sqlx::query_as!(
             Community,
             r#"
             SELECT * FROM community
-            WHERE entity = $1
+            WHERE name = $1
             "#,
-            entity
+            name
         )
         .fetch_optional(&self.pg_pool)
         .await
@@ -48,12 +48,11 @@ impl AppState {
             Community,
             r#"
             INSERT INTO community
-            (entity, supplier)
-            VALUES ($1, $2)
+            (name)
+            VALUES ($1)
             RETURNING *
             "#,
-            community_request.entity,
-            community_request.supplier,
+            community_request.name,
         )
         .fetch_one(&self.pg_pool)
         .await
