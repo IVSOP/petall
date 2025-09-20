@@ -1,6 +1,7 @@
-use crate::AppState;
-use crate::router::CommunityRegisterRequest;
+use crate::{router::ParticipantCommunityRegisterRequest, AppState};
+use crate::router::{CommunityRegisterRequest, ParticipantRole};
 use serde::{Deserialize, Serialize};
+use sqlx::postgres::PgQueryResult;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -10,8 +11,17 @@ pub struct Community {
     pub image: Uuid,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ParticipantCommunity {
+    pub participant: Uuid,
+    pub community: String,
+    pub role: ParticipantRole,
+}
+
 impl AppState {
-    pub async fn get_communities(&self) -> sqlx::Result<Vec<Community>> {
+    pub async fn get_communities(
+        &self
+    ) -> sqlx::Result<Vec<Community>> {
         sqlx::query_as!(
             Community,
             r#"
@@ -22,23 +32,10 @@ impl AppState {
         .await
     }
 
-    pub async fn get_community_by_name(
+    pub async fn get_community_by_id(
         &self,
-        name: &String,
+        id: &Uuid
     ) -> sqlx::Result<Option<Community>> {
-        sqlx::query_as!(
-            Community,
-            r#"
-            SELECT * FROM community
-            WHERE name = $1
-            "#,
-            name
-        )
-        .fetch_optional(&self.pg_pool)
-        .await
-    }
-
-    pub async fn get_community_by_id(&self, id: &Uuid) -> sqlx::Result<Option<Community>> {
         sqlx::query_as!(
             Community,
             r#"
@@ -53,7 +50,7 @@ impl AppState {
 
     pub async fn register_community(
         &self,
-        community_request: CommunityRegisterRequest,
+        community_request: &CommunityRegisterRequest,
     ) -> sqlx::Result<Community> {
         sqlx::query_as!(
             Community,
@@ -66,6 +63,45 @@ impl AppState {
             community_request.name,
         )
         .fetch_one(&self.pg_pool)
+        .await
+    }
+
+    pub async fn register_participant_community(
+        &self,
+        community: &Uuid,
+        request: &ParticipantCommunityRegisterRequest,
+    ) -> sqlx::Result<ParticipantCommunity> {
+        sqlx::query_as!(
+            ParticipantCommunity,
+            r#"
+            INSERT INTO participant_community
+            (community, participant, role)
+            VALUES ($1, $2, $3)
+            RETURNING
+            community, participant, role as "role: ParticipantRole"
+            "#,
+            community,
+            request.participant,
+            &request.role as &ParticipantRole
+        )
+        .fetch_one(&self.pg_pool)
+        .await
+    }
+
+    pub async fn remove_participant_community(
+        &self,
+        community: &Uuid,
+        participant: &Uuid,
+    ) -> sqlx::Result<PgQueryResult> {
+        sqlx::query!(
+            r#"
+            DELETE FROM participant_community
+            WHERE community = $1 AND participant = $2
+            "#,
+            community,
+            participant
+        )
+        .execute(&self.pg_pool)
         .await
     }
 }

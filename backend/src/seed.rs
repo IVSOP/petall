@@ -1,4 +1,4 @@
-use crate::participant::ParticipantRole;
+use crate::router::ParticipantRole;
 use bigdecimal::BigDecimal;
 use chrono::{Duration, Utc};
 use fake::{Fake, faker::internet::en::FreeEmail};
@@ -52,7 +52,7 @@ pub async fn run_seed(
         &communitied,
     ).await?;
 
-    seed_energytransfer(
+    seed_energypool(
         pg_pool,
         &seed_settings.energy_days,
         &seed_settings.energy_interval,
@@ -193,7 +193,7 @@ pub async fn seed_participant_community(
     Ok(participant_community_map)
 }
 
-pub async fn seed_energytransfer(
+pub async fn seed_energypool(
     pool: &PgPool,
     energy_days: &i64,
     energy_interval: &i64,

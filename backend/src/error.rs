@@ -6,11 +6,12 @@ use thiserror::Error;
 use tracing::error;
 use uuid::Uuid;
 
+
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("community not found: {0}")]
     CommunityNotFound(Uuid),
-    #[error("community entity already in use: {0}")]
+    #[error("community name already in use: {0}")]
     CommunityNameAlreadyInUse(String),
     #[error(transparent)]
     SqlxError(#[from] sqlx::error::Error),
@@ -18,6 +19,8 @@ pub enum AppError {
     ValidationError(#[from] validator::ValidationErrors),
     #[error("participant not found using ID: {0}")]
     ParticipantNotFoundId(Uuid),
+    #[error("Not found: participant {0}, community {1}")]
+    ParticipantCommunityNotFound(Uuid, Uuid),
     // #[error("user not found using email: {0}")]
     // UserNotFoundEmail(String),
     // #[error("manager not found using ID: {0}")]
@@ -68,6 +71,11 @@ impl IntoResponse for AppError {
             AppError::ParticipantNotFoundId(id) => (
                 StatusCode::NOT_FOUND,
                 format!("Participant not found with id: {}", id),
+                None,
+            ),
+            AppError::ParticipantCommunityNotFound(participant, community) => (
+                StatusCode::NOT_FOUND,
+                format!("Not found: participant {}, community {}", participant, community),
                 None,
             ),
         };

@@ -1,0 +1,26 @@
+meta {
+  name: Register
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{host}}/community/:community_id/participant
+  body: json
+  auth: inherit
+}
+
+params:path {
+  community_id: {{community_id}}
+}
+
+body:json {
+  {
+    "participant": "{{participant_id}}",
+    "role": "User"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

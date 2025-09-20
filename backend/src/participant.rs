@@ -1,18 +1,10 @@
 use crate::AppState;
-use crate::router::{EnergyTransferQuery, OrderDirection};
+use crate::router::{EnergyQuery, OrderDirection, ParticipantRole};
 use bigdecimal::BigDecimal;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::QueryBuilder;
 use uuid::Uuid;
-
-#[derive(Debug, Deserialize, Serialize, sqlx::Type)]
-#[sqlx(type_name = "participant_role", rename_all = "lowercase")]
-pub enum ParticipantRole {
-    User,
-    Manager,
-    UserManager,
-}
 
 #[derive(Debug, Deserialize, Serialize, sqlx::Type)]
 pub struct Participant {
@@ -37,7 +29,7 @@ pub struct ParticipantCommunity {
 }
 
 #[derive(Debug, Deserialize, Serialize, sqlx::FromRow)]
-pub struct EnergyTransfer {
+pub struct Energy {
     pub id: Uuid,
     pub participant: Uuid,
     pub community: Uuid,
@@ -108,23 +100,21 @@ impl AppState {
         .await
     }
 
-    pub async fn get_participant_energytransfer(
+    pub async fn get_participant_energies(
         &self,
         participant_id: &Uuid,
         community_id: &Uuid,
-        query: EnergyTransferQuery,
-    ) -> sqlx::Result<Vec<EnergyTransfer>> {
+        query: EnergyQuery,
+    ) -> sqlx::Result<Vec<Energy>> {
         let mut query_builder = QueryBuilder::new(
             r#"
-            SELECT id, participant, community, generated, consument, coeficient, start, "end"
-            FROM energytransfer
-            WHERE (participant_from = "#,
+            SELECT id, participant, community, generated, consumed, coeficient, start, "end"
+            FROM energypool
+            WHERE participant = "#,
         );
 
         query_builder.push_bind(participant_id);
-        query_builder.push(" OR participant_to = ");
-        query_builder.push_bind(participant_id);
-        query_builder.push(") AND community = ");
+        query_builder.push(" AND community = ");
         query_builder.push_bind(community_id);
 
         if let Some(start) = query.start {
@@ -143,9 +133,10 @@ impl AppState {
         };
 
         query_builder.push(format!(" ORDER BY start {}", order_dir));
+        query_builder.push(format!(" LIMIT {} OFFSET {}", query.size, (query.page - 1) * query.size));
 
         query_builder
-            .build_query_as::<EnergyTransfer>()
+            .build_query_as::<Energy>()
             .fetch_all(&self.pg_pool)
             .await
     }

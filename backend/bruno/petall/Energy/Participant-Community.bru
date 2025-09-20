@@ -1,18 +1,19 @@
 meta {
-  name: Participant energytransfer
+  name: Participant-Community
   type: http
   seq: 3
 }
 
 get {
-  url: {{host}}/community/:community_id/energytransfer/:participant_id?size=20&orderDir=desc
+  url: {{host}}/community/:community_id/energy/:participant_id?size=10&orderDir=desc&page=1
   body: json
   auth: inherit
 }
 
 params:query {
-  size: 20
+  size: 10
   orderDir: desc
+  page: 1
 }
 
 params:path {
