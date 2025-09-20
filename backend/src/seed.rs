@@ -31,18 +31,18 @@ pub async fn run_seed(
 ) -> anyhow::Result<()> {
     let suppliers = seed_supplier(
         pg_pool,
-        &seed_settings.suppliers
+        &seed_settings.suppliers,
     ).await?;
 
     let participants = seed_participant(
         pg_pool,
+        &seed_settings.participant,
         &suppliers,
-        &seed_settings.participant
     ).await?;
 
     let communitied = seed_community(
         pg_pool,
-        &seed_settings.communities
+        &seed_settings.communities,
     ).await?;
 
     let participant_communities_map = seed_participant_community(
@@ -90,8 +90,8 @@ pub async fn seed_supplier(
 
 pub async fn seed_participant(
     pool: &PgPool,
-    suppliers: &Vec<Uuid>,
     count: &usize,
+    suppliers: &[Uuid],
 ) -> anyhow::Result<Vec<Uuid>> {
     let mut rng = rand::rng();
     let mut generator = Generator::default();
@@ -158,12 +158,12 @@ pub async fn seed_community(
 pub async fn seed_participant_community(
     pool: &PgPool,
     communities_per_participant: &usize,
-    participants: &Vec<Uuid>,
-    communities: &Vec<Uuid>,
+    participants: &[Uuid],
+    communities: &[Uuid],
 ) -> anyhow::Result<HashMap<Uuid, Vec<Uuid>>> {
     let mut rng = rand::rng();
     let mut participant_community_map: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
-    let roles = vec![
+    let roles = [
         ParticipantRole::User,
         ParticipantRole::Manager,
         ParticipantRole::UserManager,
