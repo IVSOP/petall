@@ -8,12 +8,9 @@ use crate::seed::SeedSettings;
 
 mod community;
 mod error;
-mod manager;
-mod manager_community;
+mod participant;
 mod router;
 mod seed;
-mod user;
-mod user_community;
 
 #[derive(Parser)]
 pub struct DatabaseConfig {
@@ -57,6 +54,7 @@ pub struct AppState {
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
+    tracing_subscriber::fmt::init();
     let cli = Cli::parse();
     let config = cli.config;
 
@@ -83,6 +81,8 @@ async fn main() -> Result<()> {
                 .context("Failed to bind to port")?;
 
             let state = AppState { pg_pool };
+
+            info!("Starting server on {}", listener.local_addr().unwrap());
 
             tokio::select! {
                 _ = axum::serve(listener, router::router(state)) => {}

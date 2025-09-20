@@ -6,24 +6,34 @@ use uuid::Uuid;
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Community {
     pub id: Uuid,
-    pub entity: String,
+    pub name: String,
+    pub image: Uuid,
 }
 
 impl AppState {
-    pub async fn get_community_by_entity(&self, entity: String) -> sqlx::Result<Option<Community>> {
+    pub async fn get_community_by_name(
+        &self,
+        name: &String,
+    ) -> sqlx::Result<Option<Community>> {
         sqlx::query_as!(
             Community,
-            "SELECT * FROM community WHERE entity = $1",
-            entity
+            r#"
+            SELECT * FROM community
+            WHERE name = $1
+            "#,
+            name
         )
         .fetch_optional(&self.pg_pool)
         .await
     }
 
-    pub async fn get_community_by_id(&self, id: Uuid) -> sqlx::Result<Option<Community>> {
+    pub async fn get_community_by_id(&self, id: &Uuid) -> sqlx::Result<Option<Community>> {
         sqlx::query_as!(
             Community,
-            "SELECT id, entity FROM community WHERE id = $1",
+            r#"
+            SELECT * FROM community
+            WHERE id = $1
+            "#,
             id
         )
         .fetch_optional(&self.pg_pool)
@@ -34,20 +44,17 @@ impl AppState {
         &self,
         community_request: CommunityRegisterRequest,
     ) -> sqlx::Result<Community> {
-        // TODO: make the database create this uuid
-        let community: Community = Community {
-            id: Uuid::new_v4(),
-            entity: community_request.entity,
-        };
-
-        sqlx::query!(
-            "INSERT INTO community (id, entity) VALUES ($1, $2)",
-            community.id,
-            community.entity,
+        sqlx::query_as!(
+            Community,
+            r#"
+            INSERT INTO community
+            (name)
+            VALUES ($1)
+            RETURNING *
+            "#,
+            community_request.name,
         )
-        .execute(&self.pg_pool)
-        .await?;
-
-        Ok(community)
+        .fetch_one(&self.pg_pool)
+        .await
     }
 }

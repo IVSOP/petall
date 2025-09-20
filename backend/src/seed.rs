@@ -1,259 +1,232 @@
+use crate::participant::ParticipantRole;
 use bigdecimal::BigDecimal;
 use chrono::{Duration, Utc};
 use fake::{Fake, faker::internet::en::FreeEmail};
 use names::Generator;
 use rand::{Rng, seq::IteratorRandom};
 use sqlx::postgres::PgPool;
+use std::collections::HashMap;
 use std::str::FromStr;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, clap::Parser)]
 pub struct SeedSettings {
+    #[arg(long, default_value_t = 5)]
+    participant: usize,
+    #[arg(long, default_value_t = 3)]
+    suppliers: usize,
     #[arg(long, default_value_t = 10)]
     communities: usize,
     #[arg(long, default_value_t = 5)]
-    managers: usize,
-    #[arg(long, default_value_t = 5)]
-    users: usize,
-    #[arg(long, default_value_t = 50)]
-    energy_transfers: usize,
-    #[arg(long, default_value_t = 6)]
-    communities_per_user: usize,
-    #[arg(long, default_value_t = 6)]
-    communities_per_manager: usize,
+    communities_per_participant: usize,
+    #[arg(long, default_value_t = 1)]
+    energy_days: i64,
+    #[arg(long, default_value_t = 15)]
+    energy_interval: i64,
 }
 
-pub async fn run_seed(pg_pool: &PgPool, seed_settings: SeedSettings) -> anyhow::Result<()> {
-    let community_ids = seed_community(pg_pool, seed_settings.communities).await?;
+pub async fn run_seed(
+    pg_pool: &PgPool,
+    seed_settings: SeedSettings
+) -> anyhow::Result<()> {
+    let suppliers = seed_supplier(
+        pg_pool,
+        &seed_settings.suppliers
+    ).await?;
 
-    let manager_ids = seed_manager(pg_pool, seed_settings.managers).await?;
+    let participants = seed_participant(
+        pg_pool,
+        &suppliers,
+        &seed_settings.participant
+    ).await?;
 
-    let users_ids = seed_user(pg_pool, seed_settings.users).await?;
+    let communitied = seed_community(
+        pg_pool,
+        &seed_settings.communities
+    ).await?;
+
+    let participant_communities_map = seed_participant_community(
+        pg_pool,
+        &seed_settings.communities_per_participant,
+        &participants,
+        &communitied,
+    ).await?;
 
     seed_energytransfer(
         pg_pool,
-        &community_ids,
-        &users_ids,
-        seed_settings.energy_transfers,
-    )
-    .await?;
-
-    seed_user_community(
-        pg_pool,
-        &users_ids,
-        &community_ids,
-        seed_settings.communities_per_user,
-    )
-    .await?;
-
-    seed_manager_community(
-        pg_pool,
-        &manager_ids,
-        &community_ids,
-        seed_settings.communities_per_manager,
-    )
-    .await?;
+        &seed_settings.energy_days,
+        &seed_settings.energy_interval,
+        &participant_communities_map,
+    ).await?;
 
     Ok(())
 }
 
-async fn seed_community(pool: &PgPool, count: usize) -> anyhow::Result<Vec<Uuid>> {
-    let mut generator = Generator::default();
-    let mut community_ids = Vec::new();
-
-    for _ in 0..count {
-        let id = Uuid::new_v4();
-        let entity = generator.next().unwrap();
-
-        let result = sqlx::query!(
-            r#"
-            INSERT INTO "community" ("id", "entity")
-            VALUES ($1, $2)
-            ON CONFLICT ("entity") DO NOTHING
-            "#,
-            id,
-            entity
-        )
-        .execute(pool)
-        .await?;
-
-        if result.rows_affected() > 0 {
-            community_ids.push(id);
-        }
-    }
-
-    Ok(community_ids)
-}
-
-async fn seed_user(pool: &PgPool, count: usize) -> anyhow::Result<Vec<Uuid>> {
-    let mut generator = Generator::default();
-    let mut user_ids = Vec::new();
-
-    for _ in 0..count {
-        let id: Uuid = Uuid::new_v4();
-        let name = generator.next().unwrap();
-        let email = FreeEmail().fake::<String>();
-
-        let result = sqlx::query!(
-            r#"
-            INSERT INTO "user" ("id", "name", "email")
-            VALUES ($1, $2, $3)
-            ON CONFLICT DO NOTHING
-            "#,
-            id,
-            name,
-            email,
-        )
-        .execute(pool)
-        .await?;
-
-        if result.rows_affected() > 0 {
-            user_ids.push(id);
-        }
-    }
-
-    Ok(user_ids)
-}
-
-async fn seed_manager(pool: &PgPool, count: usize) -> anyhow::Result<Vec<Uuid>> {
-    let mut generator = Generator::default();
-    let mut manager_ids = Vec::new();
-
-    for _ in 0..count {
-        let id: Uuid = Uuid::new_v4();
-        let name = generator.next().unwrap();
-        let email = FreeEmail().fake::<String>();
-
-        let result = sqlx::query!(
-            r#"
-            INSERT INTO "manager" ("id", "name", "email")
-            VALUES ($1, $2, $3)
-            ON CONFLICT DO NOTHING
-            "#,
-            id,
-            name,
-            email,
-        )
-        .execute(pool)
-        .await?;
-
-        if result.rows_affected() > 0 {
-            manager_ids.push(id);
-        }
-    }
-
-    Ok(manager_ids)
-}
-
-async fn seed_energytransfer(
+pub async fn seed_supplier(
     pool: &PgPool,
-    communities: &Vec<Uuid>,
-    users: &Vec<Uuid>,
-    count: usize,
-) -> anyhow::Result<()> {
+    count: &usize,
+) -> anyhow::Result<Vec<Uuid>> {
+    let mut generator = Generator::default();
+    let mut suppliers = Vec::new();
+
+    for _ in 0..*count {
+        suppliers.push(
+            sqlx::query_scalar!(
+                r#"
+                INSERT INTO "supplier" ("email", "name")
+                VALUES ($1, $2)
+                RETURNING id
+                "#,
+                FreeEmail().fake::<String>(),
+                generator.next().unwrap()
+            )
+            .fetch_one(pool)
+            .await?,
+        )
+    }
+
+    Ok(suppliers)
+}
+
+pub async fn seed_participant(
+    pool: &PgPool,
+    suppliers: &Vec<Uuid>,
+    count: &usize,
+) -> anyhow::Result<Vec<Uuid>> {
     let mut rng = rand::rng();
+    let mut generator = Generator::default();
+    let mut participants = Vec::new();
 
-    for _ in 0..count {
-        let id: Uuid = Uuid::new_v4();
-        let community = communities.into_iter().choose(&mut rng).unwrap();
-        let energy_wh = BigDecimal::from_str(&rng.random_range(10.0..5000.0).to_string())?;
+    for _ in 0..*count {
+        participants.push(
+            sqlx::query_scalar!(
+                r#"
+                INSERT INTO "participant" ("email", "name", "supplier", "password")
+                VALUES ($1, $2, $3, $4)
+                RETURNING id
+                "#,
+                FreeEmail().fake::<String>(),
+                generator.next().unwrap(),
+                suppliers.iter().choose(&mut rng).unwrap(),
+                "password"
+            )
+            .fetch_one(pool)
+            .await?,
+        )
+    }
 
-        let start = (Utc::now() - Duration::days(rng.random_range(0..30))).naive_utc()
-            - Duration::minutes(rng.random_range(10..120));
-        let end = start + Duration::minutes(rng.random_range(10..120));
-
-        let user_from = users.into_iter().choose(&mut rng).unwrap();
-        let mut user_to = users.into_iter().choose(&mut rng).unwrap();
-
-        while user_to == user_from {
-            user_to = users.into_iter().choose(&mut rng).unwrap();
-        }
-
+    for participant_id in &participants {
         sqlx::query!(
             r#"
-            INSERT INTO "energytransfer" ("id", "user_from", "user_to", "community", "energy_wh", "start", "end")
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            ON CONFLICT DO NOTHING
+            INSERT INTO "participant_alias" ("participant")
+            VALUES ($1)
             "#,
-            id,
-            user_from,
-            user_to,
-            community,
-            energy_wh,
-            start,
-            end
+            participant_id,
         )
         .execute(pool)
         .await?;
     }
 
+    Ok(participants)
+}
+
+pub async fn seed_community(
+    pool: &PgPool,
+    count: &usize,
+) -> anyhow::Result<Vec<Uuid>> {
+    let mut generator = Generator::default();
+    let mut communities = Vec::new();
+
+    for _ in 0..*count {
+        communities.push(
+            sqlx::query_scalar!(
+                r#"
+                INSERT INTO "community" ("name")
+                VALUES ($1)
+                RETURNING id
+                "#,
+                generator.next().unwrap(),
+            )
+            .fetch_one(pool)
+            .await?,
+        )
+    }
+
+    Ok(communities)
+}
+
+pub async fn seed_participant_community(
+    pool: &PgPool,
+    communities_per_participant: &usize,
+    participants: &Vec<Uuid>,
+    communities: &Vec<Uuid>,
+) -> anyhow::Result<HashMap<Uuid, Vec<Uuid>>> {
+    let mut rng = rand::rng();
+    let mut participant_community_map: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
+    let roles = vec![
+        ParticipantRole::User,
+        ParticipantRole::Manager,
+        ParticipantRole::UserManager,
+    ];
+
+    for &participant in participants {
+        for community in communities.iter().choose_multiple(&mut rng, *communities_per_participant) {
+            sqlx::query!(
+                r#"
+                INSERT INTO "participant_community" ("participant", "community", "role")
+                VALUES ($1, $2, $3)
+                "#,
+                participant,
+                community,
+                roles.iter().choose(&mut rng).unwrap() as &ParticipantRole
+            )
+            .execute(pool)
+            .await?;
+
+            participant_community_map
+                .entry(participant)
+                .or_default()
+                .push(*community);
+        }
+    }
+
+    Ok(participant_community_map)
+}
+
+pub async fn seed_energytransfer(
+    pool: &PgPool,
+    energy_days: &i64,
+    energy_interval: &i64,
+    participant_communities_map: &HashMap<Uuid, Vec<Uuid>>,
+) -> anyhow::Result<()> {
+    let mut rng = rand::rng();
+    let start = Utc::now().naive_utc();
+    let end = (Utc::now() + Duration::days(*energy_days)).naive_utc();
+
+    for (participant, communities) in participant_communities_map.iter() {
+        let mut current = start;
+        while current < end {
+            for community in communities {
+                sqlx::query!(
+                    r#"
+                    INSERT INTO "energypool" ("participant", "community", "generated", "consumed", "coeficient", "start", "end")
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    "#,
+                    participant,
+                    community,
+                    BigDecimal::from_str(&rng.random_range(0.0..5000.0).to_string()).unwrap(),
+                    BigDecimal::from_str(&rng.random_range(0.0..5000.0).to_string()).unwrap(),
+                    BigDecimal::from_str("1.0").unwrap(),
+                    current,
+                    current + Duration::minutes(*energy_interval),
+                )
+                .execute(pool)
+                .await
+                .unwrap();
+            }
+            current += Duration::minutes(*energy_interval);
+        }
+    }
+
     Ok(())
-}
-
-async fn seed_user_community(
-    pool: &PgPool,
-    users: &Vec<Uuid>,
-    communities: &Vec<Uuid>,
-    count: usize,
-) -> anyhow::Result<Vec<(Uuid, Uuid)>> {
-    let mut rng = rand::rng();
-    let mut inserted_pairs = Vec::new();
-
-    for &user_id in users {
-        let selected_communities: Vec<_> = communities.iter().choose_multiple(&mut rng, count);
-
-        for community_id in selected_communities {
-            let result = sqlx::query!(
-                r#"
-                INSERT INTO "user-community" ("user_id", "community_id")
-                VALUES ($1, $2)
-                ON CONFLICT DO NOTHING
-                "#,
-                user_id,
-                community_id
-            )
-            .execute(pool)
-            .await?;
-
-            if result.rows_affected() > 0 {
-                inserted_pairs.push((user_id, *community_id));
-            }
-        }
-    }
-
-    Ok(inserted_pairs)
-}
-
-async fn seed_manager_community(
-    pool: &PgPool,
-    managers: &Vec<Uuid>,
-    communities: &Vec<Uuid>,
-    count: usize,
-) -> anyhow::Result<Vec<(Uuid, Uuid)>> {
-    let mut rng = rand::rng();
-    let mut inserted_pairs = Vec::new();
-
-    for &manager_id in managers {
-        let selected_communities: Vec<_> = communities.iter().choose_multiple(&mut rng, count);
-
-        for community_id in selected_communities {
-            let result = sqlx::query!(
-                r#"
-                INSERT INTO "manager-community" ("manager_id", "community_id")
-                VALUES ($1, $2)
-                ON CONFLICT DO NOTHING
-                "#,
-                manager_id,
-                community_id
-            )
-            .execute(pool)
-            .await?;
-
-            if result.rows_affected() > 0 {
-                inserted_pairs.push((manager_id, *community_id));
-            }
-        }
-    }
-
-    Ok(inserted_pairs)
 }

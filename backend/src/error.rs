@@ -11,17 +11,17 @@ pub enum AppError {
     #[error("community not found: {0}")]
     CommunityNotFound(Uuid),
     #[error("community entity already in use: {0}")]
-    CommunityEntityAlreadyInUse(String),
+    CommunityNameAlreadyInUse(String),
     #[error(transparent)]
     SqlxError(#[from] sqlx::error::Error),
     #[error(transparent)]
     ValidationError(#[from] validator::ValidationErrors),
-    #[error("user not found using ID: {0}")]
-    UserNotFoundId(Uuid),
+    #[error("participant not found using ID: {0}")]
+    ParticipantNotFoundId(Uuid),
     // #[error("user not found using email: {0}")]
     // UserNotFoundEmail(String),
-    #[error("manager not found using ID: {0}")]
-    ManagerNotFoundId(Uuid),
+    // #[error("manager not found using ID: {0}")]
+    // ManagerNotFoundId(Uuid),
     // #[error("invalid password")]
     // InvalidPassword,
     // #[error("invalid token")]
@@ -47,9 +47,9 @@ impl IntoResponse for AppError {
                 format!("Community not found: {}", id),
                 None,
             ),
-            AppError::CommunityEntityAlreadyInUse(entity) => (
+            AppError::CommunityNameAlreadyInUse(name) => (
                 StatusCode::BAD_REQUEST,
-                format!("Community entity already in use: {}", entity),
+                format!("Community name already in use: {}", name),
                 None,
             ),
             AppError::SqlxError(err) => {
@@ -65,14 +65,9 @@ impl IntoResponse for AppError {
                 "Validation error".to_string(),
                 serde_json::to_value(err).ok(),
             ),
-            AppError::UserNotFoundId(id) => (
+            AppError::ParticipantNotFoundId(id) => (
                 StatusCode::NOT_FOUND,
-                format!("User not found with id: {}", id),
-                None,
-            ),
-            AppError::ManagerNotFoundId(id) => (
-                StatusCode::NOT_FOUND,
-                format!("Manager not found with id: {}", id),
+                format!("Participant not found with id: {}", id),
                 None,
             ),
         };
