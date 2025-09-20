@@ -9,6 +9,7 @@ use axum::{
     routing::{get, post},
 };
 use chrono::NaiveDateTime;
+use rand::rand_core::le;
 use serde::Deserialize;
 use tower_http::trace::TraceLayer;
 use uuid::Uuid;
@@ -16,13 +17,25 @@ use validator::Validate;
 
 pub fn router(state: AppState) -> Router {
     Router::new()
-        .route("/community/{id}", get(get_community))
-        .route("/community/register", post(register_community))
+        .route(
+            "/community/{id}",
+            get(get_community))
+        .route(
+            "/communities",
+            get(get_communities))
+        .route(
+            "/community/register",
+            post(register_community))
         .route(
             "/community/{community_id}/energytransfer/{participant_id}",
             get(get_participant_energytransfer),
         )
-        .route("/participant/{participant_id}", get(get_participant))
+        .route(
+            "/participants",
+            get(get_participants))
+        .route(
+            "/participant/{participant_id}",
+            get(get_participant))
         .route(
             "/participant/{participant_id}/communities",
             get(get_participant_communities),
@@ -69,6 +82,14 @@ pub async fn get_community(
 }
 
 #[debug_handler]
+pub async fn get_communities(
+    State(state): State<AppState>,
+) -> AppResult<impl IntoResponse> {
+    let communities = state.get_communities().await?;
+    Ok(Json(communities))
+}
+
+#[debug_handler]
 async fn register_community(
     State(state): State<AppState>,
     Json(request): Json<CommunityRegisterRequest>,
@@ -96,6 +117,15 @@ pub async fn get_participant(
         Err(AppError::ParticipantNotFoundId(id))
     }
 }
+
+#[debug_handler]
+pub async fn get_participants(
+    State(state): State<AppState>,
+) -> AppResult<impl IntoResponse> {
+    let participants = state.get_participants().await?;
+    Ok(Json(participants))
+}
+
 
 #[debug_handler]
 pub async fn get_participant_communities(

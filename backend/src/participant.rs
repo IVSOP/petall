@@ -52,6 +52,17 @@ pub struct EnergyTransfer {
 }
 
 impl AppState {
+    pub async fn get_participants(&self) -> sqlx::Result<Vec<Participant>> {
+        sqlx::query_as!(
+            Participant,
+            r#"
+            SELECT * FROM "participant"
+            "#
+        )
+        .fetch_all(&self.pg_pool)
+        .await
+    }
+
     pub async fn get_participant_by_id(&self, id: &Uuid) -> sqlx::Result<Option<Participant>> {
         sqlx::query_as!(
             Participant,

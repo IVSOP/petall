@@ -11,6 +11,17 @@ pub struct Community {
 }
 
 impl AppState {
+    pub async fn get_communities(&self) -> sqlx::Result<Vec<Community>> {
+        sqlx::query_as!(
+            Community,
+            r#"
+            SELECT * FROM community
+            "#
+        )
+        .fetch_all(&self.pg_pool)
+        .await
+    }
+
     pub async fn get_community_by_name(
         &self,
         name: &String,
