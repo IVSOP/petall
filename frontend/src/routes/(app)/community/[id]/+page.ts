@@ -1,22 +1,20 @@
-import type { Community, EnergyTransfer } from '$lib';
+import type { Community, Energy } from '$lib';
 import type { PageLoad } from './$types';
 
 // TODO: get this from login
-const participantId = '80ad3f62-853b-4370-b345-8b49ea1cef9b';
+const participantId = '835d0b4e-98c3-447d-9cd8-db03a7f76e8e';
 
 export const load: PageLoad = async ({ fetch, params }) => {
 	// TODO: merge this into one request and backend does all the handling
 	const community: Community = await fetch(`/api/community/${params.id}`).then((res) => res.json());
 
-	const energyTransfers: EnergyTransfer[] = await fetch(
-		`/api/community/${params.id}/energytransfer/${participantId}?size=1&orderDir=desc`
+	const energyTransfers: Energy[] = await fetch(
+		`/api/community/${params.id}/energy/${participantId}?size=10&orderDir=desc&page=1`
 	).then((res) => res.json());
 
-	energyTransfers.forEach((item) => {
-		if (participantId == item.participant_to) {
-			item.energy_wh = -item.energy_wh;
-		}
-	});
+    energyTransfers.forEach((item) => {
+        item.delta = item.generated - item.consumed;
+    });
 
 	return {
 		community,

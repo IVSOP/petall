@@ -6,12 +6,14 @@
     import CustomChart from "../../../../components/Chart.svelte";
 
 	const { data }: PageProps = $props();
+
+    console.log(data.energyTransfers)
+
 </script>
 
 <div class="container">
 	<div class="grid grid-cols-1 gap-4">
 		<EnergyChart energyTransfers={data.energyTransfers} participant_id={data.participantId} />
-		<CustomChart/>
 		<EnergyTable data={data.energyTransfers} {columns} />
 	</div>
 </div>
