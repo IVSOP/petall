@@ -1,7 +1,7 @@
 use crate::AppState;
 use crate::error::{AppError, AppResult};
-use crate::models::db::community::Community;
 use crate::models::http::requests::EnergyQuery;
+use crate::models::http::response::ParticipantCommunityResponse;
 use uuid::Uuid;
 use validator::Validate;
 use axum::extract::Query;
@@ -38,12 +38,15 @@ pub async fn get_participant_communities(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> AppResult<impl IntoResponse> {
-    let mut communities: Vec<Community> = Vec::new();
+    let mut communities: Vec<ParticipantCommunityResponse> = Vec::new();
     let participant_communities = state.get_participant_communities(&id).await?;
 
     for pc in &participant_communities {
         match state.get_community_by_id(&pc.community).await? {
-            Some(community) => communities.push(community),
+            Some(com) => communities.push(ParticipantCommunityResponse {
+                community: com,
+                role: pc.role,
+            }),
             None => return Err(AppError::CommunityNotFound(pc.community)),
         }
     }

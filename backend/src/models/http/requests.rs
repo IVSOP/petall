@@ -1,22 +1,22 @@
 use uuid::Uuid;
 use chrono::NaiveDateTime;
-use serde::{Deserialize};
 use validator::Validate;
+use serde::Deserialize;
 use crate::models::db::participant::ParticipantRole;
 
-#[derive(Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct CommunityRegisterRequest {
     #[validate(length(min = 3, max = 50))]
     pub name: String,
 }
 
-#[derive(Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct ParticipantCommunityRegisterRequest {
     pub participant: Uuid,
     pub role: ParticipantRole,
 }
 
-#[derive(Deserialize, Default)]
+#[derive(Debug, Deserialize, Default)]
 pub enum OrderDirection {
     #[serde(rename = "asc")]
     Ascending,
@@ -25,7 +25,7 @@ pub enum OrderDirection {
     Descending,
 }
 
-#[derive(Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct EnergyQuery {
     #[validate(range(min = 1, max = 100))]

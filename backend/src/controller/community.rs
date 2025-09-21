@@ -1,7 +1,8 @@
 use uuid::Uuid;
 use crate::AppState;
 use crate::models::db::participant::ParticipantRole;
-use crate::models::db::community::{Community, ParticipantCommunity};
+use crate::models::db::community::Community;
+use crate::models::db::participant::ParticipantCommunity;
 use crate::models::http::requests::{CommunityRegisterRequest, ParticipantCommunityRegisterRequest};
 
 impl AppState {

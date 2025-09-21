@@ -1,8 +1,9 @@
 use uuid::Uuid;
-use crate::AppState;
 use sqlx::QueryBuilder;
-use crate::models::db::participant::{Participant, ParticipantCommunity, ParticipantRole, Energy};
+use crate::AppState;
+use crate::models::db::community::Energy;
 use crate::models::http::requests::{EnergyQuery, OrderDirection};
+use crate::models::db::participant::{Participant, ParticipantCommunity, ParticipantRole};
 
 impl AppState {
     pub async fn get_participants(
