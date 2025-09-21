@@ -1,50 +1,13 @@
-use crate::AppState;
-use crate::router::{EnergyQuery, OrderDirection, ParticipantRole};
-use bigdecimal::BigDecimal;
-use chrono::NaiveDateTime;
-use serde::{Deserialize, Serialize};
-use sqlx::QueryBuilder;
 use uuid::Uuid;
-
-#[derive(Debug, Deserialize, Serialize, sqlx::Type)]
-pub struct Participant {
-    pub id: Uuid,
-    pub email: String,
-    pub name: String,
-    pub supplier: Uuid,
-    pub password: String,
-}
-
-#[derive(Debug, Deserialize, Serialize, sqlx::Type)]
-pub struct ParticipantAlias {
-    pub participant: Uuid,
-    pub alias: Uuid,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct ParticipantCommunity {
-    pub participant: Uuid,
-    pub community: Uuid,
-    pub role: ParticipantRole,
-}
-
-#[derive(Debug, Deserialize, Serialize, sqlx::FromRow)]
-pub struct Energy {
-    pub id: Uuid,
-    pub participant: Uuid,
-    pub community: Uuid,
-    #[serde(with = "bigdecimal::serde::json_num")]
-    pub generated: BigDecimal,
-    #[serde(with = "bigdecimal::serde::json_num")]
-    pub consumed: BigDecimal,
-    #[serde(with = "bigdecimal::serde::json_num")]
-    pub coeficient: BigDecimal,
-    pub start: NaiveDateTime,
-    pub end: NaiveDateTime,
-}
+use crate::AppState;
+use sqlx::QueryBuilder;
+use crate::models::db::participant::{Participant, ParticipantCommunity, ParticipantRole, Energy};
+use crate::models::http::requests::{EnergyQuery, OrderDirection};
 
 impl AppState {
-    pub async fn get_participants(&self) -> sqlx::Result<Vec<Participant>> {
+    pub async fn get_participants(
+        &self
+    ) -> sqlx::Result<Vec<Participant>> {
         sqlx::query_as!(
             Participant,
             r#"
@@ -55,14 +18,17 @@ impl AppState {
         .await
     }
 
-    pub async fn get_participant_by_id(&self, id: &Uuid) -> sqlx::Result<Option<Participant>> {
+    pub async fn get_participant_by_id(
+        &self,
+        participant_id: &Uuid
+    ) -> sqlx::Result<Option<Participant>> {
         sqlx::query_as!(
             Participant,
             r#"
             SELECT * FROM "participant"
             WHERE id = $1
             "#,
-            id,
+            participant_id,
         )
         .fetch_optional(&self.pg_pool)
         .await

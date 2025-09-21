@@ -1,21 +1,8 @@
-use crate::{router::ParticipantCommunityRegisterRequest, AppState};
-use crate::router::{CommunityRegisterRequest, ParticipantRole};
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Community {
-    pub id: Uuid,
-    pub name: String,
-    pub image: Uuid,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct ParticipantCommunity {
-    pub participant: Uuid,
-    pub community: String,
-    pub role: ParticipantRole,
-}
+use crate::AppState;
+use crate::models::db::participant::ParticipantRole;
+use crate::models::db::community::{Community, ParticipantCommunity};
+use crate::models::http::requests::{CommunityRegisterRequest, ParticipantCommunityRegisterRequest};
 
 impl AppState {
     pub async fn get_communities(

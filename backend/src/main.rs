@@ -3,13 +3,12 @@ use clap::{Parser, Subcommand};
 use sqlx::PgPool;
 use std::net::IpAddr;
 use tracing::info;
-
 use crate::seed::SeedSettings;
 
-mod community;
-mod error;
-mod participant;
+mod controller;
+mod models;
 mod router;
+mod error;
 mod seed;
 
 #[derive(Parser)]

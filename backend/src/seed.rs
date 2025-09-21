@@ -1,4 +1,4 @@
-use crate::router::ParticipantRole;
+use crate::models::db::participant::ParticipantRole;
 use bigdecimal::BigDecimal;
 use chrono::{Duration, Utc};
 use fake::{Fake, faker::internet::en::FreeEmail};
