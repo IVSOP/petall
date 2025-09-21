@@ -6,9 +6,6 @@
     import CustomChart from "../../../../components/Chart.svelte";
 
 	const { data }: PageProps = $props();
-
-    console.log(data.energyTransfers)
-
 </script>
 
 <div class="container">

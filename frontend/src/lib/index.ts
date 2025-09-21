@@ -10,14 +10,16 @@ export type ParticipantCommunity = {
 	community_id: string;
 };
 
-export type EnergyTransfer = {
+export type Energy = {
 	id: string;
-	participant_from: string;
-	participant_to: string;
+	participant: string;
 	community: string;
-	energy_wh: number;
-	start: string;
+	generated: number;
+	consumed: number;
+    coefficient: number,
+    start: string,
 	end: string;
+    delta?: number, // is null at the start
 };
 
 export type Community = {
