@@ -133,8 +133,10 @@ async fn register_participant_community(
     Json(request): Json<ParticipantCommunityRegisterRequest>,
 ) -> AppResult<impl IntoResponse> {
     request.validate()?;
-    let participant_community = state.register_participant_community(&community_id, &request).await?;
-    Ok((StatusCode::CREATED, Json(participant_community)))
+    match state.register_participant_community(&community_id, &request).await {
+        Ok(participant_community) => Ok((StatusCode::CREATED, Json(participant_community))),
+        Err(_e) => Err(AppError::ParticipantCommunityAlredyInUse(request.participant, community_id)),
+    }
 }
 
 #[debug_handler]
@@ -142,13 +144,9 @@ async fn remove_participant_community(
     State(state): State<AppState>,
     Path((community_id, participant_id)): Path<(Uuid, Uuid)>,
 ) -> AppResult<impl IntoResponse> {
-    let deleted = state
-        .remove_participant_community(&community_id, &participant_id)
-        .await?;
-    if deleted.rows_affected() > 0 {
-        Ok(StatusCode::NO_CONTENT)
-    } else {
-        Err(AppError::ParticipantCommunityNotFound(participant_id, community_id))
+    match state.remove_participant_community(&community_id, &participant_id).await {
+        Ok(participant_community) => Ok((StatusCode::OK, Json(participant_community))),
+        Err(_e) => Err(AppError::ParticipantCommunityNotFound(participant_id, community_id)),
     }
 }
 

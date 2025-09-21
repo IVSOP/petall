@@ -68,7 +68,7 @@ impl AppState {
         .await
     }
 
-    pub async fn _get_participant_by_email(
+    pub async fn get_participant_by_email(
         &self,
         email: &str,
     ) -> sqlx::Result<Option<Participant>> {

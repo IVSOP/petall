@@ -1,7 +1,6 @@
 use crate::{router::ParticipantCommunityRegisterRequest, AppState};
 use crate::router::{CommunityRegisterRequest, ParticipantRole};
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgQueryResult;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -92,16 +91,19 @@ impl AppState {
         &self,
         community: &Uuid,
         participant: &Uuid,
-    ) -> sqlx::Result<PgQueryResult> {
-        sqlx::query!(
+    ) -> sqlx::Result<ParticipantCommunity> {
+        sqlx::query_as!(
+            ParticipantCommunity,
             r#"
             DELETE FROM participant_community
             WHERE community = $1 AND participant = $2
+            RETURNING
+            community, participant, role as "role: ParticipantRole"
             "#,
             community,
             participant
         )
-        .execute(&self.pg_pool)
+        .fetch_one(&self.pg_pool)
         .await
     }
 }

@@ -19,7 +19,9 @@ pub enum AppError {
     ValidationError(#[from] validator::ValidationErrors),
     #[error("participant not found using ID: {0}")]
     ParticipantNotFoundId(Uuid),
-    #[error("Not found: participant {0}, community {1}")]
+    #[error("participant-community already in use: participant {0}, community {1}")]
+    ParticipantCommunityAlredyInUse(Uuid, Uuid),
+    #[error("not found participant {0} in community {1}")]
     ParticipantCommunityNotFound(Uuid, Uuid),
     // #[error("user not found using email: {0}")]
     // UserNotFoundEmail(String),
@@ -51,7 +53,7 @@ impl IntoResponse for AppError {
                 None,
             ),
             AppError::CommunityNameAlreadyInUse(name) => (
-                StatusCode::BAD_REQUEST,
+                StatusCode::CONFLICT,
                 format!("Community name already in use: {}", name),
                 None,
             ),
@@ -73,9 +75,14 @@ impl IntoResponse for AppError {
                 format!("Participant not found with id: {}", id),
                 None,
             ),
+            AppError::ParticipantCommunityAlredyInUse(participant, community) => (
+                StatusCode::CONFLICT,
+                format!("participant-community already in use: participant {}, community {}", participant, community),
+                None,
+            ),
             AppError::ParticipantCommunityNotFound(participant, community) => (
                 StatusCode::NOT_FOUND,
-                format!("Not found: participant {}, community {}", participant, community),
+                format!("not found participant {} in community {}", participant, community),
                 None,
             ),
         };
