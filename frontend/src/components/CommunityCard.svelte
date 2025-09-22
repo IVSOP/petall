@@ -1,45 +1,8 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge/index.js';
-	import BadgeCheckIcon from '@lucide/svelte/icons/badge-check';
 	import * as Card from '$lib/components/ui/card/index.js';
 
 	const { community } = $props();
-
-	//TODO: remove this when real images are added
-	function generateColorsFromUUID(uuid: string) {
-		const cleanUuid = uuid.replace(/-/g, '');
-
-		function simpleHash(str: string, seed = 0): number {
-			let hash = seed;
-			for (let i = 0; i < str.length; i++) {
-				hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
-			}
-			return Math.abs(hash);
-		}
-
-		const hash1 = simpleHash(cleanUuid, 1);
-		const hash2 = simpleHash(cleanUuid, 2);
-		const hash3 = simpleHash(cleanUuid, 3);
-
-		const hue1 = hash1 % 360;
-		const hue2 = (hash2 % 120) + hue1;
-
-		const saturation = 60 + (hash3 % 30);
-		const lightness = 50 + (hash1 % 20);
-
-		return {
-			color1: `hsl(${hue1}, ${saturation}%, ${lightness}%)`,
-			color2: `hsl(${hue2 % 360}, ${saturation}%, ${lightness + 10}%)`
-		};
-	}
-
-	const colors = generateColorsFromUUID(community.image);
-	const gradientStyle = `background: linear-gradient(135deg, ${colors.color1}, ${colors.color2});`;
-
-	function getInitials(entity: string | undefined): string {
-		if (!entity || typeof entity !== 'string') return '??';
-		return entity.substring(0, 2).toUpperCase();
-	}
 </script>
 
 <a
@@ -123,7 +86,7 @@
 
 		<Card.Footer class="px-4">
 			<p class="text-sm text-muted-foreground">
-				Created at: {new Date().toLocaleDateString()}
+				Created: {new Date().toLocaleDateString()}
 			</p>
 		</Card.Footer>
 	</Card.Root>
