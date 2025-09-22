@@ -65,7 +65,7 @@ export const columns: ColumnDef<Energy>[] = [
 			);
 		}
 	},
-    {
+	{
 		accessorKey: 'consumed',
 		header: () => {
 			const energyHeaderSnippet = createRawSnippet(() => ({
@@ -98,7 +98,7 @@ export const columns: ColumnDef<Energy>[] = [
 			);
 		}
 	},
-    {
+	{
 		accessorKey: 'delta',
 		header: () => {
 			const energyHeaderSnippet = createRawSnippet(() => ({
@@ -127,11 +127,7 @@ export const columns: ColumnDef<Energy>[] = [
 				};
 			});
 
-			return renderSnippet(
-				energyCellSnippet,
-				formatter.format(parseFloat(row.getValue('delta')))
-			);
+			return renderSnippet(energyCellSnippet, formatter.format(parseFloat(row.getValue('delta'))));
 		}
-	},
-
+	}
 ];

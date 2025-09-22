@@ -5,7 +5,7 @@
 	import * as Chart from '$lib/components/ui/chart/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 
-    let { energyTransfers = [], participant_id = '' } = $props();
+	let { energyTransfers = [], participant_id = '' } = $props();
 
 	const chartConfig = {
 		energy_wh: { label: 'Energy WH' }
@@ -53,8 +53,6 @@
 				{/snippet}
 			</BarChart>
 		</Chart.Container>
-
-        
 	</Card.Content>
 
 	<Card.Footer>

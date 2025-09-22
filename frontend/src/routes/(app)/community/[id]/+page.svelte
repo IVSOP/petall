@@ -3,7 +3,7 @@
 	import EnergyTable from '../../../../components/EnergyTable.svelte';
 	import EnergyChart from '../../../../components/EnergyChart.svelte';
 	import { columns } from './columns';
-    import CustomChart from "../../../../components/Chart.svelte";
+	import CustomChart from '../../../../components/Chart.svelte';
 
 	const { data }: PageProps = $props();
 </script>

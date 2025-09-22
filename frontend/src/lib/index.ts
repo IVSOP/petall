@@ -16,10 +16,10 @@ export type Energy = {
 	community: string;
 	generated: number;
 	consumed: number;
-    coefficient: number,
-    start: string,
+	coefficient: number;
+	start: string;
 	end: string;
-    delta?: number, // is null at the start
+	delta?: number; // is null at the start
 };
 
 export type Community = {

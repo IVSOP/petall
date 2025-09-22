@@ -2,7 +2,7 @@ import type { Community } from '$lib';
 import type { PageLoad } from './$types';
 
 // TODO: get this from login
-const participantId = '80ad3f62-853b-4370-b345-8b49ea1cef9b';
+const participantId = '63e3c963-4a91-486a-bffe-9deed57864b2';
 
 export const load: PageLoad = async ({ fetch }) => {
 	const response = await fetch(`/api/participant/${participantId}/communities`);
