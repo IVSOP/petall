@@ -4,6 +4,7 @@ import { createRawSnippet } from 'svelte';
 import { renderComponent } from '$lib/components/ui/data-table/index.js';
 import { renderSnippet } from '$lib/components/ui/data-table/index.js';
 import { Checkbox } from '$lib/components/ui/checkbox/index.js';
+import { format } from 'date-fns';
 
 export const columns: ColumnDef<Energy>[] = [
 	{
@@ -26,11 +27,17 @@ export const columns: ColumnDef<Energy>[] = [
 	},
 	{
 		accessorKey: 'start',
-		header: 'Start'
+		header: 'Start',
+        cell: ({ row }) => {
+            return format(row.getValue("start"), 'd/M/yyyy HH:mm');
+        }
 	},
 	{
 		accessorKey: 'end',
-		header: 'End'
+		header: 'End',
+        cell: ({ row }) => {
+            return format(row.getValue("end"), 'd/M/yyyy HH:mm');
+        }
 	},
 	{
 		accessorKey: 'generated',

@@ -2,7 +2,7 @@ import type { Participant } from '$lib';
 import type { LayoutLoad } from './$types';
 
 // TODO: get this from login
-const participantId = '80ad3f62-853b-4370-b345-8b49ea1cef9b';
+const participantId = '98b74f06-a63c-4403-ba7b-e77e50143de3';
 
 export const load: LayoutLoad = async ({ fetch }) => {
 	const response = await fetch(`/api/participant/${participantId}`);

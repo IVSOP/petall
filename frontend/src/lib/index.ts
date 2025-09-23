@@ -19,8 +19,19 @@ export type Energy = {
 	coefficient: number;
 	start: string;
 	end: string;
-	delta?: number; // is null at the start
 };
+
+export type ProcessedEnergy = {
+    id: string;
+	participant: string;
+	community: string;
+	generated: number;
+	consumed: number;
+	coefficient: number;
+	start: Date;
+	end: Date;
+    delta: number,
+}
 
 export type Community = {
 	id: string;
