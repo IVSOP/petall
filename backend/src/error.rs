@@ -6,7 +6,6 @@ use thiserror::Error;
 use tracing::error;
 use uuid::Uuid;
 
-
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("community not found: {0}")]
@@ -77,12 +76,18 @@ impl IntoResponse for AppError {
             ),
             AppError::ParticipantCommunityAlredyInUse(participant, community) => (
                 StatusCode::CONFLICT,
-                format!("participant-community already in use: participant {}, community {}", participant, community),
+                format!(
+                    "participant-community already in use: participant {}, community {}",
+                    participant, community
+                ),
                 None,
             ),
             AppError::ParticipantCommunityNotFound(participant, community) => (
                 StatusCode::NOT_FOUND,
-                format!("not found participant {} in community {}", participant, community),
+                format!(
+                    "not found participant {} in community {}",
+                    participant, community
+                ),
                 None,
             ),
         };

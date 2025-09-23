@@ -1,14 +1,16 @@
 use crate::AppState;
 use crate::error::{AppError, AppResult};
-use crate::models::http::requests::{CommunityRegisterRequest, ParticipantCommunityRegisterRequest};
-use uuid::Uuid;
-use validator::Validate;
+use crate::models::http::requests::{
+    CommunityRegisterRequest, ParticipantCommunityRegisterRequest,
+};
 use axum::http::StatusCode;
 use axum::{
     Json, debug_handler,
     extract::{Path, State},
     response::IntoResponse,
 };
+use uuid::Uuid;
+use validator::Validate;
 
 #[debug_handler]
 pub async fn get_community(
@@ -22,9 +24,7 @@ pub async fn get_community(
 }
 
 #[debug_handler]
-pub async fn get_communities(
-    State(state): State<AppState>,
-) -> AppResult<impl IntoResponse> {
+pub async fn get_communities(State(state): State<AppState>) -> AppResult<impl IntoResponse> {
     match state.get_communities().await {
         Ok(communities) => Ok((StatusCode::OK, Json(communities))),
         Err(e) => Err(AppError::from(e)),
@@ -50,9 +50,15 @@ pub async fn register_participant_community(
     Json(request): Json<ParticipantCommunityRegisterRequest>,
 ) -> AppResult<impl IntoResponse> {
     request.validate()?;
-    match state.register_participant_community(&community_id, &request).await {
+    match state
+        .register_participant_community(&community_id, &request)
+        .await
+    {
         Ok(participant_community) => Ok((StatusCode::CREATED, Json(participant_community))),
-        Err(_e) => Err(AppError::ParticipantCommunityAlredyInUse(request.participant, community_id)),
+        Err(_e) => Err(AppError::ParticipantCommunityAlredyInUse(
+            request.participant,
+            community_id,
+        )),
     }
 }
 
@@ -61,8 +67,14 @@ pub async fn remove_participant_community(
     State(state): State<AppState>,
     Path((community_id, participant_id)): Path<(Uuid, Uuid)>,
 ) -> AppResult<impl IntoResponse> {
-    match state.remove_participant_community(&community_id, &participant_id).await {
+    match state
+        .remove_participant_community(&community_id, &participant_id)
+        .await
+    {
         Ok(participant_community) => Ok((StatusCode::OK, Json(participant_community))),
-        Err(_e) => Err(AppError::ParticipantCommunityNotFound(participant_id, community_id)),
+        Err(_e) => Err(AppError::ParticipantCommunityNotFound(
+            participant_id,
+            community_id,
+        )),
     }
 }

@@ -1,5 +1,5 @@
-use uuid::Uuid;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Copy, Clone, Deserialize, Serialize, sqlx::Type)]
 #[sqlx(type_name = "participant_role", rename_all = "lowercase")]

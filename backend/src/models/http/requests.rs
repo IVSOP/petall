@@ -1,8 +1,8 @@
-use uuid::Uuid;
-use chrono::NaiveDateTime;
-use validator::Validate;
-use serde::Deserialize;
 use crate::models::db::participant::ParticipantRole;
+use chrono::NaiveDateTime;
+use serde::Deserialize;
+use uuid::Uuid;
+use validator::Validate;
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct CommunityRegisterRequest {

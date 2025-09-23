@@ -1,14 +1,14 @@
+use crate::seed::SeedSettings;
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use sqlx::PgPool;
 use std::net::IpAddr;
 use tracing::info;
-use crate::seed::SeedSettings;
 
 mod controller;
+mod error;
 mod models;
 mod router;
-mod error;
 mod seed;
 
 #[derive(Parser)]

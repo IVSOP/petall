@@ -2,8 +2,6 @@ use crate::AppState;
 use crate::error::{AppError, AppResult};
 use crate::models::http::requests::EnergyQuery;
 use crate::models::http::response::ParticipantCommunityResponse;
-use uuid::Uuid;
-use validator::Validate;
 use axum::extract::Query;
 use axum::http::StatusCode;
 use axum::{
@@ -11,6 +9,8 @@ use axum::{
     extract::{Path, State},
     response::IntoResponse,
 };
+use uuid::Uuid;
+use validator::Validate;
 
 #[debug_handler]
 pub async fn get_participant(
@@ -24,9 +24,7 @@ pub async fn get_participant(
 }
 
 #[debug_handler]
-pub async fn get_participants(
-    State(state): State<AppState>,
-) -> AppResult<impl IntoResponse> {
+pub async fn get_participants(State(state): State<AppState>) -> AppResult<impl IntoResponse> {
     match state.get_participants().await {
         Ok(participants) => Ok((StatusCode::OK, Json(participants))),
         Err(e) => Err(AppError::from(e)),

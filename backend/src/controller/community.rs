@@ -1,14 +1,14 @@
-use uuid::Uuid;
 use crate::AppState;
-use crate::models::db::participant::ParticipantRole;
 use crate::models::db::community::Community;
 use crate::models::db::participant::ParticipantCommunity;
-use crate::models::http::requests::{CommunityRegisterRequest, ParticipantCommunityRegisterRequest};
+use crate::models::db::participant::ParticipantRole;
+use crate::models::http::requests::{
+    CommunityRegisterRequest, ParticipantCommunityRegisterRequest,
+};
+use uuid::Uuid;
 
 impl AppState {
-    pub async fn get_communities(
-        &self
-    ) -> sqlx::Result<Vec<Community>> {
+    pub async fn get_communities(&self) -> sqlx::Result<Vec<Community>> {
         sqlx::query_as!(
             Community,
             r#"
@@ -19,10 +19,7 @@ impl AppState {
         .await
     }
 
-    pub async fn get_community_by_id(
-        &self,
-        id: &Uuid
-    ) -> sqlx::Result<Option<Community>> {
+    pub async fn get_community_by_id(&self, id: &Uuid) -> sqlx::Result<Option<Community>> {
         sqlx::query_as!(
             Community,
             r#"

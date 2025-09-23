@@ -1,14 +1,12 @@
-use uuid::Uuid;
-use sqlx::QueryBuilder;
 use crate::AppState;
 use crate::models::db::community::Energy;
-use crate::models::http::requests::{EnergyQuery, OrderDirection};
 use crate::models::db::participant::{Participant, ParticipantCommunity, ParticipantRole};
+use crate::models::http::requests::{EnergyQuery, OrderDirection};
+use sqlx::QueryBuilder;
+use uuid::Uuid;
 
 impl AppState {
-    pub async fn get_participants(
-        &self
-    ) -> sqlx::Result<Vec<Participant>> {
+    pub async fn get_participants(&self) -> sqlx::Result<Vec<Participant>> {
         sqlx::query_as!(
             Participant,
             r#"
@@ -21,7 +19,7 @@ impl AppState {
 
     pub async fn get_participant_by_id(
         &self,
-        participant_id: &Uuid
+        participant_id: &Uuid,
     ) -> sqlx::Result<Option<Participant>> {
         sqlx::query_as!(
             Participant,
@@ -35,10 +33,7 @@ impl AppState {
         .await
     }
 
-    pub async fn get_participant_by_email(
-        &self,
-        email: &str,
-    ) -> sqlx::Result<Option<Participant>> {
+    pub async fn get_participant_by_email(&self, email: &str) -> sqlx::Result<Option<Participant>> {
         sqlx::query_as!(
             Participant,
             r#"
@@ -100,7 +95,11 @@ impl AppState {
         };
 
         query_builder.push(format!(" ORDER BY start {}", order_dir));
-        query_builder.push(format!(" LIMIT {} OFFSET {}", query.size, (query.page - 1) * query.size));
+        query_builder.push(format!(
+            " LIMIT {} OFFSET {}",
+            query.size,
+            (query.page - 1) * query.size
+        ));
 
         query_builder
             .build_query_as::<Energy>()

@@ -1,6 +1,6 @@
-use serde::Serialize;
 use crate::models::db::community::Community;
 use crate::models::db::participant::ParticipantRole;
+use serde::Serialize;
 
 #[derive(Debug, Serialize)]
 pub struct ParticipantCommunityResponse {

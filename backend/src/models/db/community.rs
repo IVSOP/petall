@@ -1,7 +1,7 @@
-use uuid::Uuid;
-use chrono::NaiveDateTime;
 use bigdecimal::BigDecimal;
+use chrono::NaiveDateTime;
 use serde::Serialize;
+use uuid::Uuid;
 
 #[derive(Debug, Serialize)]
 pub struct Community {

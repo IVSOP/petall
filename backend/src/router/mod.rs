@@ -1,23 +1,18 @@
 use crate::AppState;
-use tower_http::trace::TraceLayer;
 use axum::{
-    Router, routing::{get, post, delete},
+    Router,
+    routing::{delete, get, post},
 };
+use tower_http::trace::TraceLayer;
 
 pub mod community;
 pub mod participant;
 
 pub fn router(state: AppState) -> Router {
     Router::new()
-        .route(
-            "/communities",
-            get(community::get_communities))
-        .route(
-            "/community/{id}",
-            get(community::get_community))
-        .route(
-            "/community/register",
-            post(community::register_community))
+        .route("/communities", get(community::get_communities))
+        .route("/community/{id}", get(community::get_community))
+        .route("/community/register", post(community::register_community))
         .route(
             "/community/{community_id}/participant",
             post(community::register_participant_community),
@@ -30,12 +25,11 @@ pub fn router(state: AppState) -> Router {
             "/community/{community_id}/energy/{participant_id}",
             get(participant::get_participant_energies),
         )
-        .route(
-            "/participants",
-            get(participant::get_participants))
+        .route("/participants", get(participant::get_participants))
         .route(
             "/participant/{participant_id}",
-            get(participant::get_participant))
+            get(participant::get_participant),
+        )
         .route(
             "/participant/{participant_id}/communities",
             get(participant::get_participant_communities),

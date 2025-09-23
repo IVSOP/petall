@@ -1,12 +1,11 @@
 use crate::models::db::participant::ParticipantRole;
 use bigdecimal::BigDecimal;
 use chrono::{Duration, Utc};
-use fake::{Fake, faker::internet::en::FreeEmail};
+use fake::{Fake, faker::internet::pt_pt::FreeEmailProvider};
 use names::Generator;
 use rand::{Rng, seq::IteratorRandom};
 use sqlx::postgres::PgPool;
-use std::collections::HashMap;
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, clap::Parser)]
@@ -25,47 +24,33 @@ pub struct SeedSettings {
     energy_interval: i64,
 }
 
-pub async fn run_seed(
-    pg_pool: &PgPool,
-    seed_settings: SeedSettings
-) -> anyhow::Result<()> {
-    let suppliers = seed_supplier(
-        pg_pool,
-        &seed_settings.suppliers,
-    ).await?;
+pub async fn run_seed(pg_pool: &PgPool, seed_settings: SeedSettings) -> anyhow::Result<()> {
+    let suppliers = seed_supplier(pg_pool, &seed_settings.suppliers).await?;
 
-    let participants = seed_participant(
-        pg_pool,
-        &seed_settings.participant,
-        &suppliers,
-    ).await?;
+    let participants = seed_participant(pg_pool, &seed_settings.participant, &suppliers).await?;
 
-    let communitied = seed_community(
-        pg_pool,
-        &seed_settings.communities,
-    ).await?;
+    let communitied = seed_community(pg_pool, &seed_settings.communities).await?;
 
     let participant_communities_map = seed_participant_community(
         pg_pool,
         &seed_settings.communities_per_participant,
         &participants,
         &communitied,
-    ).await?;
+    )
+    .await?;
 
     seed_energypool(
         pg_pool,
         &seed_settings.energy_days,
         &seed_settings.energy_interval,
         &participant_communities_map,
-    ).await?;
+    )
+    .await?;
 
     Ok(())
 }
 
-pub async fn seed_supplier(
-    pool: &PgPool,
-    count: &usize,
-) -> anyhow::Result<Vec<Uuid>> {
+pub async fn seed_supplier(pool: &PgPool, count: &usize) -> anyhow::Result<Vec<Uuid>> {
     let mut generator = Generator::default();
     let mut suppliers = Vec::new();
 
@@ -77,7 +62,7 @@ pub async fn seed_supplier(
                 VALUES ($1, $2)
                 RETURNING id
                 "#,
-                FreeEmail().fake::<String>(),
+                FreeEmailProvider().fake::<String>(),
                 generator.next().unwrap()
             )
             .fetch_one(pool)
@@ -105,7 +90,7 @@ pub async fn seed_participant(
                 VALUES ($1, $2, $3, $4)
                 RETURNING id
                 "#,
-                FreeEmail().fake::<String>(),
+                FreeEmailProvider().fake::<String>(),
                 generator.next().unwrap(),
                 suppliers.iter().choose(&mut rng).unwrap(),
                 "password"
@@ -130,10 +115,7 @@ pub async fn seed_participant(
     Ok(participants)
 }
 
-pub async fn seed_community(
-    pool: &PgPool,
-    count: &usize,
-) -> anyhow::Result<Vec<Uuid>> {
+pub async fn seed_community(pool: &PgPool, count: &usize) -> anyhow::Result<Vec<Uuid>> {
     let mut generator = Generator::default();
     let mut communities = Vec::new();
 
@@ -170,7 +152,10 @@ pub async fn seed_participant_community(
     ];
 
     for &participant in participants {
-        for community in communities.iter().choose_multiple(&mut rng, *communities_per_participant) {
+        for community in communities
+            .iter()
+            .choose_multiple(&mut rng, *communities_per_participant)
+        {
             sqlx::query!(
                 r#"
                 INSERT INTO "participant_community" ("participant", "community", "role")
