@@ -62,16 +62,11 @@
 
 			<div class="grid flex-1 gap-4">
 				<div class="grid grid-cols-4 items-center gap-4">
-					<Label for="name" class="text-right font-sm">Name</Label>
-					<Input
-						id="name"
-						value="Diogo Marques"
-						class="col-span-3"
-						placeholder="Enter your name"
-					/>
+					<Label for="name" class="font-sm text-right">Name</Label>
+					<Input id="name" value="Diogo Marques" class="col-span-3" placeholder="Enter your name" />
 				</div>
 				<div class="grid grid-cols-4 items-center gap-4">
-					<Label for="password" class="text-right font-sm">Password</Label>
+					<Label for="password" class="font-sm text-right">Password</Label>
 					<Input
 						id="password"
 						type="password"
@@ -81,7 +76,7 @@
 					/>
 				</div>
 				<div class="grid grid-cols-4 items-center gap-4">
-					<Label for="confirm-password" class="text-right font-sm">Confirm</Label>
+					<Label for="confirm-password" class="font-sm text-right">Confirm</Label>
 					<Input
 						id="confirm-password"
 						type="password"

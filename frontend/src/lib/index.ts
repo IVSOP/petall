@@ -22,7 +22,7 @@ export type Energy = {
 };
 
 export type ProcessedEnergy = {
-    id: string;
+	id: string;
 	participant: string;
 	community: string;
 	generated: number;
@@ -30,11 +30,11 @@ export type ProcessedEnergy = {
 	coefficient: number;
 	start: Date;
 	end: Date;
-    delta: number,
-}
+	delta: number;
+};
 
 export type Community = {
 	id: string;
-	entity: string;
+	name: string;
 	supplier: string;
 };

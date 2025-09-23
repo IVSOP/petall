@@ -28,16 +28,16 @@ export const columns: ColumnDef<Energy>[] = [
 	{
 		accessorKey: 'start',
 		header: 'Start',
-        cell: ({ row }) => {
-            return format(row.getValue("start"), 'd/M/yyyy HH:mm');
-        }
+		cell: ({ row }) => {
+			return format(row.getValue('start'), 'd/M/yyyy HH:mm');
+		}
 	},
 	{
 		accessorKey: 'end',
 		header: 'End',
-        cell: ({ row }) => {
-            return format(row.getValue("end"), 'd/M/yyyy HH:mm');
-        }
+		cell: ({ row }) => {
+			return format(row.getValue('end'), 'd/M/yyyy HH:mm');
+		}
 	},
 	{
 		accessorKey: 'generated',

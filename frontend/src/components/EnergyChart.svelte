@@ -27,40 +27,40 @@
 		}
 	});
 
-    const xAxisFormat = $derived.by(() => {
-        return (v: Date) => {
-            switch (timeRange) {
-                case '1d':
-                return v.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false
-                });
-                default:
-                return v.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric'
-                });
-            }
-        };
-    });
+	const xAxisFormat = $derived.by(() => {
+		return (v: Date) => {
+			switch (timeRange) {
+				case '1d':
+					return v.toLocaleTimeString('en-US', {
+						hour: '2-digit',
+						minute: '2-digit',
+						hour12: false
+					});
+				default:
+					return v.toLocaleDateString('en-US', {
+						month: 'short',
+						day: 'numeric'
+					});
+			}
+		};
+	});
 
-    const ticksFunction = $derived.by(() => {
-        switch (timeRange) {
-            case '30d':
-                return 30; // 1 per day
-            case '7d':
-                return 7; // 1 per day
-            case '1d':
-                return 24 * 2; // every 30 mins
-            default:
-                return undefined
-        };
-    });
+	const ticksFunction = $derived.by(() => {
+		switch (timeRange) {
+			case '30d':
+				return 30; // 1 per day
+			case '7d':
+				return 7; // 1 per day
+			case '1d':
+				return 24 * 2; // every 30 mins
+			default:
+				return undefined;
+		}
+	});
 
 	const filteredData = $derived(
 		energyTransfers
-            // TODO: filter so that 30d shows only results from the last 30 days, etc
+			// TODO: filter so that 30d shows only results from the last 30 days, etc
 			// .filter((item) => {
 			// 	const date = new Date(item.start);
 			// 	const now = new Date();
@@ -128,8 +128,8 @@
 						motion: 'tween'
 					},
 					xAxis: {
-                        ticks: ticksFunction,
-                        format: xAxisFormat
+						ticks: ticksFunction,
+						format: xAxisFormat
 					},
 
 					yAxis: { format: () => '' }
