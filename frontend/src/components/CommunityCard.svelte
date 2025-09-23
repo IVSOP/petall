@@ -38,7 +38,7 @@
 						class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100"
 						title="Members"
 					>
-						<Users class="h-8 w-8"/>
+						<Users class="h-8 w-8" />
 					</div>
 					<p class="text-sm font-medium text-gray-700">13</p>
 				</div>
@@ -47,7 +47,7 @@
 						class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100"
 						title="Managers"
 					>
-						<UserLock class="h-8 w-8"/>
+						<UserLock class="h-8 w-8" />
 					</div>
 					<p class="text-sm font-medium text-gray-700">5</p>
 				</div>
@@ -56,7 +56,7 @@
 						class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100"
 						title="Profit"
 					>
-						<CircleDollarSign class="h-8 w-8"/>
+						<CircleDollarSign class="h-8 w-8" />
 					</div>
 					<p class="text-sm font-medium text-gray-700">351 $</p>
 				</div>

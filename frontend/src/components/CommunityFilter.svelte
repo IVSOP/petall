@@ -1,8 +1,7 @@
 <script lang="ts">
-	import SquarePlus from '@lucide/svelte/icons/square-plus';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
+	import CommunityModal from './CommunityModal.svelte';
 
 	export let value: string;
 </script>
@@ -35,18 +34,5 @@
 			</Select.Content>
 		</Select.Root>
 	</div>
-	<Button
-		class="order-1 cursor-pointer border-none bg-green-600 text-white hover:bg-green-700 md:order-none"
-	>
-		<SquarePlus />
-		New Community
-	</Button>
+	<CommunityModal />
 </div>
-
-<!-- <div class="flex w-full items-center pb-4">
-	<Input
-		bind:value
-		placeholder="Find a community..."
-		class="w-full text-base sm:text-lg md:text-lg lg:text-xl"
-	/>
-</div> -->

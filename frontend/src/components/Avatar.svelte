@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Profile from './Profile.svelte';
+	import ProfileModal from './ProfileModal.svelte';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 
@@ -18,7 +18,7 @@
 		<DropdownMenu.Group>
 			<DropdownMenu.Label>{participant.name}</DropdownMenu.Label>
 			<DropdownMenu.Separator />
-			<Profile />
+			<ProfileModal />
 			<DropdownMenu.Item>
 				<a href="/logout" class="w-full">Logout</a>
 			</DropdownMenu.Item>
