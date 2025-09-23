@@ -1,13 +1,11 @@
 <script lang="ts" generics="TData, TValue">
 	import * as Table from '$lib/components/ui/table/index.js';
 	import * as Menubar from '$lib/components/ui/menubar/index.js';
-	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
 	import { toast } from 'svelte-sonner';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
-	import Calendar from '$lib/components/ui/calendar/calendar.svelte';
 	import { CalendarDate } from '@internationalized/date';
 	import {
 		type ColumnDef,
