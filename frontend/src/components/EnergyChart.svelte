@@ -12,29 +12,69 @@
 
 	let { energyTransfers = [], participant_id = '' } = $props();
 
-	let timeRange = $state('90d');
+	let timeRange = $state('30d');
 
 	const selectedLabel = $derived.by(() => {
 		switch (timeRange) {
-			case '90d':
-				return 'Last 3 months';
 			case '30d':
-				return 'Last 30 days';
+				return '30 dias';
 			case '7d':
-				return 'Last 7 days';
+				return '7 dias';
+			case '1d':
+				return '24 horas';
 			default:
-				return 'Last 3 months';
+				return '30 dias';
 		}
 	});
 
+    const xAxisFormat = $derived.by(() => {
+        return (v: Date) => {
+            switch (timeRange) {
+                case '1d':
+                return v.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+                default:
+                return v.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric'
+                });
+            }
+        };
+    });
+
+    const ticksFunction = $derived.by(() => {
+        switch (timeRange) {
+            case '30d':
+                return 30; // 1 per day
+            case '7d':
+                return 7; // 1 per day
+            case '1d':
+                return 24 * 2; // every 30 mins
+            default:
+                return undefined
+        };
+    });
+
 	const filteredData = $derived(
-		energyTransfers.map((item) => {
-			return {
+		energyTransfers
+            // TODO: filter so that 30d shows only results from the last 30 days, etc
+			// .filter((item) => {
+			// 	const date = new Date(item.start);
+			// 	const now = new Date();
+			// 	if (timeRange === '30d') {
+			// 		const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+			// 		return date >= thirtyDaysAgo && date <= now;
+			// 	}
+			// 	return true; // Include all data for '7d' and '1d'
+			// })
+			.map((item) => ({
 				date: new Date(item.start),
 				generated: item.generated,
 				consumed: item.consumed
-			};
-		})
+			}))
 	);
 
 	const chartConfig = {
@@ -54,9 +94,9 @@
 				{selectedLabel}
 			</Select.Trigger>
 			<Select.Content class="rounded-xl">
-				<Select.Item value="90d" class="rounded-lg">Last 3 months</Select.Item>
-				<Select.Item value="30d" class="rounded-lg">Last 30 days</Select.Item>
-				<Select.Item value="7d" class="rounded-lg">Last 7 days</Select.Item>
+				<Select.Item value="30d" class="rounded-lg">30 dias</Select.Item>
+				<Select.Item value="7d" class="rounded-lg">7 dias</Select.Item>
+				<Select.Item value="1d" class="rounded-lg">24 horas</Select.Item>
 			</Select.Content>
 		</Select.Root>
 	</Card.Header>
@@ -88,13 +128,8 @@
 						motion: 'tween'
 					},
 					xAxis: {
-						ticks: timeRange === '7d' ? 7 : undefined,
-						format: (v) => {
-							return v.toLocaleDateString('en-US', {
-								month: 'short',
-								day: 'numeric'
-							});
-						}
+                        ticks: ticksFunction,
+                        format: xAxisFormat
 					},
 
 					yAxis: { format: () => '' }
