@@ -8,7 +8,9 @@
 </script>
 
 <Dialog.Root>
-	<Dialog.Trigger class={`${buttonVariants({ variant: "outline" })} focus:outline-none order-1 bg-green-600 text-white hover:bg-green-700 hover:text-white md:order-none`}>
+	<Dialog.Trigger
+		class={`${buttonVariants({ variant: 'outline' })} order-1 bg-green-600 text-white hover:bg-green-700 hover:text-white focus:outline-none md:order-none`}
+	>
 		<SquarePlus />
 		New Community
 	</Dialog.Trigger>

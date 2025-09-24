@@ -8,7 +8,8 @@
 
 <div class="flex flex-col gap-2 pb-4 md:flex-row md:items-center">
 	<Input
-		bind:value={value} {...props}
+		bind:value
+		{...props}
 		placeholder="Find a community..."
 		class="md:text-md order-2 flex-1 text-base md:order-none"
 	/>
