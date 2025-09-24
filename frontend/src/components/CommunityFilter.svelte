@@ -3,12 +3,12 @@
 	import * as Select from '$lib/components/ui/select/index.js';
 	import CommunityModal from './CommunityModal.svelte';
 
-	export let value: string;
+	let { value = $bindable(), ...props } = $props();
 </script>
 
 <div class="flex flex-col gap-2 pb-4 md:flex-row md:items-center">
 	<Input
-		bind:value
+		bind:value={value} {...props}
 		placeholder="Find a community..."
 		class="md:text-md order-2 flex-1 text-base md:order-none"
 	/>

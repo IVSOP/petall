@@ -8,13 +8,9 @@
 </script>
 
 <Dialog.Root>
-	<Dialog.Trigger class="focus:outline-none">
-		<Button
-			class="order-1 w-full cursor-pointer border-none bg-green-600 text-white hover:bg-green-700 md:order-none"
-		>
-			<SquarePlus />
-			New Community
-		</Button>
+	<Dialog.Trigger class={`${buttonVariants({ variant: "outline" })} focus:outline-none order-1 bg-green-600 text-white hover:bg-green-700 hover:text-white md:order-none`}>
+		<SquarePlus />
+		New Community
 	</Dialog.Trigger>
 	<Dialog.Content class="sm:max-w-[500px]">
 		<Dialog.Header>
@@ -26,7 +22,7 @@
 		<div class="grid gap-4">
 			<div class="flex justify-center">
 				<button
-					class="relative w-full  cursor-pointer rounded-lg focus:outline-none"
+					class="relative w-full cursor-pointer rounded-lg focus:outline-none"
 					aria-label="Change community picture"
 					type="button"
 				>
