@@ -24,10 +24,7 @@ pub struct SeedSettings {
     energy_interval: i64,
 }
 
-pub async fn run_seed(
-    pg_pool: &PgPool,
-    seed_settings: SeedSettings
-) -> anyhow::Result<()> {
+pub async fn run_seed(pg_pool: &PgPool, seed_settings: SeedSettings) -> anyhow::Result<()> {
     let suppliers = seed_supplier(pg_pool, &seed_settings.suppliers).await?;
 
     let participants = seed_participant(pg_pool, &seed_settings.participants, &suppliers).await?;
@@ -53,10 +50,7 @@ pub async fn run_seed(
     Ok(())
 }
 
-pub async fn seed_supplier(
-    pool: &PgPool,
-    count: &usize,
-) -> anyhow::Result<Vec<Uuid>> {
+pub async fn seed_supplier(pool: &PgPool, count: &usize) -> anyhow::Result<Vec<Uuid>> {
     let mut generator = Generator::default();
     let mut suppliers = Vec::new();
 
@@ -109,10 +103,7 @@ pub async fn seed_participant(
     Ok(participants)
 }
 
-pub async fn seed_community(
-    pool: &PgPool,
-    count: &usize
-) -> anyhow::Result<Vec<Uuid>> {
+pub async fn seed_community(pool: &PgPool, count: &usize) -> anyhow::Result<Vec<Uuid>> {
     let mut generator = Generator::default();
     let mut communities = Vec::new();
 

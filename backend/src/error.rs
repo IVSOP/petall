@@ -22,6 +22,10 @@ pub enum AppError {
     ParticipantCommunityAlredyInUse(Uuid, Uuid),
     #[error("not found participant {0} in community {1}")]
     ParticipantCommunityNotFound(Uuid, Uuid),
+    #[error(transparent)]
+    JwtError(#[from] jsonwebtoken::errors::Error),
+    #[error("invalid jwt token")]
+    InvalidToken,
     // #[error("user not found using email: {0}")]
     // UserNotFoundEmail(String),
     // #[error("manager not found using ID: {0}")]
@@ -90,6 +94,15 @@ impl IntoResponse for AppError {
                 ),
                 None,
             ),
+            AppError::JwtError(error) => {
+                error!("JWT error: {}", error);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    String::from("Internal server error"),
+                    None,
+                )
+            }
+            AppError::InvalidToken => (StatusCode::UNAUTHORIZED, "Invalid token".to_string(), None),
         };
 
         let body = ErrorBody { error, details };

@@ -1,10 +1,12 @@
-use crate::seed::SeedSettings;
+use crate::{config::Config, seed::SeedSettings};
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use sqlx::PgPool;
-use std::net::IpAddr;
+use std::{net::IpAddr, sync::Arc};
 use tracing::info;
 
+mod auth;
+mod config;
 mod controller;
 mod error;
 mod models;
@@ -12,24 +14,10 @@ mod router;
 mod seed;
 
 #[derive(Parser)]
-pub struct DatabaseConfig {
-    #[arg(long, env)]
-    pub postgres_host: String,
-    #[arg(long, env, default_value_t = 5432)]
-    pub postgres_port: u16,
-    #[arg(long, env)]
-    pub postgres_user: String,
-    #[arg(long, env)]
-    pub postgres_password: String,
-    #[arg(long, env)]
-    pub postgres_db: String,
-}
-
-#[derive(Parser)]
 #[command(name = "petall")]
 struct Cli {
     #[command(flatten)]
-    config: DatabaseConfig,
+    config: Config,
     #[command(subcommand)]
     command: Command,
 }
@@ -48,6 +36,7 @@ enum Command {
 #[derive(Clone)]
 pub struct AppState {
     pub pg_pool: PgPool,
+    pub config: Arc<Config>,
 }
 
 #[tokio::main]
@@ -79,7 +68,8 @@ async fn main() -> Result<()> {
                 .await
                 .context("Failed to bind to port")?;
 
-            let state = AppState { pg_pool };
+            let config = Arc::new(config);
+            let state = AppState { pg_pool, config };
 
             info!("Starting server on {}", listener.local_addr().unwrap());
 

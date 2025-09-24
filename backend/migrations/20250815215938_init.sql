@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS "participant" (
     "supplier" UUID NOT NULL,
     PRIMARY KEY ("id"),
     CONSTRAINT fk_participant_supplier
-        FOREIGN KEY ("supplier") 
+        FOREIGN KEY ("supplier")
         REFERENCES "supplier"("id")
         ON DELETE CASCADE
 );
@@ -43,11 +43,11 @@ CREATE TABLE IF NOT EXISTS "participant_community" (
     "role" participant_role NOT NULL,
     PRIMARY KEY ("participant", "community"),
     CONSTRAINT fk_participant_community
-        FOREIGN KEY ("participant") 
+        FOREIGN KEY ("participant")
         REFERENCES "participant"("id")
         ON DELETE CASCADE,
     CONSTRAINT fk_community_participant
-        FOREIGN KEY ("community") 
+        FOREIGN KEY ("community")
         REFERENCES "community"("id")
         ON DELETE CASCADE
 );
