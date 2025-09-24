@@ -20,7 +20,8 @@ pub struct Energy {
     #[serde(with = "bigdecimal::serde::json_num")]
     pub consumed: BigDecimal,
     #[serde(with = "bigdecimal::serde::json_num")]
-    pub coeficient: BigDecimal,
+    pub consumer_price: BigDecimal,
+    #[serde(with = "bigdecimal::serde::json_num")]
+    pub seller_price: BigDecimal,
     pub start: NaiveDateTime,
-    pub end: NaiveDateTime,
 }

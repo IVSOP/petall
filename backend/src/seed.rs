@@ -1,7 +1,7 @@
 use crate::models::db::participant::ParticipantRole;
 use bigdecimal::BigDecimal;
 use chrono::{Duration, Utc};
-use fake::{Fake, faker::internet::pt_pt::FreeEmailProvider};
+use fake::{Fake, faker::internet::pt_pt::FreeEmail};
 use names::Generator;
 use rand::{Rng, seq::IteratorRandom};
 use sqlx::postgres::PgPool;
@@ -11,7 +11,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, clap::Parser)]
 pub struct SeedSettings {
     #[arg(long, default_value_t = 5)]
-    participant: usize,
+    participants: usize,
     #[arg(long, default_value_t = 3)]
     suppliers: usize,
     #[arg(long, default_value_t = 10)]
@@ -24,10 +24,13 @@ pub struct SeedSettings {
     energy_interval: i64,
 }
 
-pub async fn run_seed(pg_pool: &PgPool, seed_settings: SeedSettings) -> anyhow::Result<()> {
+pub async fn run_seed(
+    pg_pool: &PgPool,
+    seed_settings: SeedSettings
+) -> anyhow::Result<()> {
     let suppliers = seed_supplier(pg_pool, &seed_settings.suppliers).await?;
 
-    let participants = seed_participant(pg_pool, &seed_settings.participant, &suppliers).await?;
+    let participants = seed_participant(pg_pool, &seed_settings.participants, &suppliers).await?;
 
     let communitied = seed_community(pg_pool, &seed_settings.communities).await?;
 
@@ -50,7 +53,10 @@ pub async fn run_seed(pg_pool: &PgPool, seed_settings: SeedSettings) -> anyhow::
     Ok(())
 }
 
-pub async fn seed_supplier(pool: &PgPool, count: &usize) -> anyhow::Result<Vec<Uuid>> {
+pub async fn seed_supplier(
+    pool: &PgPool,
+    count: &usize,
+) -> anyhow::Result<Vec<Uuid>> {
     let mut generator = Generator::default();
     let mut suppliers = Vec::new();
 
@@ -62,7 +68,7 @@ pub async fn seed_supplier(pool: &PgPool, count: &usize) -> anyhow::Result<Vec<U
                 VALUES ($1, $2)
                 RETURNING id
                 "#,
-                FreeEmailProvider().fake::<String>(),
+                FreeEmail().fake::<String>(),
                 generator.next().unwrap()
             )
             .fetch_one(pool)
@@ -90,7 +96,7 @@ pub async fn seed_participant(
                 VALUES ($1, $2, $3, $4)
                 RETURNING id
                 "#,
-                FreeEmailProvider().fake::<String>(),
+                FreeEmail().fake::<String>(),
                 generator.next().unwrap(),
                 suppliers.iter().choose(&mut rng).unwrap(),
                 "password"
@@ -100,22 +106,13 @@ pub async fn seed_participant(
         )
     }
 
-    for participant_id in &participants {
-        sqlx::query!(
-            r#"
-            INSERT INTO "participant_alias" ("participant")
-            VALUES ($1)
-            "#,
-            participant_id,
-        )
-        .execute(pool)
-        .await?;
-    }
-
     Ok(participants)
 }
 
-pub async fn seed_community(pool: &PgPool, count: &usize) -> anyhow::Result<Vec<Uuid>> {
+pub async fn seed_community(
+    pool: &PgPool,
+    count: &usize
+) -> anyhow::Result<Vec<Uuid>> {
     let mut generator = Generator::default();
     let mut communities = Vec::new();
 
@@ -194,16 +191,16 @@ pub async fn seed_energypool(
             for community in communities {
                 sqlx::query!(
                     r#"
-                    INSERT INTO "energypool" ("participant", "community", "generated", "consumed", "coeficient", "start", "end")
+                    INSERT INTO "energypool" ("participant", "community", "generated", "consumed", "consumer_price", "seller_price", "start")
                     VALUES ($1, $2, $3, $4, $5, $6, $7)
                     "#,
                     participant,
                     community,
                     BigDecimal::from_str(&rng.random_range(0.0..5000.0).to_string()).unwrap(),
                     BigDecimal::from_str(&rng.random_range(0.0..5000.0).to_string()).unwrap(),
-                    BigDecimal::from_str("1.0").unwrap(),
+                    BigDecimal::from_str(&rng.random_range(0.0..20.0).to_string()).unwrap(),
+                    BigDecimal::from_str(&rng.random_range(0.0..20.0).to_string()).unwrap(),
                     current,
-                    current + Duration::minutes(*energy_interval),
                 )
                 .execute(pool)
                 .await

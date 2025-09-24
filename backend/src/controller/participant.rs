@@ -70,7 +70,7 @@ impl AppState {
     ) -> sqlx::Result<Vec<Energy>> {
         let mut query_builder = QueryBuilder::new(
             r#"
-            SELECT id, participant, community, generated, consumed, coeficient, start, "end"
+            SELECT id, participant, community, generated, consumed, consumer_price, seller_price, start
             FROM energypool
             WHERE participant = "#,
         );

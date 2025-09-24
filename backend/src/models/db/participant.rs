@@ -18,12 +18,6 @@ pub struct Participant {
     pub password: String,
 }
 
-#[derive(Debug, Deserialize, Serialize, sqlx::Type)]
-pub struct ParticipantAlias {
-    pub participant: Uuid,
-    pub alias: Uuid,
-}
-
 #[derive(Debug, Serialize)]
 pub struct ParticipantCommunity {
     pub participant: Uuid,
