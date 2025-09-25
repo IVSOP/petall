@@ -2,7 +2,7 @@ import type { Community, Energy, ProcessedEnergy } from '$lib';
 import type { PageLoad } from './$types';
 
 // TODO: get this from login
-const participantId = '63e3c963-4a91-486A-bffe-9deed57864b2';
+const participantId = '50a536d5-755b-4904-af39-b9e30c6b8a58';
 
 export const load: PageLoad = async ({ fetch, params }) => {
 	// TODO: merge this into one request and backend does all the handling

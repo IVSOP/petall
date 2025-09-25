@@ -7,7 +7,9 @@
 	let filterValue = $state('');
 
 	let filteredCommunities = $derived(
-		data.communities.filter((c) => c.name.toLowerCase().includes(filterValue.toLowerCase()))
+		data.communities.filter((c) =>
+			c.community.name.toLowerCase().includes(filterValue.toLowerCase())
+		)
 	);
 </script>
 

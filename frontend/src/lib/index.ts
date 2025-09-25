@@ -38,3 +38,8 @@ export type Community = {
 	name: string;
 	supplier: string;
 };
+
+export type UserRoleData = {
+	community: Community;
+	role: string;
+};
