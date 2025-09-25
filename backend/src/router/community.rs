@@ -37,7 +37,7 @@ pub async fn register_community(
     Json(request): Json<CommunityRegisterRequest>,
 ) -> AppResult<impl IntoResponse> {
     request.validate()?;
-    match state.register_community(&request).await {
+    match state.register_community(&request.name).await {
         Ok(community) => Ok((StatusCode::CREATED, Json(community))),
         Err(_e) => Err(AppError::CommunityNameAlreadyInUse(request.name)),
     }
@@ -51,7 +51,7 @@ pub async fn register_participant_community(
 ) -> AppResult<impl IntoResponse> {
     request.validate()?;
     match state
-        .register_participant_community(&community_id, &request)
+        .register_participant_community(&community_id, request.participant, request.role)
         .await
     {
         Ok(participant_community) => Ok((StatusCode::CREATED, Json(participant_community))),

@@ -2,9 +2,6 @@ use crate::AppState;
 use crate::models::db::community::Community;
 use crate::models::db::participant::ParticipantCommunity;
 use crate::models::db::participant::ParticipantRole;
-use crate::models::http::requests::{
-    CommunityRegisterRequest, ParticipantCommunityRegisterRequest,
-};
 use uuid::Uuid;
 
 impl AppState {
@@ -32,10 +29,7 @@ impl AppState {
         .await
     }
 
-    pub async fn register_community(
-        &self,
-        community_request: &CommunityRegisterRequest,
-    ) -> sqlx::Result<Community> {
+    pub async fn register_community(&self, name: &str) -> sqlx::Result<Community> {
         sqlx::query_as!(
             Community,
             r#"
@@ -44,7 +38,7 @@ impl AppState {
             VALUES ($1)
             RETURNING *
             "#,
-            community_request.name,
+            name,
         )
         .fetch_one(&self.pg_pool)
         .await
@@ -53,7 +47,8 @@ impl AppState {
     pub async fn register_participant_community(
         &self,
         community: &Uuid,
-        request: &ParticipantCommunityRegisterRequest,
+        participant: Uuid,
+        role: ParticipantRole,
     ) -> sqlx::Result<ParticipantCommunity> {
         sqlx::query_as!(
             ParticipantCommunity,
@@ -65,8 +60,8 @@ impl AppState {
             community, participant, role as "role: ParticipantRole"
             "#,
             community,
-            request.participant,
-            &request.role as &ParticipantRole
+            participant,
+            &role as &ParticipantRole
         )
         .fetch_one(&self.pg_pool)
         .await

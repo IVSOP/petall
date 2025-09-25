@@ -1,7 +1,8 @@
-use crate::AppState;
+use crate::error::AppResult;
 use crate::models::db::community::Energy;
 use crate::models::db::participant::{Participant, ParticipantCommunity, ParticipantRole};
 use crate::models::http::requests::{EnergyQuery, OrderDirection};
+use crate::{AppState, auth};
 use sqlx::QueryBuilder;
 use uuid::Uuid;
 
@@ -33,7 +34,7 @@ impl AppState {
         .await
     }
 
-    pub async fn get_participant_by_email(&self, email: &str) -> sqlx::Result<Option<Participant>> {
+    pub async fn get_participant_by_email(&self, email: &str) -> AppResult<Option<Participant>> {
         sqlx::query_as!(
             Participant,
             r#"
@@ -44,6 +45,53 @@ impl AppState {
         )
         .fetch_optional(&self.pg_pool)
         .await
+        .map_err(Into::into)
+    }
+
+    pub async fn register_participant(
+        &self,
+        email: &str,
+        name: &str,
+        password: &str,
+    ) -> AppResult<Participant> {
+        let hashed_password = auth::password::hash_password(password)?;
+
+        sqlx::query_as!(
+            Participant,
+            r#"
+            INSERT INTO "participant" (email, name, password)
+            VALUES ($1, $2, $3)
+            RETURNING *
+            "#,
+            email,
+            name,
+            hashed_password
+        )
+        .fetch_one(&self.pg_pool)
+        .await
+        .map_err(Into::into)
+    }
+
+    pub async fn update_participant_password(
+        &self,
+        participant_id: &Uuid,
+        new_password: &str,
+    ) -> AppResult<()> {
+        let hashed_password = auth::password::hash_password(new_password)?;
+
+        sqlx::query!(
+            r#"
+            UPDATE "participant"
+            SET password = $2
+            WHERE id = $1
+            "#,
+            participant_id,
+            hashed_password
+        )
+        .execute(&self.pg_pool)
+        .await?;
+
+        Ok(())
     }
 
     pub async fn get_participant_communities(
