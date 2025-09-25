@@ -1,18 +1,17 @@
-use crate::router::ParticipantRole;
+use crate::models::db::participant::ParticipantRole;
 use bigdecimal::BigDecimal;
 use chrono::{Duration, Utc};
-use fake::{Fake, faker::internet::en::FreeEmail};
+use fake::{Fake, faker::internet::pt_pt::FreeEmail};
 use names::Generator;
 use rand::{Rng, seq::IteratorRandom};
 use sqlx::postgres::PgPool;
-use std::collections::HashMap;
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, clap::Parser)]
 pub struct SeedSettings {
     #[arg(long, default_value_t = 5)]
-    participant: usize,
+    participants: usize,
     #[arg(long, default_value_t = 3)]
     suppliers: usize,
     #[arg(long, default_value_t = 10)]
@@ -29,35 +28,27 @@ pub async fn run_seed(
     pg_pool: &PgPool,
     seed_settings: SeedSettings
 ) -> anyhow::Result<()> {
-    let suppliers = seed_supplier(
-        pg_pool,
-        &seed_settings.suppliers,
-    ).await?;
+    let suppliers = seed_supplier(pg_pool, &seed_settings.suppliers).await?;
 
-    let participants = seed_participant(
-        pg_pool,
-        &seed_settings.participant,
-        &suppliers,
-    ).await?;
+    let participants = seed_participant(pg_pool, &seed_settings.participants, &suppliers).await?;
 
-    let communitied = seed_community(
-        pg_pool,
-        &seed_settings.communities,
-    ).await?;
+    let communitied = seed_community(pg_pool, &seed_settings.communities).await?;
 
     let participant_communities_map = seed_participant_community(
         pg_pool,
         &seed_settings.communities_per_participant,
         &participants,
         &communitied,
-    ).await?;
+    )
+    .await?;
 
     seed_energypool(
         pg_pool,
         &seed_settings.energy_days,
         &seed_settings.energy_interval,
         &participant_communities_map,
-    ).await?;
+    )
+    .await?;
 
     Ok(())
 }
@@ -115,24 +106,12 @@ pub async fn seed_participant(
         )
     }
 
-    for participant_id in &participants {
-        sqlx::query!(
-            r#"
-            INSERT INTO "participant_alias" ("participant")
-            VALUES ($1)
-            "#,
-            participant_id,
-        )
-        .execute(pool)
-        .await?;
-    }
-
     Ok(participants)
 }
 
 pub async fn seed_community(
     pool: &PgPool,
-    count: &usize,
+    count: &usize
 ) -> anyhow::Result<Vec<Uuid>> {
     let mut generator = Generator::default();
     let mut communities = Vec::new();
@@ -170,7 +149,10 @@ pub async fn seed_participant_community(
     ];
 
     for &participant in participants {
-        for community in communities.iter().choose_multiple(&mut rng, *communities_per_participant) {
+        for community in communities
+            .iter()
+            .choose_multiple(&mut rng, *communities_per_participant)
+        {
             sqlx::query!(
                 r#"
                 INSERT INTO "participant_community" ("participant", "community", "role")
@@ -209,16 +191,16 @@ pub async fn seed_energypool(
             for community in communities {
                 sqlx::query!(
                     r#"
-                    INSERT INTO "energypool" ("participant", "community", "generated", "consumed", "coeficient", "start", "end")
+                    INSERT INTO "energypool" ("participant", "community", "generated", "consumed", "consumer_price", "seller_price", "start")
                     VALUES ($1, $2, $3, $4, $5, $6, $7)
                     "#,
                     participant,
                     community,
                     BigDecimal::from_str(&rng.random_range(0.0..5000.0).to_string()).unwrap(),
                     BigDecimal::from_str(&rng.random_range(0.0..5000.0).to_string()).unwrap(),
-                    BigDecimal::from_str("1.0").unwrap(),
+                    BigDecimal::from_str(&rng.random_range(0.0..20.0).to_string()).unwrap(),
+                    BigDecimal::from_str(&rng.random_range(0.0..20.0).to_string()).unwrap(),
                     current,
-                    current + Duration::minutes(*energy_interval),
                 )
                 .execute(pool)
                 .await

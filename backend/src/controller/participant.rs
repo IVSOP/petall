@@ -1,47 +1,9 @@
 use crate::AppState;
-use crate::router::{EnergyQuery, OrderDirection, ParticipantRole};
-use bigdecimal::BigDecimal;
-use chrono::NaiveDateTime;
-use serde::{Deserialize, Serialize};
+use crate::models::db::community::Energy;
+use crate::models::db::participant::{Participant, ParticipantCommunity, ParticipantRole};
+use crate::models::http::requests::{EnergyQuery, OrderDirection};
 use sqlx::QueryBuilder;
 use uuid::Uuid;
-
-#[derive(Debug, Deserialize, Serialize, sqlx::Type)]
-pub struct Participant {
-    pub id: Uuid,
-    pub email: String,
-    pub name: String,
-    pub supplier: Uuid,
-    pub password: String,
-}
-
-#[derive(Debug, Deserialize, Serialize, sqlx::Type)]
-pub struct ParticipantAlias {
-    pub participant: Uuid,
-    pub alias: Uuid,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct ParticipantCommunity {
-    pub participant: Uuid,
-    pub community: Uuid,
-    pub role: ParticipantRole,
-}
-
-#[derive(Debug, Deserialize, Serialize, sqlx::FromRow)]
-pub struct Energy {
-    pub id: Uuid,
-    pub participant: Uuid,
-    pub community: Uuid,
-    #[serde(with = "bigdecimal::serde::json_num")]
-    pub generated: BigDecimal,
-    #[serde(with = "bigdecimal::serde::json_num")]
-    pub consumed: BigDecimal,
-    #[serde(with = "bigdecimal::serde::json_num")]
-    pub coeficient: BigDecimal,
-    pub start: NaiveDateTime,
-    pub end: NaiveDateTime,
-}
 
 impl AppState {
     pub async fn get_participants(&self) -> sqlx::Result<Vec<Participant>> {
@@ -55,23 +17,23 @@ impl AppState {
         .await
     }
 
-    pub async fn get_participant_by_id(&self, id: &Uuid) -> sqlx::Result<Option<Participant>> {
+    pub async fn get_participant_by_id(
+        &self,
+        participant_id: &Uuid,
+    ) -> sqlx::Result<Option<Participant>> {
         sqlx::query_as!(
             Participant,
             r#"
             SELECT * FROM "participant"
             WHERE id = $1
             "#,
-            id,
+            participant_id,
         )
         .fetch_optional(&self.pg_pool)
         .await
     }
 
-    pub async fn get_participant_by_email(
-        &self,
-        email: &str,
-    ) -> sqlx::Result<Option<Participant>> {
+    pub async fn get_participant_by_email(&self, email: &str) -> sqlx::Result<Option<Participant>> {
         sqlx::query_as!(
             Participant,
             r#"
@@ -108,7 +70,7 @@ impl AppState {
     ) -> sqlx::Result<Vec<Energy>> {
         let mut query_builder = QueryBuilder::new(
             r#"
-            SELECT id, participant, community, generated, consumed, coeficient, start, "end"
+            SELECT id, participant, community, generated, consumed, consumer_price, seller_price, start
             FROM energypool
             WHERE participant = "#,
         );
@@ -133,7 +95,11 @@ impl AppState {
         };
 
         query_builder.push(format!(" ORDER BY start {}", order_dir));
-        query_builder.push(format!(" LIMIT {} OFFSET {}", query.size, (query.page - 1) * query.size));
+        query_builder.push(format!(
+            " LIMIT {} OFFSET {}",
+            query.size,
+            (query.page - 1) * query.size
+        ));
 
         query_builder
             .build_query_as::<Energy>()

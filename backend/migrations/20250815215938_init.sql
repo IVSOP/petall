@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TYPE participant_role AS ENUM (
     'user',
     'manager',
@@ -25,16 +27,6 @@ CREATE TABLE IF NOT EXISTS "participant" (
 );
 
 CREATE INDEX IF NOT EXISTS "participant_email_idx" ON "participant" ("email");
-
-CREATE TABLE IF NOT EXISTS "participant_alias" (
-    "participant" UUID NOT NULL,
-    "alias" UUID NOT NULL DEFAULT gen_random_uuid(),
-    PRIMARY KEY ("participant", "alias"),
-    CONSTRAINT fk_participant_alias
-        FOREIGN KEY ("participant") 
-        REFERENCES "participant"("id")
-        ON DELETE CASCADE
-);
 
 CREATE TABLE IF NOT EXISTS "community" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
@@ -66,9 +58,9 @@ CREATE TABLE IF NOT EXISTS "energypool" (
     "community" UUID NOT NULL,
     "generated" NUMERIC(11,2) NOT NULL CHECK ("generated" >= 0),
     "consumed" NUMERIC(11,2) NOT NULL CHECK ("consumed" >= 0),
-    "coeficient" NUMERIC(11,2) NOT NULL,
+    "consumer_price" NUMERIC(11,2) NOT NULL CHECK ("generated" >= 0),
+    "seller_price" NUMERIC(11,2) NOT NULL CHECK ("consumed" >= 0),
     "start" TIMESTAMP NOT NULL,
-    "end" TIMESTAMP NOT NULL,
     PRIMARY KEY ("id"),
     CONSTRAINT fk_energypool_participant
         FOREIGN KEY ("participant")

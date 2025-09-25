@@ -1,14 +1,13 @@
+use crate::seed::SeedSettings;
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use sqlx::PgPool;
 use std::net::IpAddr;
 use tracing::info;
 
-use crate::seed::SeedSettings;
-
-mod community;
+mod controller;
 mod error;
-mod participant;
+mod models;
 mod router;
 mod seed;
 
