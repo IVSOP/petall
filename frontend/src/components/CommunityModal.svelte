@@ -53,6 +53,15 @@
 					placeholder="Enter a short description"
 				/>
 			</div>
+			<div class="grid grid-cols-4 items-center gap-4">
+				<Label for="calculation-tule" class="text-right">Rule</Label>
+				<Input
+					id="calculation-rule"
+					value=""
+					class="col-span-3"
+					placeholder="Enter calculation rule"
+				/>
+			</div>
 		</div>
 		<Dialog.Footer>
 			<Button type="submit">Save Community</Button>

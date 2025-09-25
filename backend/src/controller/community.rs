@@ -1,7 +1,8 @@
 use crate::AppState;
 use crate::models::db::community::Community;
-use crate::models::db::participant::ParticipantCommunity;
-use crate::models::db::participant::ParticipantRole;
+use crate::models::db::participant::{
+    ParticipantRole, ParticipantCommunity
+};
 use crate::models::http::requests::{
     CommunityRegisterRequest, ParticipantCommunityRegisterRequest,
 };
@@ -89,6 +90,22 @@ impl AppState {
             participant
         )
         .fetch_one(&self.pg_pool)
+        .await
+    }
+
+    pub async fn get_community_participants(
+        &self,
+        community: &Uuid,
+    ) -> sqlx::Result<Vec<ParticipantCommunity>> {
+        sqlx::query_as!(
+            ParticipantCommunity,
+            r#"
+            SELECT participant, community, role as "role: ParticipantRole" FROM "participant_community"
+            WHERE community = $1
+            "#,
+            community
+        )
+        .fetch_all(&self.pg_pool)
         .await
     }
 }

@@ -14,7 +14,7 @@
 >
 	<Card.Root class="gap-3 overflow-hidden rounded-xl pt-0">
 		<Card.Header class="relative px-0 py-0">
-			<div class="relative h-48 w-full overflow-hidden rounded-t-xl shadow-inner">
+			<div class="relative h-48 w-full overflow-hidden shadow-inner">
 				<a href={`/community/${community.community.id}`}>
 					<img
 						src="https://media.istockphoto.com/id/1284536377/photo/solar-panels-on-field-in-summer-aerial-view-of-poland.jpg?s=612x612&w=0&k=20&c=CaH_vkg5gwZl8QzQTQYHhAqm0G5jEqhuuGR6V0l3wWc="

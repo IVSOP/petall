@@ -2,9 +2,11 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 
+	let isLoading = true;
 	let image: string | null = 'https://github.com/DigoqueDigo.png';
 
 	function handleFileChange(e: Event) {
@@ -47,10 +49,17 @@
 					aria-label="Change profile picture"
 					type="button"
 				>
+					{#if isLoading}
+						<Skeleton class="h-full w-full rounded-full" />
+					{/if}
+
 					<img
 						src={image}
 						alt=""
-						class="h-full w-full rounded-full object-cover ring-2 ring-transparent transition hover:ring-gray-300"
+						class="h-full w-full rounded-full object-cover ring-2 ring-transparent transition hover:ring-gray-300 {isLoading
+							? 'hidden'
+							: ''}"
+						on:load={() => (isLoading = false)}
 					/>
 					<div
 						class="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 text-white opacity-0 transition hover:opacity-100"
