@@ -1,10 +1,13 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
+	import Info from '@lucide/svelte/icons/info';
 	import AlertCircleIcon from '@lucide/svelte/icons/alert-circle';
+	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Alert from '$lib/components/ui/alert/index.js';
+	import * as Card from '$lib/components/ui/card/index.js';
 
 	const { data }: PageProps = $props();
 </script>
@@ -16,34 +19,49 @@
 		{data.community.name}
 	</div>
 
-	<div class="flex flex-col gap-6 py-0 lg:flex-row lg:items-start">
-		<div>
-			<button
-				class="relative w-full cursor-pointer overflow-hidden rounded-lg border-2 focus:outline-none"
-				aria-label="Change community picture"
-				type="button"
+	<div class="flex flex-col gap-4 py-0 lg:flex-row lg:items-start">
+		<button
+			class="relative cursor-pointer overflow-hidden rounded-lg border focus:outline-none"
+			aria-label="Change community picture"
+			type="button"
+		>
+			<img
+				src="https://images.jdmagicbox.com/rep/b2b/wall-paper/wall-paper-11.jpg"
+				alt="Solar panels on a field in summer"
+				class="h-60 w-full object-cover ring-2 ring-transparent transition hover:ring-gray-300 lg:w-[30rem]"
+			/>
+			<div
+				class="absolute inset-0 flex items-center justify-center rounded-lg bg-black/40 text-white opacity-0 transition hover:opacity-100"
 			>
-				<img
-					src="https://media.istockphoto.com/id/1284536377/photo/solar-panels-on-field-in-summer-aerial-view-of-poland.jpg?s=612x612&w=0&k=20&c=CaH_vkg5gwZl8QzQTQYHhAqm0G5jEqhuuGR6V0l3wWc="
-					alt="Solar panels on a field in summer"
-					class="h-auto w-full object-cover ring-2 ring-transparent transition hover:ring-gray-300"
-				/>
-				<div
-					class="absolute inset-0 flex items-center justify-center rounded-lg bg-black/40 text-white opacity-0 transition hover:opacity-100"
-				>
-					Change
-				</div>
-			</button>
-		</div>
+				Change
+			</div>
+		</button>
 
 		<div class="grid flex-1 gap-4">
-			<div class="grid grid-cols-8 items-center gap-4">
+			<Alert.Root class="bg-blue-100">
+				<Info />
+				<Alert.Title>Success! Your changes have been saved</Alert.Title>
+				<Alert.Description>This is an alert with icon, title and description.</Alert.Description>
+			</Alert.Root>
+			<div class="grid grid-cols-4 items-center gap-4">
 				<Label for="name" class="font-sm text-right">Name</Label>
 				<Input
 					id="name"
 					value={data.community.name}
-					class="col-span-7"
+					class="col-span-3 text-sm"
 					placeholder="Enter community name"
+				/>
+			</div>
+			<div class="grid grid-cols-4 items-center gap-4">
+				<Label for="rule" class="font-sm text-right">Rule</Label>
+				<Input id="rule" class="col-span-3 text-sm" placeholder="Enter community rule" />
+			</div>
+			<div class="grid grid-cols-4 items-center gap-4">
+				<Label for="description" class="text-right">Description</Label>
+				<Textarea
+					id="description"
+					class="col-span-3 h-0 overflow-y-auto text-sm"
+					placeholder="Enter a short decription"
 				/>
 			</div>
 		</div>
@@ -54,6 +72,30 @@
 	>
 		Manage access
 	</div>
+	<Card.Root class="rounded-lg border">
+		<Card.Header>
+			<Card.Title>Card Title</Card.Title>
+			<Card.Description>Card Description</Card.Description>
+		</Card.Header>
+		<Card.Content>
+			<p>Card Content</p>
+		</Card.Content>
+		<Card.Footer>
+			<p>Card Footer</p>
+		</Card.Footer>
+	</Card.Root>
+		<Card.Root class="rounded-lg border">
+		<Card.Header>
+			<Card.Title>Card Title</Card.Title>
+			<Card.Description>Card Description</Card.Description>
+		</Card.Header>
+		<Card.Content>
+			<p>Card Content</p>
+		</Card.Content>
+		<Card.Footer>
+			<p>Card Footer</p>
+		</Card.Footer>
+	</Card.Root>
 
 	<div
 		class="text-w-full my-4 rounded-md border bg-destructive px-4 py-2 text-lg font-semibold text-white md:text-xl"
@@ -62,7 +104,6 @@
 	</div>
 
 	<div class="space-y-4">
-
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 			<Alert.Root variant="destructive">
 				<AlertCircleIcon />
@@ -104,13 +145,13 @@
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 			<Button
 				variant="secondary"
-				class="w-full rounded-md border border-red-600 bg-white px-4 py-2 text-red-600 hover:bg-red-50 cursor-pointer"
+				class="w-full cursor-pointer rounded-md border border-red-600 bg-white px-4 py-2 text-red-600 hover:bg-red-50"
 			>
 				Leave Community
 			</Button>
-			<Button variant="destructive" class="w-full rounded-md px-4 py-2 cursor-pointer">
-                Delete Community
-            </Button>
+			<Button variant="destructive" class="w-full cursor-pointer rounded-md px-4 py-2">
+				Delete Community
+			</Button>
 		</div>
 	</div>
 </div>

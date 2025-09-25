@@ -1,15 +1,15 @@
 <script lang="ts">
 	import SquarePlus from '@lucide/svelte/icons/square-plus';
-
-	import { Button, buttonVariants } from '$lib/components/ui/button/index.js';
-	import * as Dialog from '$lib/components/ui/dialog/index.js';
+	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
+	import { Button, buttonVariants } from '$lib/components/ui/button/index.js';
+	import * as Dialog from '$lib/components/ui/dialog/index.js';
 </script>
 
 <Dialog.Root>
 	<Dialog.Trigger
-		class={`${buttonVariants({ variant: 'outline' })} order-1 bg-green-600 text-white hover:bg-green-700 hover:text-white focus:outline-none md:order-none`}
+		class={`${buttonVariants({ variant: 'outline' })} order-1 bg-green-600 text-white hover:bg-green-700 hover:text-white focus:outline-none md:order-none text-sm md:text-base`}
 	>
 		<SquarePlus />
 		New Community
@@ -24,14 +24,14 @@
 		<div class="grid gap-4">
 			<div class="flex justify-center">
 				<button
-					class="relative w-full cursor-pointer rounded-lg focus:outline-none"
+					class="relative w-full cursor-pointer overflow-hidden rounded-lg border focus:outline-none"
 					aria-label="Change community picture"
 					type="button"
 				>
 					<img
-						src="https://media.istockphoto.com/id/1284536377/photo/solar-panels-on-field-in-summer-aerial-view-of-poland.jpg?s=612x612&w=0&k=20&c=CaH_vkg5gwZl8QzQTQYHhAqm0G5jEqhuuGR6V0l3wWc="
+						src="https://images.jdmagicbox.com/rep/b2b/wall-paper/wall-paper-11.jpg"
 						alt="Solar panels on a field in summer"
-						class="h-auto w-full rounded-lg object-cover ring-2 ring-transparent transition hover:ring-gray-300"
+						class="h-48 w-full object-cover ring-2 ring-transparent transition hover:ring-gray-300"
 					/>
 					<div
 						class="absolute inset-0 flex items-center justify-center rounded-lg bg-black/40 text-white opacity-0 transition hover:opacity-100"
@@ -42,15 +42,11 @@
 			</div>
 			<div class="grid grid-cols-4 items-center gap-4">
 				<Label for="community-name" class="text-right">Name</Label>
-				<Input id="community-name" value="" class="col-span-3" placeholder="Enter community name" />
-			</div>
-			<div class="grid grid-cols-4 items-center gap-4">
-				<Label for="description" class="text-right">Description</Label>
 				<Input
-					id="description"
+					id="community-name"
 					value=""
-					class="col-span-3"
-					placeholder="Enter a short description"
+					class="col-span-3 text-sm"
+					placeholder="Enter community name"
 				/>
 			</div>
 			<div class="grid grid-cols-4 items-center gap-4">
@@ -58,8 +54,16 @@
 				<Input
 					id="calculation-rule"
 					value=""
-					class="col-span-3"
+					class="col-span-3 text-sm"
 					placeholder="Enter calculation rule"
+				/>
+			</div>
+			<div class="grid grid-cols-4 items-center gap-4">
+				<Label for="description" class="text-righ">Description</Label>
+				<Textarea
+					id="description"
+					class="col-span-3 h-0 overflow-y-auto text-sm"
+					placeholder="Enter community decription"
 				/>
 			</div>
 		</div>
