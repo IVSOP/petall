@@ -9,7 +9,7 @@
 
 <Dialog.Root>
 	<Dialog.Trigger
-		class={`${buttonVariants({ variant: 'outline' })} order-1 bg-green-600 text-white hover:bg-green-700 hover:text-white focus:outline-none md:order-none text-sm md:text-base`}
+		class={`${buttonVariants({ variant: 'outline' })} w-full bg-green-600 text-sm text-white hover:bg-green-700 hover:text-white focus:outline-none md:text-base`}
 	>
 		<SquarePlus />
 		New Community
@@ -40,35 +40,21 @@
 					</div>
 				</button>
 			</div>
-			<div class="grid grid-cols-4 items-center gap-4">
+			<div class="grid gap-2">
 				<Label for="community-name" class="text-right">Name</Label>
-				<Input
-					id="community-name"
-					value=""
-					class="col-span-3 text-sm"
-					placeholder="Enter community name"
-				/>
+				<Input id="community-name" class="text-sm" placeholder="Enter community name" />
 			</div>
-			<div class="grid grid-cols-4 items-center gap-4">
+			<div class="grid gap-2">
 				<Label for="calculation-tule" class="text-right">Rule</Label>
-				<Input
-					id="calculation-rule"
-					value=""
-					class="col-span-3 text-sm"
-					placeholder="Enter calculation rule"
-				/>
+				<Input id="calculation-rule" class="text-sm" placeholder="Enter calculation rule" />
 			</div>
-			<div class="grid grid-cols-4 items-center gap-4">
+			<div class="grid gap-2">
 				<Label for="description" class="text-righ">Description</Label>
-				<Textarea
-					id="description"
-					class="col-span-3 h-0 overflow-y-auto text-sm"
-					placeholder="Enter community decription"
-				/>
+				<Textarea id="description" class="h-0 text-sm" placeholder="Enter community decription" />
 			</div>
 		</div>
 		<Dialog.Footer>
-			<Button type="submit">Save Community</Button>
+			<Button type="submit" class="w-full">Save Community</Button>
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>

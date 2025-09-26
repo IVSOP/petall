@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
 	import Info from '@lucide/svelte/icons/info';
+	import Search from '@lucide/svelte/icons/search';
 	import AlertCircleIcon from '@lucide/svelte/icons/alert-circle';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -8,6 +9,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Alert from '$lib/components/ui/alert/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
+	import CommunityModal from '../../../../../components/CommunityDialog.svelte';
 
 	const { data }: PageProps = $props();
 </script>
@@ -72,29 +74,20 @@
 	>
 		Manage access
 	</div>
-	<Card.Root class="rounded-lg border">
+
+	<Card.Root class="w-full ">
 		<Card.Header>
-			<Card.Title>Card Title</Card.Title>
-			<Card.Description>Card Description</Card.Description>
+			<div class="flex flex-col gap-2 pb-4 md:flex-row md:items-center">
+				<div class="relative order-2 w-full md:order-none">
+					<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+						<Search class="h-4 w-4 text-muted-foreground" />
+					</div>
+					<Input placeholder="Find a community..." class="flex-1 pl-9 text-sm md:text-base" />
+				</div>
+				<CommunityModal />
+			</div>
 		</Card.Header>
-		<Card.Content>
-			<p>Card Content</p>
-		</Card.Content>
-		<Card.Footer>
-			<p>Card Footer</p>
-		</Card.Footer>
-	</Card.Root>
-		<Card.Root class="rounded-lg border">
-		<Card.Header>
-			<Card.Title>Card Title</Card.Title>
-			<Card.Description>Card Description</Card.Description>
-		</Card.Header>
-		<Card.Content>
-			<p>Card Content</p>
-		</Card.Content>
-		<Card.Footer>
-			<p>Card Footer</p>
-		</Card.Footer>
+		<Card.Content></Card.Content>
 	</Card.Root>
 
 	<div

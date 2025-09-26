@@ -1,19 +1,44 @@
 <script lang="ts">
 	import CommunityCard from '../../components/CommunityCard.svelte';
-	import CommunityFilter from '../../components/CommunityFilter.svelte';
+	import CommunityDialog from '../../components/CommunityDialog.svelte';
+	import SearchBar from '../../components/SearchBar.svelte';
+	import SmartSelect from '../../components/SmartSelect.svelte';
 
 	const { data } = $props();
 
-	let filterValue = $state('');
+	let filterCommunityName = $state('');
+
+	let roleItems = [
+		{ value: 'user', label: 'User' },
+		{ value: 'manager', label: 'Manager' }
+	];
+
+	let sortItems = [
+		{ value: 'byDate', label: 'Date' },
+		{ value: 'byName', label: 'Name' },
+		{ value: 'byParticipants', label: 'Participants' }
+	];
 
 	let filteredCommunities = $derived(
 		data.communities.filter((c) =>
-			c.community.name.toLowerCase().includes(filterValue.toLowerCase())
+			c.community.name.toLowerCase().includes(filterCommunityName.toLowerCase())
 		)
 	);
 </script>
 
-<CommunityFilter bind:value={filterValue} />
+<div class="flex flex-col gap-2 pb-4 md:flex-row md:items-center">
+	<div class="order-2 w-full md:order-none">
+		<SearchBar bind:value={filterCommunityName} placeholder="Find community" />
+	</div>
+	<div class="order-3 flex flex-row gap-2 md:order-none">
+		<SmartSelect type="multiple" label="Role" items={roleItems} />
+		<SmartSelect type="single" label="Sort" items={sortItems} />
+	</div>
+	<div class="order-1 md:order-none">
+		<CommunityDialog />
+	</div>
+</div>
+
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
 	{#if filteredCommunities.length > 0}
 		{#each filteredCommunities as community}

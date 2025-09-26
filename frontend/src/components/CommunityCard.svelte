@@ -32,7 +32,7 @@
 			</div>
 		</Card.Header>
 		<Card.Content class="px-4">
-			<div class="flex flex-col sm:justify-between xl:flex-row">
+			<div class="flex flex-col justify-between xl:flex-row">
 				<div class="truncate text-lg font-semibold">
 					<a href={`/community/${community.community.id}`}>
 						{community.community.name}
