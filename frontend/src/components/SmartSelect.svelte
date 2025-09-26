@@ -5,7 +5,7 @@
 </script>
 
 <Select.Root {type}>
-	<Select.Trigger class="w-full text-sm md:text-base">
+	<Select.Trigger class="text-sm md:text-base">
 		{label}
 	</Select.Trigger>
 	<Select.Content>
