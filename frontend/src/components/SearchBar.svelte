@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Input } from '$lib/components/ui/input/index.js';
 	import Search from '@lucide/svelte/icons/search';
+	import { Input } from '$lib/components/ui/input/index.js';
 
 	let { value = $bindable(), placeholder, ...props } = $props();
 </script>

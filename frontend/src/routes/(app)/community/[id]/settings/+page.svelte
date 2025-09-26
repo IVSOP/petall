@@ -10,7 +10,7 @@
 <div class="container">
 	<div class="grid gap-4">
 		<InfoZone community={data.community} />
-		<ManageAccessZone />
+		<ManageAccessZone participants={data.participants} />
 		<DangerZone community={data.community} />
 	</div>
 </div>
