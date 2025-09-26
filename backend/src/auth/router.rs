@@ -7,7 +7,7 @@ use axum::{Json, Router, debug_handler, extract::State, response::IntoResponse, 
 use uuid::Uuid;
 use validator::Validate;
 
-pub fn router(state: AppState) -> Router {
+pub fn router() -> Router<AppState> {
     Router::new()
         .route("/register", post(register_handler))
         .route("/login", post(login_handler))
@@ -15,20 +15,19 @@ pub fn router(state: AppState) -> Router {
         .route("/revoke", post(revoke_handler))
         .route("/changepassword", post(change_password_handler))
         .route("/me", post(me_handler))
-        .with_state(state)
 }
 
-#[derive(serde::Deserialize, Validate)]
-pub struct RegisterRequest {
+#[derive(serde::Deserialize, serde::Serialize, Validate)]
+struct RegisterRequest {
     #[validate(length(min = 3, max = 50))]
-    pub name: String,
+    name: String,
     #[validate(email)]
-    pub email: String,
+    email: String,
     #[validate(length(min = 8, max = 50))]
-    pub password: String,
+    password: String,
 }
 
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 struct RegisterResponse {
     uuid: Uuid,
     name: String,
@@ -75,13 +74,13 @@ async fn register_handler(
     }))
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 struct LoginRequest {
     email: String,
     password: String,
 }
 
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 struct LoginResponse {
     access_token: String,
     refresh_token: String,
@@ -116,12 +115,12 @@ async fn login_handler(
     }))
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 struct RefreshTokenRequest {
     refresh_token: String,
 }
 
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 struct RefreshTokenResponse {
     access_token: String,
 }
@@ -147,9 +146,9 @@ async fn refresh_handler(
     Ok(Json(RefreshTokenResponse { access_token }))
 }
 
-#[derive(serde::Serialize)]
-struct RevokeResponse {
-    message: String,
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct RevokeResponse {
+    pub message: String,
 }
 
 #[debug_handler]
@@ -167,13 +166,13 @@ async fn revoke_handler(
     }))
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 struct ChangePasswordRequest {
     old_password: String,
     new_password: String,
 }
 
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 struct ChangePasswordResponse {
     message: String,
     access_token: String,
@@ -217,7 +216,7 @@ async fn change_password_handler(
     }))
 }
 
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 struct MeResponse {
     id: Uuid,
     email: String,
@@ -239,4 +238,247 @@ async fn me_handler(
         email: participant.email,
         name: participant.name,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{sync::Arc, time::Duration};
+
+    use axum::http::StatusCode;
+    use axum_test::TestServer;
+    use jsonwebtoken::{DecodingKey, EncodingKey};
+    use sqlx::PgPool;
+    use tower_http::trace::TraceLayer;
+    use tracing_test::traced_test;
+
+    use crate::auth::{
+        jwt::JwtConfig,
+        router::{
+            ChangePasswordRequest, LoginRequest, MeResponse, RefreshTokenRequest, RegisterRequest,
+            RegisterResponse,
+        },
+        token_store,
+    };
+
+    fn generate_jwt_config() -> JwtConfig {
+        const TEST_SECRET: &[u8] = b"test_secret";
+
+        JwtConfig {
+            access_token_max_age: Duration::from_secs(3600), // 1 hour
+            refresh_token_max_age: Duration::from_secs(86400), // 24 hours
+            access_token_public_key: DecodingKey::from_secret(TEST_SECRET),
+            access_token_private_key: EncodingKey::from_secret(TEST_SECRET),
+            refresh_token_public_key: DecodingKey::from_secret(TEST_SECRET),
+            refresh_token_private_key: EncodingKey::from_secret(TEST_SECRET),
+        }
+    }
+
+    fn server(pg_pool: PgPool) -> TestServer {
+        let jwt_config = Arc::new(generate_jwt_config());
+        let token_store = Arc::new(token_store::Store);
+        let state = crate::AppState {
+            pg_pool,
+            jwt_config,
+            token_store,
+        };
+        let router = crate::auth::router::router()
+            .with_state(state)
+            .layer(TraceLayer::new_for_http());
+
+        TestServer::new(router).unwrap()
+    }
+
+    #[traced_test]
+    #[sqlx::test]
+    async fn test_register(pool: PgPool) {
+        let server = server(pool);
+
+        let request_body = RegisterRequest {
+            name: "Test User".to_string(),
+            email: "test@example.com".to_string(),
+            password: "test_password".to_string(),
+        };
+
+        let response = server.post("/register").json(&request_body).await;
+        response.assert_status(StatusCode::OK);
+
+        let response = server.post("/register").json(&request_body).await;
+        response.assert_status(StatusCode::CONFLICT);
+    }
+
+    #[traced_test]
+    #[sqlx::test]
+    async fn test_login(pool: PgPool) {
+        let server = server(pool);
+
+        let register_request = RegisterRequest {
+            name: "Test User".to_string(),
+            email: "test@example.com".to_string(),
+            password: "test_password".to_string(),
+        };
+
+        let response = server.post("/register").json(&register_request).await;
+        response.assert_status(StatusCode::OK);
+
+        let login_request = LoginRequest {
+            email: "test@example.com".to_string(),
+            password: "test_password".to_string(),
+        };
+
+        let response = server.post("/login").json(&login_request).await;
+        response.assert_status(StatusCode::OK);
+
+        let wrong_password_request = LoginRequest {
+            email: "test@example.com".to_string(),
+            password: "wrong_password".to_string(),
+        };
+
+        let response = server.post("/login").json(&wrong_password_request).await;
+        response.assert_status(StatusCode::UNAUTHORIZED);
+
+        let nonexistent_email_request = LoginRequest {
+            email: "nonexistent@example.com".to_string(),
+            password: "test_password".to_string(),
+        };
+
+        let response = server.post("/login").json(&nonexistent_email_request).await;
+        response.assert_status(StatusCode::UNAUTHORIZED);
+    }
+
+    #[traced_test]
+    #[sqlx::test]
+    async fn test_refresh(pool: PgPool) {
+        let server = server(pool);
+
+        let register_request = RegisterRequest {
+            name: "Test User".to_string(),
+            email: "test@example.com".to_string(),
+            password: "test_password".to_string(),
+        };
+
+        let response = server.post("/register").json(&register_request).await;
+        response.assert_status(StatusCode::OK);
+        let register_response: RegisterResponse = response.json();
+
+        let refresh_request = RefreshTokenRequest {
+            refresh_token: register_response.refresh_token,
+        };
+
+        let response = server.post("/refresh").json(&refresh_request).await;
+        response.assert_status(StatusCode::OK);
+
+        let invalid_refresh_request = RefreshTokenRequest {
+            refresh_token: "invalid_token".to_string(),
+        };
+
+        let response = server.post("/refresh").json(&invalid_refresh_request).await;
+        response.assert_status(StatusCode::UNAUTHORIZED);
+    }
+
+    #[traced_test]
+    #[sqlx::test]
+    async fn test_revoke(pool: PgPool) {
+        let server = server(pool);
+
+        let register_request = RegisterRequest {
+            name: "Test User".to_string(),
+            email: "test@example.com".to_string(),
+            password: "test_password".to_string(),
+        };
+
+        let response = server.post("/register").json(&register_request).await;
+        response.assert_status(StatusCode::OK);
+        let register_response: RegisterResponse = response.json();
+
+        let access_token = register_response.access_token;
+        let response = server
+            .post("/revoke")
+            .add_header("Authorization", format!("Bearer {}", access_token))
+            .await;
+        response.assert_status(StatusCode::OK);
+
+        let response = server.post("/revoke").await;
+        response.assert_status(StatusCode::UNAUTHORIZED);
+    }
+
+    #[traced_test]
+    #[sqlx::test]
+    async fn test_change_password(pool: PgPool) {
+        let server = server(pool);
+
+        let register_request = RegisterRequest {
+            name: "Test User".to_string(),
+            email: "test@example.com".to_string(),
+            password: "old_password".to_string(),
+        };
+
+        let response = server.post("/register").json(&register_request).await;
+        response.assert_status(StatusCode::OK);
+        let register_response: RegisterResponse = response.json();
+
+        let access_token = register_response.access_token;
+
+        let change_password_request = ChangePasswordRequest {
+            old_password: "old_password".to_string(),
+            new_password: "new_password".to_string(),
+        };
+
+        let response = server
+            .post("/changepassword")
+            .add_header("Authorization", format!("Bearer {}", access_token))
+            .json(&change_password_request)
+            .await;
+        response.assert_status(StatusCode::OK);
+
+        let wrong_old_password_request = ChangePasswordRequest {
+            old_password: "wrong_old_password".to_string(),
+            new_password: "new_password2".to_string(),
+        };
+
+        let response = server
+            .post("/changepassword")
+            .add_header("Authorization", format!("Bearer {}", access_token))
+            .json(&wrong_old_password_request)
+            .await;
+        response.assert_status(StatusCode::UNAUTHORIZED);
+
+        let response = server
+            .post("/changepassword")
+            .json(&change_password_request)
+            .await;
+        response.assert_status(StatusCode::UNAUTHORIZED);
+    }
+
+    #[traced_test]
+    #[sqlx::test]
+    async fn test_me(pool: PgPool) {
+        let server = server(pool);
+
+        let register_request = RegisterRequest {
+            name: "Test User".to_string(),
+            email: "test@example.com".to_string(),
+            password: "test_password".to_string(),
+        };
+
+        let response = server.post("/register").json(&register_request).await;
+        response.assert_status(StatusCode::OK);
+        let register_response: RegisterResponse = response.json();
+
+        let access_token = register_response.access_token;
+
+        let response = server
+            .post("/me")
+            .add_header("Authorization", format!("Bearer {}", access_token))
+            .await;
+        response.assert_status(StatusCode::OK);
+
+        let me_response: MeResponse = response.json();
+
+        assert_eq!(register_response.uuid, me_response.id);
+        assert_eq!(me_response.email, "test@example.com");
+        assert_eq!(me_response.name, "Test User");
+
+        let response = server.post("/me").await;
+        response.assert_status(StatusCode::UNAUTHORIZED);
+    }
 }

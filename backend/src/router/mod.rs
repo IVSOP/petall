@@ -1,4 +1,4 @@
-use crate::AppState;
+use crate::{AppState, auth};
 use axum::{
     Router,
     routing::{delete, get, post},
@@ -34,6 +34,7 @@ pub fn router(state: AppState) -> Router {
             "/participant/{participant_id}/communities",
             get(participant::get_participant_communities),
         )
-        .with_state(state)
+        .nest("/auth", auth::router::router().with_state(state.clone()))
+        .with_state(state.clone())
         .layer(TraceLayer::new_for_http())
 }

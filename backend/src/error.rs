@@ -75,7 +75,7 @@ impl IntoResponse for AppError {
                 None,
             ),
             AppError::SqlxError(err) => {
-                error!(error = ?err, "Database error occurred");
+                error!("Database error occurred: {err:?}");
                 internal_server_error
             }
             AppError::ValidationError(err) => (
