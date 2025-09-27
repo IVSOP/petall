@@ -57,12 +57,12 @@ async fn register_handler(
         .await?;
 
     let token_id = Uuid::new_v4();
-    let refresh_token = jwt::create_refresh_token(&state.jwt_config, token_id, user.id)?;
+    let (refresh_token, refresh_expiration) =
+        jwt::create_refresh_token(&state.jwt_config, token_id, user.id)?;
     let access_token = jwt::create_access_token(&state.jwt_config, token_id, user.id)?;
 
     state
-        .token_store
-        .store_token(token_id, user.id.clone())
+        .store_token(token_id, user.id.clone(), refresh_expiration)
         .await?;
 
     Ok(Json(RegisterResponse {
@@ -102,11 +102,11 @@ async fn login_handler(
 
     let token_id = Uuid::new_v4();
     let access_token = jwt::create_access_token(&state.jwt_config, token_id, participant.id)?;
-    let refresh_token = jwt::create_refresh_token(&state.jwt_config, token_id, participant.id)?;
+    let (refresh_token, refresh_expiration) =
+        jwt::create_refresh_token(&state.jwt_config, token_id, participant.id)?;
 
     state
-        .token_store
-        .store_token(token_id, participant.id.clone())
+        .store_token(token_id, participant.id.clone(), refresh_expiration)
         .await?;
 
     Ok(Json(LoginResponse {
@@ -130,13 +130,10 @@ async fn refresh_handler(
     State(state): State<AppState>,
     Json(request): Json<RefreshTokenRequest>,
 ) -> AppResult<impl IntoResponse> {
-    let refresh_token = jwt::decode_refresh_token(&state.jwt_config, &request.refresh_token)?;
+    let refresh_token = jwt::decode_refresh_token(&state.jwt_config, &request.refresh_token)
+        .map_err(|_| AppError::InvalidToken)?;
 
-    if state
-        .token_store
-        .is_token_revoked(refresh_token.token_id)
-        .await?
-    {
+    if !state.is_token_valid(refresh_token.token_id).await? {
         return Err(AppError::InvalidToken);
     }
 
@@ -156,10 +153,9 @@ async fn revoke_handler(
     ExtractAccessToken(access_token): ExtractAccessToken,
     State(state): State<AppState>,
 ) -> AppResult<impl IntoResponse> {
-    state
-        .token_store
-        .delete_token(access_token.token_id)
-        .await?;
+    if !state.delete_token(access_token.token_id).await? {
+        return Err(AppError::InvalidToken);
+    }
 
     Ok(Json(RevokeResponse {
         message: "Token revoked".to_string(),
@@ -200,13 +196,13 @@ async fn change_password_handler(
 
     let token_id = Uuid::new_v4();
     let access_token = jwt::create_access_token(&state.jwt_config, token_id, participant.id)?;
-    let refresh_token = jwt::create_refresh_token(&state.jwt_config, token_id, participant.id)?;
+    let (refresh_token, refresh_expiration) =
+        jwt::create_refresh_token(&state.jwt_config, token_id, participant.id)?;
 
-    state.token_store.delete_all_tokens(participant.id).await?;
+    state.delete_all_tokens(participant.id).await?;
 
     state
-        .token_store
-        .store_token(token_id, participant.id.clone())
+        .store_token(token_id, participant.id.clone(), refresh_expiration)
         .await?;
 
     Ok(Json(ChangePasswordResponse {
@@ -260,7 +256,6 @@ mod tests {
             ChangePasswordRequest, LoginRequest, MeResponse, RefreshTokenRequest, RegisterRequest,
             RegisterResponse,
         },
-        token_store,
     };
 
     fn generate_jwt_config() -> JwtConfig {
@@ -293,11 +288,9 @@ mod tests {
 
     fn server(pg_pool: PgPool) -> TestServer {
         let jwt_config = Arc::new(generate_jwt_config());
-        let token_store = Arc::new(token_store::Store);
         let state = crate::AppState {
             pg_pool,
             jwt_config,
-            token_store,
         };
         let router = crate::auth::router::router()
             .with_state(state)
@@ -408,14 +401,21 @@ mod tests {
         response.assert_status(StatusCode::OK);
         let register_response: RegisterResponse = response.json();
 
+        let empty_revoke_response = server.post("/revoke").await;
+        empty_revoke_response.assert_status(StatusCode::UNAUTHORIZED);
+
         let access_token = register_response.access_token;
+
         let response = server
             .post("/revoke")
-            .add_header("Authorization", format!("Bearer {}", access_token))
+            .add_header("Authorization", &access_token)
             .await;
         response.assert_status(StatusCode::OK);
 
-        let response = server.post("/revoke").await;
+        let response = server
+            .post("/revoke")
+            .add_header("Authorization", &access_token)
+            .await;
         response.assert_status(StatusCode::UNAUTHORIZED);
     }
 
@@ -443,7 +443,7 @@ mod tests {
 
         let response = server
             .post("/changepassword")
-            .add_header("Authorization", format!("Bearer {}", access_token))
+            .add_header("Authorization", &access_token)
             .json(&change_password_request)
             .await;
         response.assert_status(StatusCode::OK);
@@ -455,7 +455,7 @@ mod tests {
 
         let response = server
             .post("/changepassword")
-            .add_header("Authorization", format!("Bearer {}", access_token))
+            .add_header("Authorization", &access_token)
             .json(&wrong_old_password_request)
             .await;
         response.assert_status(StatusCode::UNAUTHORIZED);
@@ -486,7 +486,7 @@ mod tests {
 
         let response = server
             .post("/me")
-            .add_header("Authorization", format!("Bearer {}", access_token))
+            .add_header("Authorization", &access_token)
             .await;
         response.assert_status(StatusCode::OK);
 

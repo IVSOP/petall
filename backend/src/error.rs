@@ -110,7 +110,7 @@ impl IntoResponse for AppError {
             }
             AppError::InvalidToken => (StatusCode::UNAUTHORIZED, "Invalid token".to_string(), None),
             AppError::EmailAlreadyInUse(email) => (
-                StatusCode::BAD_REQUEST,
+                StatusCode::CONFLICT,
                 format!("Email already in use: {}", email),
                 None,
             ),

@@ -28,6 +28,17 @@ CREATE TABLE IF NOT EXISTS "participant" (
 
 CREATE INDEX IF NOT EXISTS "participant_email_idx" ON "participant" ("email");
 
+CREATE TABLE IF NOT EXISTS "token" (
+    "id" UUID NOT NULL,
+    "participant" UUID NOT NULL,
+    "expiration" TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY ("id"),
+    CONSTRAINT fk_token_participant
+        FOREIGN KEY ("participant")
+        REFERENCES "participant"("id")
+        ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS "community" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "name" VARCHAR(255) NOT NULL UNIQUE,

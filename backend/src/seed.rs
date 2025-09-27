@@ -3,7 +3,7 @@ use bigdecimal::BigDecimal;
 use chrono::{Duration, Utc};
 use fake::{Fake, faker::internet::pt_pt::FreeEmail};
 use names::Generator;
-use rand::{seq::IteratorRandom, Rng};
+use rand::{Rng, seq::IteratorRandom};
 use sqlx::postgres::PgPool;
 use std::{collections::HashMap, str::FromStr};
 use uuid::Uuid;

@@ -1,7 +1,4 @@
-use crate::{
-    auth::{jwt::JwtConfig, token_store},
-    seed::SeedSettings,
-};
+use crate::{auth::jwt::JwtConfig, seed::SeedSettings};
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use sqlx::PgPool;
@@ -55,7 +52,6 @@ pub struct Config {
 pub struct AppState {
     pg_pool: PgPool,
     jwt_config: Arc<JwtConfig>,
-    token_store: Arc<token_store::Store>,
 }
 
 #[tokio::main]
@@ -87,11 +83,9 @@ async fn main() -> Result<()> {
                 .await
                 .context("Failed to bind to port")?;
 
-            let token_store = Arc::new(token_store::Store);
             let state = AppState {
                 jwt_config: Arc::new(config.jwt),
                 pg_pool,
-                token_store,
             };
 
             info!("Starting server on {}", listener.local_addr().unwrap());

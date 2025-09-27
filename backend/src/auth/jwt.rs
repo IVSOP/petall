@@ -1,6 +1,7 @@
 use crate::error::AppError;
 use crate::error::AppResult;
 use anyhow::Context;
+use chrono::DateTime;
 use chrono::Utc;
 use clap::Parser;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
@@ -77,19 +78,19 @@ pub fn create_refresh_token(
     jwt_config: &JwtConfig,
     token_id: Uuid,
     participant_id: Uuid,
-) -> AppResult<String> {
+) -> AppResult<(String, DateTime<Utc>)> {
     let age = jwt_config.refresh_token_max_age;
-    let expiration = Utc::now().add(age).timestamp();
+    let expiration = Utc::now().add(age);
 
     let claims = RefreshTokenClaims {
         sub: participant_id,
         token_id,
-        exp: expiration,
+        exp: expiration.timestamp(),
     };
 
     let key = &jwt_config.refresh_token_private_key;
     let token = jsonwebtoken::encode(&Header::new(Algorithm::RS256), &claims, key)?;
-    Ok(token)
+    Ok((token, expiration))
 }
 
 fn decode_token<T: serde::de::DeserializeOwned>(token: &str, key: &DecodingKey) -> AppResult<T> {
