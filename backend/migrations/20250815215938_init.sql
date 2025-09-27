@@ -6,24 +6,24 @@ CREATE TYPE participant_role AS ENUM (
     'usermanager'
 );
 
-CREATE TABLE IF NOT EXISTS "supplier" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "email" VARCHAR(255) NOT NULL UNIQUE,
-    "name" VARCHAR(255) NOT NULL,
-    PRIMARY KEY ("id")
-);
+-- CREATE TABLE IF NOT EXISTS "supplier" (
+--     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+--     "email" VARCHAR(255) NOT NULL UNIQUE,
+--     "name" VARCHAR(255) NOT NULL,
+--     PRIMARY KEY ("id")
+-- );
 
 CREATE TABLE IF NOT EXISTS "participant" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "name" VARCHAR(255) NOT NULL,
     "email" VARCHAR(255) NOT NULL UNIQUE,
     "password" VARCHAR(255) NOT NULL,
-    "supplier" UUID NOT NULL,
-    PRIMARY KEY ("id"),
-    CONSTRAINT fk_participant_supplier
-        FOREIGN KEY ("supplier")
-        REFERENCES "supplier"("id")
-        ON DELETE CASCADE
+    -- "supplier" UUID NOT NULL,
+    PRIMARY KEY ("id")
+    -- CONSTRAINT fk_participant_supplier
+    --     FOREIGN KEY ("supplier")
+    --     REFERENCES "supplier"("id")
+    --     ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS "participant_email_idx" ON "participant" ("email");

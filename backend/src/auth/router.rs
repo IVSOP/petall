@@ -244,6 +244,9 @@ async fn me_handler(
 mod tests {
     use std::{sync::Arc, time::Duration};
 
+    use rsa::pkcs8::EncodePrivateKey;
+    use rsa::pkcs8::EncodePublicKey;
+
     use axum::http::StatusCode;
     use axum_test::TestServer;
     use jsonwebtoken::{DecodingKey, EncodingKey};
@@ -261,15 +264,30 @@ mod tests {
     };
 
     fn generate_jwt_config() -> JwtConfig {
-        const TEST_SECRET: &[u8] = b"test_secret";
+        let bits = 2048;
+        let private_key = rsa::RsaPrivateKey::new(&mut rand::thread_rng(), bits)
+            .expect("failed to generate a key");
+        let public_key = rsa::RsaPublicKey::from(&private_key);
+
+        let private_key_pem = private_key
+            .to_pkcs8_pem(rsa::pkcs8::LineEnding::LF)
+            .expect("failed to serialize private key");
+        let public_key_pem = public_key
+            .to_public_key_pem(rsa::pkcs8::LineEnding::LF)
+            .expect("failed to serialize public key");
+
+        let encoding_key = EncodingKey::from_rsa_pem(private_key_pem.as_bytes())
+            .expect("failed to create encoding key");
+        let decoding_key = DecodingKey::from_rsa_pem(public_key_pem.as_bytes())
+            .expect("failed to create decoding key");
 
         JwtConfig {
             access_token_max_age: Duration::from_secs(3600), // 1 hour
             refresh_token_max_age: Duration::from_secs(86400), // 24 hours
-            access_token_public_key: DecodingKey::from_secret(TEST_SECRET),
-            access_token_private_key: EncodingKey::from_secret(TEST_SECRET),
-            refresh_token_public_key: DecodingKey::from_secret(TEST_SECRET),
-            refresh_token_private_key: EncodingKey::from_secret(TEST_SECRET),
+            access_token_public_key: decoding_key.clone(),
+            access_token_private_key: encoding_key.clone(),
+            refresh_token_public_key: decoding_key.clone(),
+            refresh_token_private_key: encoding_key.clone(),
         }
     }
 

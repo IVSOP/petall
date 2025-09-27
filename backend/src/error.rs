@@ -105,7 +105,7 @@ impl IntoResponse for AppError {
                 None,
             ),
             AppError::JwtError(error) => {
-                error!("JWT error: {}", error);
+                error!("JWT error: {:?}", error);
                 internal_server_error
             }
             AppError::InvalidToken => (StatusCode::UNAUTHORIZED, "Invalid token".to_string(), None),
