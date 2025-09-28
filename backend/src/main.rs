@@ -1,10 +1,11 @@
-use crate::seed::SeedSettings;
+use crate::{auth::jwt::JwtConfig, seed::SeedSettings};
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use sqlx::PgPool;
-use std::net::IpAddr;
+use std::{net::IpAddr, sync::Arc};
 use tracing::info;
 
+mod auth;
 mod controller;
 mod error;
 mod models;
@@ -12,24 +13,10 @@ mod router;
 mod seed;
 
 #[derive(Parser)]
-pub struct DatabaseConfig {
-    #[arg(long, env)]
-    pub postgres_host: String,
-    #[arg(long, env, default_value_t = 5432)]
-    pub postgres_port: u16,
-    #[arg(long, env)]
-    pub postgres_user: String,
-    #[arg(long, env)]
-    pub postgres_password: String,
-    #[arg(long, env)]
-    pub postgres_db: String,
-}
-
-#[derive(Parser)]
 #[command(name = "petall")]
 struct Cli {
     #[command(flatten)]
-    config: DatabaseConfig,
+    config: Config,
     #[command(subcommand)]
     command: Command,
 }
@@ -45,9 +32,26 @@ enum Command {
     Seed(SeedSettings),
 }
 
+#[derive(Parser)]
+pub struct Config {
+    #[arg(long, env)]
+    pub postgres_host: String,
+    #[arg(long, env, default_value_t = 5432)]
+    pub postgres_port: u16,
+    #[arg(long, env)]
+    pub postgres_user: String,
+    #[arg(long, env)]
+    pub postgres_password: String,
+    #[arg(long, env)]
+    pub postgres_db: String,
+    #[clap(flatten)]
+    pub jwt: JwtConfig,
+}
+
 #[derive(Clone)]
 pub struct AppState {
-    pub pg_pool: PgPool,
+    pg_pool: PgPool,
+    jwt_config: Arc<JwtConfig>,
 }
 
 #[tokio::main]
@@ -79,7 +83,10 @@ async fn main() -> Result<()> {
                 .await
                 .context("Failed to bind to port")?;
 
-            let state = AppState { pg_pool };
+            let state = AppState {
+                jwt_config: Arc::new(config.jwt),
+                pg_pool,
+            };
 
             info!("Starting server on {}", listener.local_addr().unwrap());
 

@@ -6,27 +6,38 @@ CREATE TYPE participant_role AS ENUM (
     'usermanager'
 );
 
-CREATE TABLE IF NOT EXISTS "supplier" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "email" VARCHAR(255) NOT NULL UNIQUE,
-    "name" VARCHAR(255) NOT NULL,
-    PRIMARY KEY ("id")
-);
+-- CREATE TABLE IF NOT EXISTS "supplier" (
+--     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+--     "email" VARCHAR(255) NOT NULL UNIQUE,
+--     "name" VARCHAR(255) NOT NULL,
+--     PRIMARY KEY ("id")
+-- );
 
 CREATE TABLE IF NOT EXISTS "participant" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "name" VARCHAR(255) NOT NULL,
     "email" VARCHAR(255) NOT NULL UNIQUE,
     "password" VARCHAR(255) NOT NULL,
-    "supplier" UUID NOT NULL,
-    PRIMARY KEY ("id"),
-    CONSTRAINT fk_participant_supplier
-        FOREIGN KEY ("supplier") 
-        REFERENCES "supplier"("id")
-        ON DELETE CASCADE
+    -- "supplier" UUID NOT NULL,
+    PRIMARY KEY ("id")
+    -- CONSTRAINT fk_participant_supplier
+    --     FOREIGN KEY ("supplier")
+    --     REFERENCES "supplier"("id")
+    --     ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS "participant_email_idx" ON "participant" ("email");
+
+CREATE TABLE IF NOT EXISTS "token" (
+    "id" UUID NOT NULL,
+    "participant" UUID NOT NULL,
+    "expiration" TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY ("id"),
+    CONSTRAINT fk_token_participant
+        FOREIGN KEY ("participant")
+        REFERENCES "participant"("id")
+        ON DELETE CASCADE
+);
 
 CREATE TABLE IF NOT EXISTS "community" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
@@ -43,11 +54,11 @@ CREATE TABLE IF NOT EXISTS "participant_community" (
     "role" participant_role NOT NULL,
     PRIMARY KEY ("participant", "community"),
     CONSTRAINT fk_participant_community
-        FOREIGN KEY ("participant") 
+        FOREIGN KEY ("participant")
         REFERENCES "participant"("id")
         ON DELETE CASCADE,
     CONSTRAINT fk_community_participant
-        FOREIGN KEY ("community") 
+        FOREIGN KEY ("community")
         REFERENCES "community"("id")
         ON DELETE CASCADE
 );

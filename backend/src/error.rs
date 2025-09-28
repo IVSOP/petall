@@ -6,6 +6,8 @@ use thiserror::Error;
 use tracing::error;
 use uuid::Uuid;
 
+use crate::auth;
+
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("community not found: {0}")]
@@ -22,6 +24,16 @@ pub enum AppError {
     ParticipantCommunityAlredyInUse(Uuid, Uuid),
     #[error("not found participant {0} in community {1}")]
     ParticipantCommunityNotFound(Uuid, Uuid),
+    #[error(transparent)]
+    JwtError(#[from] jsonwebtoken::errors::Error),
+    #[error("invalid jwt token")]
+    InvalidToken,
+    #[error("email already in use: {0}")]
+    EmailAlreadyInUse(String),
+    #[error("argon2 error: {0}")]
+    Argon2Error(#[from] auth::password::Argon2Error),
+    #[error("invalid credentials")]
+    InvalidCredentials,
     // #[error("user not found using email: {0}")]
     // UserNotFoundEmail(String),
     // #[error("manager not found using ID: {0}")]
@@ -45,6 +57,12 @@ impl IntoResponse for AppError {
             details: Option<serde_json::Value>,
         }
 
+        let internal_server_error = (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            String::from("Internal server error"),
+            None,
+        );
+
         let (status, error, details) = match &self {
             AppError::CommunityNotFound(id) => (
                 StatusCode::NOT_FOUND,
@@ -57,12 +75,8 @@ impl IntoResponse for AppError {
                 None,
             ),
             AppError::SqlxError(err) => {
-                error!(error = ?err, "Database error occurred");
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    String::from("Internal server error"),
-                    None,
-                )
+                error!("Database error occurred: {err:?}");
+                internal_server_error
             }
             AppError::ValidationError(err) => (
                 StatusCode::BAD_REQUEST,
@@ -88,6 +102,25 @@ impl IntoResponse for AppError {
                     "not found participant {} in community {}",
                     participant, community
                 ),
+                None,
+            ),
+            AppError::JwtError(error) => {
+                error!("JWT error: {:?}", error);
+                internal_server_error
+            }
+            AppError::InvalidToken => (StatusCode::UNAUTHORIZED, "Invalid token".to_string(), None),
+            AppError::EmailAlreadyInUse(email) => (
+                StatusCode::CONFLICT,
+                format!("Email already in use: {}", email),
+                None,
+            ),
+            AppError::Argon2Error(argon2_error) => {
+                error!("Argon2 error: {}", argon2_error);
+                internal_server_error
+            }
+            AppError::InvalidCredentials => (
+                StatusCode::UNAUTHORIZED,
+                "Invalid credentials".to_string(),
                 None,
             ),
         };

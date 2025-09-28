@@ -14,7 +14,6 @@ pub struct Participant {
     pub id: Uuid,
     pub email: String,
     pub name: String,
-    pub supplier: Uuid,
     pub password: String,
 }
 

@@ -24,13 +24,11 @@ pub struct SeedSettings {
     energy_interval: i64,
 }
 
-pub async fn run_seed(
-    pg_pool: &PgPool,
-    seed_settings: SeedSettings
-) -> anyhow::Result<()> {
-    let suppliers = seed_supplier(pg_pool, &seed_settings.suppliers).await?;
+pub async fn run_seed(pg_pool: &PgPool, seed_settings: SeedSettings) -> anyhow::Result<()> {
+    // let suppliers = seed_supplier(pg_pool, &seed_settings.suppliers).await?;
 
-    let participants = seed_participant(pg_pool, &seed_settings.participants, &suppliers).await?;
+    // let participants = seed_participant(pg_pool, &seed_settings.participants, &suppliers).await?;
+    let participants = seed_participant(pg_pool, &seed_settings.participants).await?;
 
     let communitied = seed_community(pg_pool, &seed_settings.communities).await?;
 
@@ -53,52 +51,59 @@ pub async fn run_seed(
     Ok(())
 }
 
-pub async fn seed_supplier(
-    pool: &PgPool,
-    count: &usize,
-) -> anyhow::Result<Vec<Uuid>> {
-    let mut generator = Generator::default();
-    let mut suppliers = Vec::new();
+// pub async fn seed_supplier(pool: &PgPool, count: &usize) -> anyhow::Result<Vec<Uuid>> {
+//     let mut generator = Generator::default();
+//     let mut suppliers = Vec::new();
 
-    for _ in 0..*count {
-        suppliers.push(
-            sqlx::query_scalar!(
-                r#"
-                INSERT INTO "supplier" ("email", "name")
-                VALUES ($1, $2)
-                RETURNING id
-                "#,
-                FreeEmail().fake::<String>(),
-                generator.next().unwrap()
-            )
-            .fetch_one(pool)
-            .await?,
-        )
-    }
+//     for _ in 0..*count {
+//         suppliers.push(
+//             sqlx::query_scalar!(
+//                 r#"
+//                 INSERT INTO "supplier" ("email", "name")
+//                 VALUES ($1, $2)
+//                 RETURNING id
+//                 "#,
+//                 FreeEmail().fake::<String>(),
+//                 generator.next().unwrap()
+//             )
+//             .fetch_one(pool)
+//             .await?,
+//         )
+//     }
 
-    Ok(suppliers)
-}
+//     Ok(suppliers)
+// }
 
 pub async fn seed_participant(
     pool: &PgPool,
     count: &usize,
-    suppliers: &[Uuid],
+    // suppliers: &[Uuid],
 ) -> anyhow::Result<Vec<Uuid>> {
-    let mut rng = rand::rng();
+    // let mut rng = rand::rng();
     let mut generator = Generator::default();
     let mut participants = Vec::new();
 
     for _ in 0..*count {
         participants.push(
+            // sqlx::query_scalar!(
+            //     r#"
+            //     INSERT INTO "participant" ("email", "name", "supplier", "password")
+            //     VALUES ($1, $2, $3, $4)
+            //     RETURNING id
+            //     "#,
+            //     FreeEmail().fake::<String>(),
+            //     generator.next().unwrap(),
+            //     suppliers.iter().choose(&mut rng).unwrap(),
+            //     "password"
+            // )
             sqlx::query_scalar!(
                 r#"
-                INSERT INTO "participant" ("email", "name", "supplier", "password")
-                VALUES ($1, $2, $3, $4)
+                INSERT INTO "participant" ("email", "name", "password")
+                VALUES ($1, $2, $3)
                 RETURNING id
                 "#,
                 FreeEmail().fake::<String>(),
                 generator.next().unwrap(),
-                suppliers.iter().choose(&mut rng).unwrap(),
                 "password"
             )
             .fetch_one(pool)
@@ -109,10 +114,7 @@ pub async fn seed_participant(
     Ok(participants)
 }
 
-pub async fn seed_community(
-    pool: &PgPool,
-    count: &usize
-) -> anyhow::Result<Vec<Uuid>> {
+pub async fn seed_community(pool: &PgPool, count: &usize) -> anyhow::Result<Vec<Uuid>> {
     let mut generator = Generator::default();
     let mut communities = Vec::new();
 
@@ -140,7 +142,7 @@ pub async fn seed_participant_community(
     participants: &[Uuid],
     communities: &[Uuid],
 ) -> anyhow::Result<HashMap<Uuid, Vec<Uuid>>> {
-    let mut rng = rand::rng();
+    let mut rng = rand::thread_rng();
     let mut participant_community_map: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
     let roles = [
         ParticipantRole::User,
@@ -181,7 +183,7 @@ pub async fn seed_energypool(
     energy_interval: &i64,
     participant_communities_map: &HashMap<Uuid, Vec<Uuid>>,
 ) -> anyhow::Result<()> {
-    let mut rng = rand::rng();
+    let mut rng = rand::thread_rng();
     let start = Utc::now().naive_utc();
     let end = (Utc::now() + Duration::days(*energy_days)).naive_utc();
 
@@ -196,10 +198,10 @@ pub async fn seed_energypool(
                     "#,
                     participant,
                     community,
-                    BigDecimal::from_str(&rng.random_range(0.0..5000.0).to_string()).unwrap(),
-                    BigDecimal::from_str(&rng.random_range(0.0..5000.0).to_string()).unwrap(),
-                    BigDecimal::from_str(&rng.random_range(0.0..20.0).to_string()).unwrap(),
-                    BigDecimal::from_str(&rng.random_range(0.0..20.0).to_string()).unwrap(),
+                    BigDecimal::from_str(&rng.gen_range(0.0..5000.0).to_string()).unwrap(),
+                    BigDecimal::from_str(&rng.gen_range(0.0..5000.0).to_string()).unwrap(),
+                    BigDecimal::from_str(&rng.gen_range(0.0..20.0).to_string()).unwrap(),
+                    BigDecimal::from_str(&rng.gen_range(0.0..20.0).to_string()).unwrap(),
                     current,
                 )
                 .execute(pool)
