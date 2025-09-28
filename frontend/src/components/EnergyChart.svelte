@@ -1,62 +1,178 @@
 <script lang="ts">
-	import { scaleBand } from 'd3-scale';
-	import { BarChart } from 'layerchart';
 	import TrendingUpIcon from '@lucide/svelte/icons/trending-up';
 	import * as Chart from '$lib/components/ui/chart/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
+	import * as Select from '$lib/components/ui/select/index.js';
+	import { scaleUtc } from 'd3-scale';
+	import { Area, AreaChart, ChartClipPath } from 'layerchart';
+	import { curveNatural } from 'd3-shape';
+	import ChartContainer from '$lib/components/ui/chart/chart-container.svelte';
 
-    let { energyTransfers = [], participant_id = '' } = $props();
+	import { cubicInOut } from 'svelte/easing';
+
+	let { energyTransfers = [], participant_id = '' } = $props();
+
+	let timeRange = $state('30d');
+
+	const selectedLabel = $derived.by(() => {
+		switch (timeRange) {
+			case '30d':
+				return '30 dias';
+			case '7d':
+				return '7 dias';
+			case '1d':
+				return '24 horas';
+			default:
+				return '30 dias';
+		}
+	});
+
+	const xAxisFormat = $derived.by(() => {
+		return (v: Date) => {
+			switch (timeRange) {
+				case '1d':
+					return v.toLocaleTimeString('en-US', {
+						hour: '2-digit',
+						minute: '2-digit',
+						hour12: false
+					});
+				default:
+					return v.toLocaleDateString('en-US', {
+						month: 'short',
+						day: 'numeric'
+					});
+			}
+		};
+	});
+
+	const ticksFunction = $derived.by(() => {
+		switch (timeRange) {
+			case '30d':
+				return 30; // 1 per day
+			case '7d':
+				return 7; // 1 per day
+			case '1d':
+				return 24 * 2; // every 30 mins
+			default:
+				return undefined;
+		}
+	});
+
+	const filteredData = $derived(
+		energyTransfers
+			// TODO: filter so that 30d shows only results from the last 30 days, etc
+			// .filter((item) => {
+			// 	const date = new Date(item.start);
+			// 	const now = new Date();
+			// 	if (timeRange === '30d') {
+			// 		const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+			// 		return date >= thirtyDaysAgo && date <= now;
+			// 	}
+			// 	return true; // Include all data for '7d' and '1d'
+			// })
+			.map((item) => ({
+				date: new Date(item.start),
+				generated: item.generated,
+				consumed: item.consumed
+			}))
+	);
 
 	const chartConfig = {
-		energy_wh: { label: 'Energy WH' }
+		generated: { label: 'Generated', color: 'var(--chart-1)' },
+		consumed: { label: 'Consumed', color: 'var(--chart-2)' }
 	} satisfies Chart.ChartConfig;
 </script>
 
 <Card.Root>
-	<Card.Header class="flex items-center gap-2 space-y-0 border-b sm:flex-row">
+	<Card.Header class="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
 		<div class="grid flex-1 gap-1 text-center sm:text-left">
-			<Card.Title>Energy Transfers</Card.Title>
-			<Card.Description>January - June 2024</Card.Description>
+			<Card.Title>Area Chart - Interactive</Card.Title>
+			<Card.Description>Showing total visitors for the last 3 months</Card.Description>
 		</div>
+		<Select.Root type="single" bind:value={timeRange}>
+			<Select.Trigger class="w-[160px] rounded-lg sm:ml-auto" aria-label="Select a value">
+				{selectedLabel}
+			</Select.Trigger>
+			<Select.Content class="rounded-xl">
+				<Select.Item value="30d" class="rounded-lg">30 dias</Select.Item>
+				<Select.Item value="7d" class="rounded-lg">7 dias</Select.Item>
+				<Select.Item value="1d" class="rounded-lg">24 horas</Select.Item>
+			</Select.Content>
+		</Select.Root>
 	</Card.Header>
 	<Card.Content>
-		<!-- <Chart.Container config={chartConfig}>
-			<BarChart
-				labels={{
-					offset: 5,
-					value: (d) => d.start,
-					fill: (d) => {
-						if (d.energy_wh > 0) {
-							return 'var(--chart-1)';
-						} else if (d.energy_wh < 0) {
-							return 'var(--chart-2)';
-						}
+		<ChartContainer config={chartConfig} class="aspect-auto h-[250px] w-full">
+			<AreaChart
+				legend
+				data={filteredData}
+				x="date"
+				xScale={scaleUtc()}
+				series={[
+					{
+						key: 'consumed',
+						label: 'Consumed',
+						color: chartConfig.consumed.color
+					},
+					{
+						key: 'generated',
+						label: 'Generated',
+						color: chartConfig.generated.color
 					}
-				}}
-				data={energyTransfers}
-				xScale={scaleBand().padding(0.25)}
-				x="start"
-				y="energy_wh"
-				yNice={4}
-				yBaseline={0}
-				cRange={['var(--chart-1)', 'var(--chart-2)']}
-				c={(d) => (d.energy_wh > 0 ? 'var(--chart-1)' : 'var(--chart-2)')}
-				axis={false}
+				]}
+				seriesLayout="stack"
 				props={{
-					bars: { stroke: 'none', radius: 10 },
-					highlight: { area: { fill: 'none' } },
-					xAxis: { format: (d) => d.slice(0, 3) }
+					area: {
+						curve: curveNatural,
+						'fill-opacity': 0.4,
+						line: { class: 'stroke-1' },
+						motion: 'tween'
+					},
+					xAxis: {
+						ticks: ticksFunction,
+						format: xAxisFormat
+					},
+
+					yAxis: { format: () => '' }
 				}}
 			>
-				{#snippet tooltip()}
-					<Chart.Tooltip hideLabel hideIndicator nameKey="visitors" />
+				{#snippet marks({ series, getAreaProps })}
+					<defs>
+						<linearGradient id="fillGenerated" x1="0" y1="0" x2="0" y2="1">
+							<stop offset="5%" stop-color="var(--color-generated)" stop-opacity={1.0} />
+							<stop offset="95%" stop-color="var(--color-generated)" stop-opacity={0.1} />
+						</linearGradient>
+						<linearGradient id="fillConsumed" x1="0" y1="0" x2="0" y2="1">
+							<stop offset="5%" stop-color="var(--color-consumed)" stop-opacity={0.8} />
+							<stop offset="95%" stop-color="var(--color-consumed)" stop-opacity={0.1} />
+						</linearGradient>
+					</defs>
+					<ChartClipPath
+						initialWidth={0}
+						motion={{
+							width: { type: 'tween', duration: 1000, easing: cubicInOut }
+						}}
+					>
+						{#each series as s, i (s.key)}
+							<Area
+								{...getAreaProps(s, i)}
+								fill={s.key === 'generated' ? 'url(#fillGenerated)' : 'url(#fillConsumed)'}
+							/>
+						{/each}
+					</ChartClipPath>
 				{/snippet}
-			</BarChart>
-		</Chart.Container> -->
-
-        
+				{#snippet tooltip()}
+					<Chart.Tooltip
+						labelFormatter={(v: Date) => {
+							return v.toLocaleDateString('en-US', {
+								month: 'long'
+							});
+						}}
+						indicator="line"
+					/>
+				{/snippet}
+			</AreaChart>
+		</ChartContainer>
 	</Card.Content>
-
 	<Card.Footer>
 		<div class="flex w-full items-start gap-2 text-sm">
 			<div class="grid gap-2">
@@ -64,7 +180,7 @@
 					Trending up by 5.2% this month <TrendingUpIcon class="size-4" />
 				</div>
 				<div class="flex items-center gap-2 leading-none text-muted-foreground">
-					Showing total visitors for the last 6 months
+					January - June 2024
 				</div>
 			</div>
 		</div>

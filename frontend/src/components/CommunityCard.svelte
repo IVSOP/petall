@@ -1,28 +1,89 @@
 <script lang="ts">
+	import Users from '@lucide/svelte/icons/users';
+	import UserLock from '@lucide/svelte/icons/user-lock';
+	import Settings from '@lucide/svelte/icons/settings';
+	import CircleDollarSign from '@lucide/svelte/icons/circle-dollar-sign';
+	import { Badge } from '$lib/components/ui/badge/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 
 	const { community } = $props();
 </script>
 
-<a
-	href={`/community/${community.id}`}
-	class="block transform rounded-md transition-transform duration-300 hover:scale-102 hover:shadow-lg"
+<div
+	class="block transform rounded-b-xl transition-transform duration-300 hover:scale-102 hover:shadow-xl"
 >
-	<Card.Root>
-		<Card.Header>
-			<Card.Title>{community.entity}</Card.Title>
-			<Card.Description>Energy Comunity</Card.Description>
+	<Card.Root class="gap-3 overflow-hidden rounded-xl pt-0">
+		<Card.Header class="relative px-0 py-0">
+			<div class="relative h-48 w-full shadow-inner">
+				<a href={`/community/${community.community.id}`}>
+					<img
+						src="https://images.jdmagicbox.com/rep/b2b/wall-paper/wall-paper-11.jpg"
+						alt={community.community.name}
+						class="h-full w-full object-cover"
+					/>
+				</a>
+				{#if community.role.includes('Manager')}
+					<button class="absolute top-2 right-2 rounded-full bg-white/70 p-2 hover:bg-white">
+						<a href={`/community/${community.community.id}/settings`}>
+							<Settings />
+						</a>
+					</button>
+				{/if}
+			</div>
 		</Card.Header>
-		<Card.Content>
-			<p>ID: {community.id}</p>
-			{#if community.supplier}
-				<p>Fornecedor: {community.supplier.name || community.supplier}</p>
-			{/if}
+		<Card.Content class="px-4">
+			<div class="flex flex-col justify-between xl:flex-row">
+				<div class="truncate text-lg font-semibold">
+					<a href={`/community/${community.community.id}`}>
+						{community.community.name}
+					</a>
+				</div>
+				<div class="mt-2 flex flex-wrap gap-1 sm:mt-0">
+					{#if community.role == 'UserManager'}
+						<Badge>User</Badge>
+						<Badge>Manager</Badge>
+					{:else}
+						<Badge>{community.role}</Badge>
+					{/if}
+				</div>
+			</div>
 		</Card.Content>
-		<Card.Footer>
+		<Card.Content class="px-4">
+			<div class="grid grid-cols-3 gap-4 text-center">
+				<div class="flex flex-col items-center">
+					<div
+						class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100"
+						title="Members"
+					>
+						<Users class="h-8 w-8" />
+					</div>
+					<p class="text-sm font-medium text-gray-700">13</p>
+				</div>
+				<div class="flex flex-col items-center">
+					<div
+						class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100"
+						title="Managers"
+					>
+						<UserLock class="h-8 w-8" />
+					</div>
+					<p class="text-sm font-medium text-gray-700">5</p>
+				</div>
+				<div class="flex flex-col items-center">
+					<div
+						class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100"
+						title="Profit"
+					>
+						<CircleDollarSign class="h-8 w-8" />
+					</div>
+					<p class="text-sm font-medium text-gray-700">351 $</p>
+				</div>
+			</div>
+		</Card.Content>
+
+		<Card.Footer class="px-4">
 			<p class="text-sm text-muted-foreground">
-				Last Update: {new Date().toLocaleDateString()}
+				Created: {new Date().toLocaleDateString()}
 			</p>
 		</Card.Footer>
 	</Card.Root>
-</a>
+</div>

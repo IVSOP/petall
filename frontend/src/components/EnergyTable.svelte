@@ -1,13 +1,11 @@
 <script lang="ts" generics="TData, TValue">
 	import * as Table from '$lib/components/ui/table/index.js';
 	import * as Menubar from '$lib/components/ui/menubar/index.js';
-	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
 	import { toast } from 'svelte-sonner';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
-	import Calendar from '$lib/components/ui/calendar/calendar.svelte';
 	import { CalendarDate } from '@internationalized/date';
 	import {
 		type ColumnDef,
@@ -70,7 +68,7 @@
 </script>
 
 <div>
-	<div class="flex items-center justify-between space-x-2 mb-4">
+	<div class="mb-4 flex items-center justify-between space-x-2">
 		<Menubar.Root>
 			<Menubar.Menu>
 				<Menubar.Trigger>View</Menubar.Trigger>
@@ -111,23 +109,23 @@
 	</div>
 	{#if showFilters}
 		<div transition:slide={{ duration: 200 }}>
-            <div class="pb-4">
-                <div class="grid grid-cols-3 gap-4 rounded-md border p-4">
-                    <div>
-                        <Label for="start-date">Start Date</Label>
-                        <Input id="start-date" type="date" bind:value={startDate} />
-                    </div>
-                    <div>
-                        <Label for="end-date">End Date</Label>
-                        <Input id="end-date" type="date" bind:value={endDate} />
-                    </div>
-                    <div>
-                        <Label for="amount">Amount</Label>
-                        <Input id="amount" type="number" min="0" bind:value={amount} />
-                    </div>
-                </div>
-            </div>
-        </div>
+			<div class="pb-4">
+				<div class="grid grid-cols-3 gap-4 rounded-md border p-4">
+					<div>
+						<Label for="start-date">Start Date</Label>
+						<Input id="start-date" type="date" bind:value={startDate} />
+					</div>
+					<div>
+						<Label for="end-date">End Date</Label>
+						<Input id="end-date" type="date" bind:value={endDate} />
+					</div>
+					<div>
+						<Label for="amount">Amount</Label>
+						<Input id="amount" type="number" min="0" bind:value={amount} />
+					</div>
+				</div>
+			</div>
+		</div>
 	{/if}
 	<div class="rounded-md border">
 		<Table.Root>

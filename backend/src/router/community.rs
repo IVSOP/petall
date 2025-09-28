@@ -1,5 +1,6 @@
 use crate::AppState;
 use crate::error::{AppError, AppResult};
+use crate::models::db::participant::Participant;
 use crate::models::http::requests::{
     CommunityRegisterRequest, ParticipantCommunityRegisterRequest,
 };
@@ -24,11 +25,31 @@ pub async fn get_community(
 }
 
 #[debug_handler]
-pub async fn get_communities(State(state): State<AppState>) -> AppResult<impl IntoResponse> {
+pub async fn get_communities(
+    State(state): State<AppState>
+) -> AppResult<impl IntoResponse> {
     match state.get_communities().await {
         Ok(communities) => Ok((StatusCode::OK, Json(communities))),
         Err(e) => Err(AppError::from(e)),
     }
+}
+
+#[debug_handler]
+pub async fn get_community_participants(
+    State(state): State<AppState>,
+    Path(community_id): Path<Uuid>,
+) -> AppResult<impl IntoResponse> {
+    let mut participants: Vec<Participant> = Vec::new();
+    let participant_communities = state.get_community_participants(&community_id).await?;
+
+    for pc in &participant_communities {
+        match state.get_participant_by_id(&pc.participant).await? {
+            Some(participant) => participants.push(participant),
+            None => return Err(AppError::ParticipantNotFoundId(pc.participant)),
+        }
+    }
+
+    Ok(Json(participants))
 }
 
 #[debug_handler]

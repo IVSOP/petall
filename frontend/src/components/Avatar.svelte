@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ProfileDialog from './ProfileDialog.svelte';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 
@@ -7,7 +8,7 @@
 </script>
 
 <DropdownMenu.Root>
-	<DropdownMenu.Trigger>
+	<DropdownMenu.Trigger class="focus:outline-none">
 		<Avatar.Root class="cursor-pointer transition hover:scale-105 hover:ring-2 hover:ring-gray-300">
 			<Avatar.Image src={image} />
 			<Avatar.Fallback>A</Avatar.Fallback>
@@ -17,12 +18,7 @@
 		<DropdownMenu.Group>
 			<DropdownMenu.Label>{participant.name}</DropdownMenu.Label>
 			<DropdownMenu.Separator />
-			<DropdownMenu.Item>
-				<a href="/profile" class="w-full">Profile</a>
-			</DropdownMenu.Item>
-			<DropdownMenu.Item>
-				<a href="/change-password" class="w-full">Change Password</a>
-			</DropdownMenu.Item>
+			<ProfileDialog />
 			<DropdownMenu.Item>
 				<a href="/logout" class="w-full">Logout</a>
 			</DropdownMenu.Item>

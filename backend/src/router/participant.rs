@@ -34,10 +34,10 @@ pub async fn get_participants(State(state): State<AppState>) -> AppResult<impl I
 #[debug_handler]
 pub async fn get_participant_communities(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(participant_id): Path<Uuid>,
 ) -> AppResult<impl IntoResponse> {
     let mut communities: Vec<ParticipantCommunityResponse> = Vec::new();
-    let participant_communities = state.get_participant_communities(&id).await?;
+    let participant_communities = state.get_participant_communities(&participant_id).await?;
 
     for pc in &participant_communities {
         match state.get_community_by_id(&pc.community).await? {

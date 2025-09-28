@@ -12,6 +12,7 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/communities", get(community::get_communities))
         .route("/community/{id}", get(community::get_community))
+        .route("/community/{community_id}/participants", get(community::get_community_participants))
         .route("/community/register", post(community::register_community))
         .route(
             "/community/{community_id}/participant",
