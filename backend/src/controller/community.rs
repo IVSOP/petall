@@ -1,11 +1,6 @@
 use crate::AppState;
 use crate::models::db::community::Community;
-use crate::models::db::participant::{
-    ParticipantRole, ParticipantCommunity
-};
-use crate::models::http::requests::{
-    CommunityRegisterRequest, ParticipantCommunityRegisterRequest,
-};
+use crate::models::db::participant::{ParticipantCommunity, ParticipantRole};
 use uuid::Uuid;
 
 impl AppState {
