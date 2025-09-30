@@ -18,16 +18,26 @@ pub fn router() -> Router<AppState> {
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Validate)]
+#[serde(rename_all = "camelCase")]
 struct RegisterRequest {
-    #[validate(length(min = 3, max = 50))]
+    #[validate(length(
+        min = 3,
+        max = 50,
+        message = "Name must be between 3 and 50 characters"
+    ))]
     name: String,
-    #[validate(email)]
+    #[validate(email(message = "Invalid email address"))]
     email: String,
-    #[validate(length(min = 8, max = 50))]
+    #[validate(length(
+        min = 8,
+        max = 50,
+        message = "Password must be between 8 and 50 characters"
+    ))]
     password: String,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct RegisterResponse {
     uuid: Uuid,
     name: String,
@@ -75,12 +85,14 @@ async fn register_handler(
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct LoginRequest {
     email: String,
     password: String,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct LoginResponse {
     access_token: String,
     refresh_token: String,
@@ -116,11 +128,13 @@ async fn login_handler(
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct RefreshTokenRequest {
     refresh_token: String,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct RefreshTokenResponse {
     access_token: String,
 }
@@ -144,6 +158,7 @@ async fn refresh_handler(
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RevokeResponse {
     pub message: String,
 }
@@ -163,12 +178,14 @@ async fn revoke_handler(
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct ChangePasswordRequest {
     old_password: String,
     new_password: String,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct ChangePasswordResponse {
     message: String,
     access_token: String,
@@ -213,6 +230,7 @@ async fn change_password_handler(
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct MeResponse {
     id: Uuid,
     email: String,

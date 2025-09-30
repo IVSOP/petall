@@ -25,9 +25,7 @@ pub async fn get_community(
 }
 
 #[debug_handler]
-pub async fn get_communities(
-    State(state): State<AppState>
-) -> AppResult<impl IntoResponse> {
+pub async fn get_communities(State(state): State<AppState>) -> AppResult<impl IntoResponse> {
     match state.get_communities().await {
         Ok(communities) => Ok((StatusCode::OK, Json(communities))),
         Err(e) => Err(AppError::from(e)),

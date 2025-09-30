@@ -8,6 +8,8 @@ use uuid::Uuid;
 
 use crate::auth;
 
+pub type AppResult<T> = Result<T, AppError>;
+
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("community not found: {0}")]
@@ -46,33 +48,26 @@ pub enum AppError {
     // Unauthorized,
 }
 
-pub type AppResult<T> = Result<T, AppError>;
-
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         #[derive(Serialize)]
         struct ErrorBody {
             error: String,
-            #[serde(skip_serializing_if = "Option::is_none")]
-            details: Option<serde_json::Value>,
         }
 
         let internal_server_error = (
             StatusCode::INTERNAL_SERVER_ERROR,
             String::from("Internal server error"),
-            None,
         );
 
-        let (status, error, details) = match &self {
+        let (status, error) = match &self {
             AppError::CommunityNotFound(id) => (
                 StatusCode::NOT_FOUND,
                 format!("Community not found: {}", id),
-                None,
             ),
             AppError::CommunityNameAlreadyInUse(name) => (
                 StatusCode::CONFLICT,
                 format!("Community name already in use: {}", name),
-                None,
             ),
             AppError::SqlxError(err) => {
                 error!("Database error occurred: {err:?}");
@@ -80,13 +75,19 @@ impl IntoResponse for AppError {
             }
             AppError::ValidationError(err) => (
                 StatusCode::BAD_REQUEST,
-                "Validation error".to_string(),
-                serde_json::to_value(err).ok(),
+                itertools::Itertools::intersperse(
+                    err.field_errors()
+                        .into_values()
+                        .flatten()
+                        .filter_map(|v| v.message.clone())
+                        .map(|a| a.to_string()),
+                    ", ".to_string(),
+                )
+                .collect(),
             ),
             AppError::ParticipantNotFoundId(id) => (
                 StatusCode::NOT_FOUND,
                 format!("Participant not found with id: {}", id),
-                None,
             ),
             AppError::ParticipantCommunityAlredyInUse(participant, community) => (
                 StatusCode::CONFLICT,
@@ -94,7 +95,6 @@ impl IntoResponse for AppError {
                     "participant-community already in use: participant {}, community {}",
                     participant, community
                 ),
-                None,
             ),
             AppError::ParticipantCommunityNotFound(participant, community) => (
                 StatusCode::NOT_FOUND,
@@ -102,30 +102,26 @@ impl IntoResponse for AppError {
                     "not found participant {} in community {}",
                     participant, community
                 ),
-                None,
             ),
             AppError::JwtError(error) => {
                 error!("JWT error: {:?}", error);
                 internal_server_error
             }
-            AppError::InvalidToken => (StatusCode::UNAUTHORIZED, "Invalid token".to_string(), None),
+            AppError::InvalidToken => (StatusCode::UNAUTHORIZED, "Invalid token".to_string()),
             AppError::EmailAlreadyInUse(email) => (
                 StatusCode::CONFLICT,
                 format!("Email already in use: {}", email),
-                None,
             ),
             AppError::Argon2Error(argon2_error) => {
                 error!("Argon2 error: {}", argon2_error);
                 internal_server_error
             }
-            AppError::InvalidCredentials => (
-                StatusCode::UNAUTHORIZED,
-                "Invalid credentials".to_string(),
-                None,
-            ),
+            AppError::InvalidCredentials => {
+                (StatusCode::UNAUTHORIZED, "Invalid credentials".to_string())
+            }
         };
 
-        let body = ErrorBody { error, details };
+        let body = ErrorBody { error };
 
         (status, Json(body)).into_response()
     }

@@ -54,7 +54,6 @@
 						</div>
 						<div class="grid gap-3">
 							<Label for="password-{id}">Password</Label>
-
 							<Input id="password-{id}" type="password" required />
 						</div>
 						<div class="grid gap-3">
