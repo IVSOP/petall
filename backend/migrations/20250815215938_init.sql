@@ -1,41 +1,29 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TYPE participant_role AS ENUM (
-    'user',
+CREATE TYPE user_role AS ENUM (
+    'participant',
     'manager',
     'usermanager'
 );
 
--- CREATE TABLE IF NOT EXISTS "supplier" (
---     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
---     "email" VARCHAR(255) NOT NULL UNIQUE,
---     "name" VARCHAR(255) NOT NULL,
---     PRIMARY KEY ("id")
--- );
-
-CREATE TABLE IF NOT EXISTS "participant" (
+CREATE TABLE IF NOT EXISTS "user" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "name" VARCHAR(255) NOT NULL,
     "email" VARCHAR(255) NOT NULL UNIQUE,
     "password" VARCHAR(255) NOT NULL,
-    -- "supplier" UUID NOT NULL,
     PRIMARY KEY ("id")
-    -- CONSTRAINT fk_participant_supplier
-    --     FOREIGN KEY ("supplier")
-    --     REFERENCES "supplier"("id")
-    --     ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS "participant_email_idx" ON "participant" ("email");
+CREATE INDEX IF NOT EXISTS "user_email_idx" ON "user" ("email");
 
 CREATE TABLE IF NOT EXISTS "token" (
     "id" UUID NOT NULL,
-    "participant" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
     "expiration" TIMESTAMPTZ NOT NULL,
     PRIMARY KEY ("id"),
-    CONSTRAINT fk_token_participant
-        FOREIGN KEY ("participant")
-        REFERENCES "participant"("id")
+    CONSTRAINT fk_token_user
+        FOREIGN KEY ("user_id")
+        REFERENCES "user"("id")
         ON DELETE CASCADE
 );
 
@@ -48,37 +36,37 @@ CREATE TABLE IF NOT EXISTS "community" (
 
 CREATE INDEX IF NOT EXISTS "community_name_idx" ON "community" ("name");
 
-CREATE TABLE IF NOT EXISTS "participant_community" (
-    "participant" UUID NOT NULL,
-    "community" UUID NOT NULL,
-    "role" participant_role NOT NULL,
-    PRIMARY KEY ("participant", "community"),
-    CONSTRAINT fk_participant_community
-        FOREIGN KEY ("participant")
-        REFERENCES "participant"("id")
+CREATE TABLE IF NOT EXISTS "user_community" (
+    "user_id" UUID NOT NULL,
+    "community_id" UUID NOT NULL,
+    "role" user_role NOT NULL,
+    PRIMARY KEY ("user_id", "community_id"),
+    CONSTRAINT fk_user_community
+        FOREIGN KEY ("user_id")
+        REFERENCES "user"("id")
         ON DELETE CASCADE,
-    CONSTRAINT fk_community_participant
-        FOREIGN KEY ("community")
+    CONSTRAINT fk_community_user
+        FOREIGN KEY ("community_id")
         REFERENCES "community"("id")
         ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS "energypool" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "participant" UUID NOT NULL,
-    "community" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "community_id" UUID NOT NULL,
     "generated" NUMERIC(11,2) NOT NULL CHECK ("generated" >= 0),
     "consumed" NUMERIC(11,2) NOT NULL CHECK ("consumed" >= 0),
     "consumer_price" NUMERIC(11,2) NOT NULL CHECK ("generated" >= 0),
     "seller_price" NUMERIC(11,2) NOT NULL CHECK ("consumed" >= 0),
     "start" TIMESTAMP NOT NULL,
     PRIMARY KEY ("id"),
-    CONSTRAINT fk_energypool_participant
-        FOREIGN KEY ("participant")
-        REFERENCES "participant"("id")
+    CONSTRAINT fk_energypool_user
+        FOREIGN KEY ("user_id")
+        REFERENCES "user"("id")
         ON DELETE CASCADE,
     CONSTRAINT fk_energypool_community
-        FOREIGN KEY ("community")
+        FOREIGN KEY ("community_id")
         REFERENCES "community"("id")
         ON DELETE CASCADE
 );

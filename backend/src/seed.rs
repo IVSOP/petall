@@ -1,4 +1,3 @@
-use crate::models::db::participant::ParticipantRole;
 use bigdecimal::BigDecimal;
 use chrono::{Duration, Utc};
 use fake::{Fake, faker::internet::pt_pt::FreeEmail};
@@ -8,16 +7,18 @@ use sqlx::postgres::PgPool;
 use std::{collections::HashMap, str::FromStr};
 use uuid::Uuid;
 
+use crate::models::db::user::UserRole;
+
 #[derive(Debug, Clone, clap::Parser)]
 pub struct SeedSettings {
     #[arg(long, default_value_t = 5)]
-    participants: usize,
+    users: usize,
     #[arg(long, default_value_t = 3)]
     suppliers: usize,
     #[arg(long, default_value_t = 10)]
     communities: usize,
     #[arg(long, default_value_t = 5)]
-    communities_per_participant: usize,
+    communities_per_user: usize,
     #[arg(long, default_value_t = 1)]
     energy_days: i64,
     #[arg(long, default_value_t = 15)]
@@ -27,15 +28,15 @@ pub struct SeedSettings {
 pub async fn run_seed(pg_pool: &PgPool, seed_settings: SeedSettings) -> anyhow::Result<()> {
     // let suppliers = seed_supplier(pg_pool, &seed_settings.suppliers).await?;
 
-    // let participants = seed_participant(pg_pool, &seed_settings.participants, &suppliers).await?;
-    let participants = seed_participant(pg_pool, &seed_settings.participants).await?;
+    // let users = seed_user(pg_pool, &seed_settings.users, &suppliers).await?;
+    let users = seed_user(pg_pool, &seed_settings.users).await?;
 
     let communitied = seed_community(pg_pool, &seed_settings.communities).await?;
 
-    let participant_communities_map = seed_participant_community(
+    let user_communities_map = seed_user_community(
         pg_pool,
-        &seed_settings.communities_per_participant,
-        &participants,
+        &seed_settings.communities_per_user,
+        &users,
         &communitied,
     )
     .await?;
@@ -44,7 +45,7 @@ pub async fn run_seed(pg_pool: &PgPool, seed_settings: SeedSettings) -> anyhow::
         pg_pool,
         &seed_settings.energy_days,
         &seed_settings.energy_interval,
-        &participant_communities_map,
+        &user_communities_map,
     )
     .await?;
 
@@ -74,20 +75,20 @@ pub async fn run_seed(pg_pool: &PgPool, seed_settings: SeedSettings) -> anyhow::
 //     Ok(suppliers)
 // }
 
-pub async fn seed_participant(
+pub async fn seed_user(
     pool: &PgPool,
     count: &usize,
     // suppliers: &[Uuid],
 ) -> anyhow::Result<Vec<Uuid>> {
     // let mut rng = rand::rng();
     let mut generator = Generator::default();
-    let mut participants = Vec::new();
+    let mut users = Vec::new();
 
     for _ in 0..*count {
-        participants.push(
+        users.push(
             // sqlx::query_scalar!(
             //     r#"
-            //     INSERT INTO "participant" ("email", "name", "supplier", "password")
+            //     INSERT INTO "user" ("email", "name", "supplier", "password")
             //     VALUES ($1, $2, $3, $4)
             //     RETURNING id
             //     "#,
@@ -98,7 +99,7 @@ pub async fn seed_participant(
             // )
             sqlx::query_scalar!(
                 r#"
-                INSERT INTO "participant" ("email", "name", "password")
+                INSERT INTO "user" ("email", "name", "password")
                 VALUES ($1, $2, $3)
                 RETURNING id
                 "#,
@@ -111,7 +112,7 @@ pub async fn seed_participant(
         )
     }
 
-    Ok(participants)
+    Ok(users)
 }
 
 pub async fn seed_community(pool: &PgPool, count: &usize) -> anyhow::Result<Vec<Uuid>> {
@@ -136,67 +137,64 @@ pub async fn seed_community(pool: &PgPool, count: &usize) -> anyhow::Result<Vec<
     Ok(communities)
 }
 
-pub async fn seed_participant_community(
+pub async fn seed_user_community(
     pool: &PgPool,
-    communities_per_participant: &usize,
-    participants: &[Uuid],
+    communities_per_user: &usize,
+    users: &[Uuid],
     communities: &[Uuid],
 ) -> anyhow::Result<HashMap<Uuid, Vec<Uuid>>> {
     let mut rng = rand::thread_rng();
-    let mut participant_community_map: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
+    let mut user_community_map: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
     let roles = [
-        ParticipantRole::User,
-        ParticipantRole::Manager,
-        ParticipantRole::UserManager,
+        UserRole::Participant,
+        UserRole::Manager,
+        UserRole::UserManager,
     ];
 
-    for &participant in participants {
+    for &user in users {
         for community in communities
             .iter()
-            .choose_multiple(&mut rng, *communities_per_participant)
+            .choose_multiple(&mut rng, *communities_per_user)
         {
             sqlx::query!(
                 r#"
-                INSERT INTO "participant_community" ("participant", "community", "role")
+                INSERT INTO "user_community" ("user_id", "community_id", "role")
                 VALUES ($1, $2, $3)
                 "#,
-                participant,
+                user,
                 community,
-                roles.iter().choose(&mut rng).unwrap() as &ParticipantRole
+                roles.iter().choose(&mut rng).unwrap() as &UserRole
             )
             .execute(pool)
             .await?;
 
-            participant_community_map
-                .entry(participant)
-                .or_default()
-                .push(*community);
+            user_community_map.entry(user).or_default().push(*community);
         }
     }
 
-    Ok(participant_community_map)
+    Ok(user_community_map)
 }
 
 pub async fn seed_energypool(
     pool: &PgPool,
     energy_days: &i64,
     energy_interval: &i64,
-    participant_communities_map: &HashMap<Uuid, Vec<Uuid>>,
+    user_communities_map: &HashMap<Uuid, Vec<Uuid>>,
 ) -> anyhow::Result<()> {
     let mut rng = rand::thread_rng();
     let start = Utc::now().naive_utc();
     let end = (Utc::now() + Duration::days(*energy_days)).naive_utc();
 
-    for (participant, communities) in participant_communities_map.iter() {
+    for (user, communities) in user_communities_map.iter() {
         let mut current = start;
         while current < end {
             for community in communities {
                 sqlx::query!(
                     r#"
-                    INSERT INTO "energypool" ("participant", "community", "generated", "consumed", "consumer_price", "seller_price", "start")
+                    INSERT INTO "energypool" ("user_id", "community_id", "generated", "consumed", "consumer_price", "seller_price", "start")
                     VALUES ($1, $2, $3, $4, $5, $6, $7)
                     "#,
-                    participant,
+                    user,
                     community,
                     BigDecimal::from_str(&rng.gen_range(0.0..5000.0).to_string()).unwrap(),
                     BigDecimal::from_str(&rng.gen_range(0.0..5000.0).to_string()).unwrap(),

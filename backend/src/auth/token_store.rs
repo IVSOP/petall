@@ -7,16 +7,16 @@ impl AppState {
     pub async fn store_token(
         &self,
         token_id: Uuid,
-        participant_id: Uuid,
+        user_id: Uuid,
         expiration: DateTime<Utc>,
     ) -> AppResult<()> {
         sqlx::query!(
             r#"
-            INSERT INTO token (id, participant, expiration)
+            INSERT INTO token (id, user_id, expiration)
             VALUES ($1, $2, $3)
             "#,
             token_id,
-            participant_id,
+            user_id,
             expiration
         )
         .execute(&self.pg_pool)
@@ -53,13 +53,13 @@ impl AppState {
         Ok(result.rows_affected() != 0)
     }
 
-    pub async fn delete_all_tokens(&self, participant_id: Uuid) -> AppResult<()> {
+    pub async fn delete_all_tokens(&self, user_id: Uuid) -> AppResult<()> {
         sqlx::query!(
             r#"
             DELETE FROM token
-            WHERE participant = $1
+            WHERE user_id = $1
             "#,
-            participant_id
+            user_id
         )
         .execute(&self.pg_pool)
         .await?;

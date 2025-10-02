@@ -1,2 +1,2 @@
 pub mod community;
-pub mod participant;
+pub mod user;

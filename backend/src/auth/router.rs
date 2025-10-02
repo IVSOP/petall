@@ -53,17 +53,13 @@ async fn register_handler(
 ) -> AppResult<impl IntoResponse> {
     request.validate()?;
 
-    if state
-        .get_participant_by_email(&request.email)
-        .await?
-        .is_some()
-    {
+    if state.get_user_by_email(&request.email).await?.is_some() {
         // email already exists
         return Err(AppError::EmailAlreadyInUse(request.email));
     }
 
     let user = state
-        .register_participant(&request.email, &request.name, &request.password)
+        .register_user(&request.email, &request.name, &request.password)
         .await?;
 
     let token_id = Uuid::new_v4();
@@ -103,22 +99,22 @@ async fn login_handler(
     State(state): State<AppState>,
     Json(request): Json<LoginRequest>,
 ) -> AppResult<impl IntoResponse> {
-    let participant = state
-        .get_participant_by_email(&request.email)
+    let user = state
+        .get_user_by_email(&request.email)
         .await?
         .ok_or(AppError::InvalidCredentials)?;
 
-    if !password::verify_password(&request.password, &participant.password)? {
+    if !password::verify_password(&request.password, &user.password)? {
         return Err(AppError::InvalidCredentials);
     }
 
     let token_id = Uuid::new_v4();
-    let access_token = jwt::create_access_token(&state.jwt_config, token_id, participant.id)?;
+    let access_token = jwt::create_access_token(&state.jwt_config, token_id, user.id)?;
     let (refresh_token, refresh_expiration) =
-        jwt::create_refresh_token(&state.jwt_config, token_id, participant.id)?;
+        jwt::create_refresh_token(&state.jwt_config, token_id, user.id)?;
 
     state
-        .store_token(token_id, participant.id.clone(), refresh_expiration)
+        .store_token(token_id, user.id.clone(), refresh_expiration)
         .await?;
 
     Ok(Json(LoginResponse {
@@ -198,28 +194,28 @@ async fn change_password_handler(
     State(state): State<AppState>,
     request: Json<ChangePasswordRequest>,
 ) -> AppResult<impl IntoResponse> {
-    let participant = state
-        .get_participant_by_id(&access_token.sub)
+    let user = state
+        .get_user_by_id(&access_token.sub)
         .await?
         .ok_or(AppError::InvalidToken)?;
 
-    if !password::verify_password(&request.old_password, &participant.password)? {
+    if !password::verify_password(&request.old_password, &user.password)? {
         return Err(AppError::InvalidCredentials);
     }
 
     state
-        .update_participant_password(&participant.id, &request.new_password)
+        .update_user_password(&user.id, &request.new_password)
         .await?;
 
     let token_id = Uuid::new_v4();
-    let access_token = jwt::create_access_token(&state.jwt_config, token_id, participant.id)?;
+    let access_token = jwt::create_access_token(&state.jwt_config, token_id, user.id)?;
     let (refresh_token, refresh_expiration) =
-        jwt::create_refresh_token(&state.jwt_config, token_id, participant.id)?;
+        jwt::create_refresh_token(&state.jwt_config, token_id, user.id)?;
 
-    state.delete_all_tokens(participant.id).await?;
+    state.delete_all_tokens(user.id).await?;
 
     state
-        .store_token(token_id, participant.id.clone(), refresh_expiration)
+        .store_token(token_id, user.id.clone(), refresh_expiration)
         .await?;
 
     Ok(Json(ChangePasswordResponse {
@@ -242,15 +238,15 @@ async fn me_handler(
     ExtractAccessToken(access_token): ExtractAccessToken,
     State(state): State<AppState>,
 ) -> AppResult<impl IntoResponse> {
-    let participant = state
-        .get_participant_by_id(&access_token.sub)
+    let user = state
+        .get_user_by_id(&access_token.sub)
         .await?
         .ok_or(AppError::InvalidToken)?;
 
     Ok(Json(MeResponse {
-        id: participant.id,
-        email: participant.email,
-        name: participant.name,
+        id: user.id,
+        email: user.email,
+        name: user.name,
     }))
 }
 

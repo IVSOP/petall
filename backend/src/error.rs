@@ -20,12 +20,12 @@ pub enum AppError {
     SqlxError(#[from] sqlx::error::Error),
     #[error(transparent)]
     ValidationError(#[from] validator::ValidationErrors),
-    #[error("participant not found using ID: {0}")]
-    ParticipantNotFoundId(Uuid),
-    #[error("participant-community already in use: participant {0}, community {1}")]
-    ParticipantCommunityAlredyInUse(Uuid, Uuid),
-    #[error("not found participant {0} in community {1}")]
-    ParticipantCommunityNotFound(Uuid, Uuid),
+    #[error("user not found using ID: {0}")]
+    UserNotFoundId(Uuid),
+    #[error("user-community already in use: user {0}, community {1}")]
+    UserCommunityAlreadyInUse(Uuid, Uuid),
+    #[error("not found user {0} in community {1}")]
+    UserCommunityNotFound(Uuid, Uuid),
     #[error(transparent)]
     JwtError(#[from] jsonwebtoken::errors::Error),
     #[error("invalid jwt token")]
@@ -85,23 +85,20 @@ impl IntoResponse for AppError {
                 )
                 .collect(),
             ),
-            AppError::ParticipantNotFoundId(id) => (
+            AppError::UserNotFoundId(id) => (
                 StatusCode::NOT_FOUND,
-                format!("Participant not found with id: {}", id),
+                format!("user not found with id: {}", id),
             ),
-            AppError::ParticipantCommunityAlredyInUse(participant, community) => (
+            AppError::UserCommunityAlreadyInUse(user, community) => (
                 StatusCode::CONFLICT,
                 format!(
-                    "participant-community already in use: participant {}, community {}",
-                    participant, community
+                    "user-community already in use: user {}, community {}",
+                    user, community
                 ),
             ),
-            AppError::ParticipantCommunityNotFound(participant, community) => (
+            AppError::UserCommunityNotFound(user, community) => (
                 StatusCode::NOT_FOUND,
-                format!(
-                    "not found participant {} in community {}",
-                    participant, community
-                ),
+                format!("not found user {} in community {}", user, community),
             ),
             AppError::JwtError(error) => {
                 error!("JWT error: {:?}", error);

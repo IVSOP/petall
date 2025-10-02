@@ -13,8 +13,8 @@ pub struct Community {
 #[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct Energy {
     pub id: Uuid,
-    pub participant: Uuid,
-    pub community: Uuid,
+    pub user_id: Uuid,
+    pub community_id: Uuid,
     #[serde(with = "bigdecimal::serde::json_num")]
     pub generated: BigDecimal,
     #[serde(with = "bigdecimal::serde::json_num")]

@@ -1,15 +1,13 @@
 use crate::AppState;
 use crate::error::{AppError, AppResult};
-use crate::models::db::participant::Participant;
-use crate::models::http::requests::{
-    CommunityRegisterRequest, ParticipantCommunityRegisterRequest,
-};
+use crate::models::db::user::{User, UserRole};
 use axum::http::StatusCode;
 use axum::{
     Json, debug_handler,
     extract::{Path, State},
     response::IntoResponse,
 };
+use serde::Deserialize;
 use uuid::Uuid;
 use validator::Validate;
 
@@ -33,21 +31,27 @@ pub async fn get_communities(State(state): State<AppState>) -> AppResult<impl In
 }
 
 #[debug_handler]
-pub async fn get_community_participants(
+pub async fn get_community_users(
     State(state): State<AppState>,
     Path(community_id): Path<Uuid>,
 ) -> AppResult<impl IntoResponse> {
-    let mut participants: Vec<Participant> = Vec::new();
-    let participant_communities = state.get_community_participants(&community_id).await?;
+    let mut users: Vec<User> = Vec::new();
+    let user_communities = state.get_community_users(&community_id).await?;
 
-    for pc in &participant_communities {
-        match state.get_participant_by_id(&pc.participant).await? {
-            Some(participant) => participants.push(participant),
-            None => return Err(AppError::ParticipantNotFoundId(pc.participant)),
+    for pc in &user_communities {
+        match state.get_user_by_id(&pc.user_id).await? {
+            Some(user) => users.push(user),
+            None => return Err(AppError::UserNotFoundId(pc.user_id)),
         }
     }
 
-    Ok(Json(participants))
+    Ok(Json(users))
+}
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct CommunityRegisterRequest {
+    #[validate(length(min = 3, max = 50))]
+    pub name: String,
 }
 
 #[debug_handler]
@@ -62,38 +66,38 @@ pub async fn register_community(
     }
 }
 
+#[derive(Debug, Deserialize, Validate)]
+pub struct UserCommunityRegisterRequest {
+    pub user: Uuid,
+    pub role: UserRole,
+}
+
 #[debug_handler]
-pub async fn register_participant_community(
+pub async fn register_user_community(
     State(state): State<AppState>,
     Path(community_id): Path<Uuid>,
-    Json(request): Json<ParticipantCommunityRegisterRequest>,
+    Json(request): Json<UserCommunityRegisterRequest>,
 ) -> AppResult<impl IntoResponse> {
     request.validate()?;
     match state
-        .register_participant_community(&community_id, request.participant, request.role)
+        .register_user_community(&community_id, request.user, request.role)
         .await
     {
-        Ok(participant_community) => Ok((StatusCode::CREATED, Json(participant_community))),
-        Err(_e) => Err(AppError::ParticipantCommunityAlredyInUse(
-            request.participant,
+        Ok(user_community) => Ok((StatusCode::CREATED, Json(user_community))),
+        Err(_e) => Err(AppError::UserCommunityAlreadyInUse(
+            request.user,
             community_id,
         )),
     }
 }
 
 #[debug_handler]
-pub async fn remove_participant_community(
+pub async fn remove_user_community(
     State(state): State<AppState>,
-    Path((community_id, participant_id)): Path<(Uuid, Uuid)>,
+    Path((community_id, user_id)): Path<(Uuid, Uuid)>,
 ) -> AppResult<impl IntoResponse> {
-    match state
-        .remove_participant_community(&community_id, &participant_id)
-        .await
-    {
-        Ok(participant_community) => Ok((StatusCode::OK, Json(participant_community))),
-        Err(_e) => Err(AppError::ParticipantCommunityNotFound(
-            participant_id,
-            community_id,
-        )),
+    match state.remove_user_community(&community_id, &user_id).await {
+        Ok(user_community) => Ok((StatusCode::OK, Json(user_community))),
+        Err(_e) => Err(AppError::UserCommunityNotFound(user_id, community_id)),
     }
 }

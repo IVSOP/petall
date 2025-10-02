@@ -1,6 +1,6 @@
 use crate::AppState;
 use crate::models::db::community::Community;
-use crate::models::db::participant::{ParticipantCommunity, ParticipantRole};
+use crate::models::db::user::{UserCommunity, UserRole};
 use uuid::Uuid;
 
 impl AppState {
@@ -43,58 +43,55 @@ impl AppState {
         .await
     }
 
-    pub async fn register_participant_community(
+    pub async fn register_user_community(
         &self,
         community: &Uuid,
-        participant: Uuid,
-        role: ParticipantRole,
-    ) -> sqlx::Result<ParticipantCommunity> {
+        user: Uuid,
+        role: UserRole,
+    ) -> sqlx::Result<UserCommunity> {
         sqlx::query_as!(
-            ParticipantCommunity,
+            UserCommunity,
             r#"
-            INSERT INTO participant_community
-            (community, participant, role)
+            INSERT INTO user_community
+            (community_id, user_id, role)
             VALUES ($1, $2, $3)
             RETURNING
-            community, participant, role as "role: ParticipantRole"
+            community_id, user_id, role as "role: UserRole"
             "#,
             community,
-            participant,
-            &role as &ParticipantRole
+            user,
+            &role as &UserRole
         )
         .fetch_one(&self.pg_pool)
         .await
     }
 
-    pub async fn remove_participant_community(
+    pub async fn remove_user_community(
         &self,
         community: &Uuid,
-        participant: &Uuid,
-    ) -> sqlx::Result<ParticipantCommunity> {
+        user: &Uuid,
+    ) -> sqlx::Result<UserCommunity> {
         sqlx::query_as!(
-            ParticipantCommunity,
+            UserCommunity,
             r#"
-            DELETE FROM participant_community
-            WHERE community = $1 AND participant = $2
+            DELETE FROM user_community
+            WHERE community_id = $1 AND user_id = $2
             RETURNING
-            community, participant, role as "role: ParticipantRole"
+            community_id, user_id, role as "role: UserRole"
             "#,
             community,
-            participant
+            user
         )
         .fetch_one(&self.pg_pool)
         .await
     }
 
-    pub async fn get_community_participants(
-        &self,
-        community: &Uuid,
-    ) -> sqlx::Result<Vec<ParticipantCommunity>> {
+    pub async fn get_community_users(&self, community: &Uuid) -> sqlx::Result<Vec<UserCommunity>> {
         sqlx::query_as!(
-            ParticipantCommunity,
+            UserCommunity,
             r#"
-            SELECT participant, community, role as "role: ParticipantRole" FROM "participant_community"
-            WHERE community = $1
+            SELECT user_id, community_id, role as "role: UserRole" FROM "user_community"
+            WHERE community_id = $1
             "#,
             community
         )

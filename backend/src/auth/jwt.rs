@@ -58,13 +58,13 @@ pub struct RefreshTokenClaims {
 pub fn create_access_token(
     jwt_config: &JwtConfig,
     token_id: Uuid,
-    participant_id: Uuid,
+    user_id: Uuid,
 ) -> AppResult<String> {
     let age = jwt_config.access_token_max_age;
     let expiration = Utc::now().add(age).timestamp();
 
     let claims = AccessTokenClaims {
-        sub: participant_id,
+        sub: user_id,
         token_id,
         exp: expiration,
     };
@@ -77,13 +77,13 @@ pub fn create_access_token(
 pub fn create_refresh_token(
     jwt_config: &JwtConfig,
     token_id: Uuid,
-    participant_id: Uuid,
+    user_id: Uuid,
 ) -> AppResult<(String, DateTime<Utc>)> {
     let age = jwt_config.refresh_token_max_age;
     let expiration = Utc::now().add(age);
 
     let claims = RefreshTokenClaims {
-        sub: participant_id,
+        sub: user_id,
         token_id,
         exp: expiration.timestamp(),
     };

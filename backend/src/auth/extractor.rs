@@ -22,7 +22,8 @@ impl FromRequestParts<AppState> for ExtractAccessToken {
 
         let access_token = header.to_str().map_err(|_| AppError::InvalidToken)?;
 
-        let token = jwt::decode_access_token(&state.jwt_config, access_token)?;
+        let token = jwt::decode_access_token(&state.jwt_config, access_token)
+            .map_err(|_| AppError::InvalidToken)?;
         Ok(ExtractAccessToken(token))
     }
 }
