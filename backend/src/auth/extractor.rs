@@ -1,14 +1,11 @@
 use axum::{extract::FromRequestParts, http::request::Parts};
+use uuid::Uuid;
 
-use crate::{
-    AppState,
-    auth::jwt::{self, AccessTokenClaims},
-    error::AppError,
-};
+use crate::{AppState, auth::Session, error::AppError};
 
-pub struct ExtractAccessToken(pub AccessTokenClaims);
+pub struct ExtractSession(pub Session);
 
-impl FromRequestParts<AppState> for ExtractAccessToken {
+impl FromRequestParts<AppState> for ExtractSession {
     type Rejection = AppError;
 
     async fn from_request_parts(
@@ -18,12 +15,16 @@ impl FromRequestParts<AppState> for ExtractAccessToken {
         let header = parts
             .headers
             .get("Authorization")
-            .ok_or(AppError::InvalidToken)?;
+            .ok_or(AppError::InvalidSession)?;
 
-        let access_token = header.to_str().map_err(|_| AppError::InvalidToken)?;
+        let session = header.to_str().map_err(|_| AppError::InvalidSession)?;
+        let session_id: Uuid = session.parse().map_err(|_| AppError::InvalidSession)?;
 
-        let token = jwt::decode_access_token(&state.jwt_config, access_token)
-            .map_err(|_| AppError::InvalidToken)?;
-        Ok(ExtractAccessToken(token))
+        let session = state
+            .get_valid_session(session_id)
+            .await?
+            .ok_or(AppError::InvalidSession)?;
+
+        Ok(ExtractSession(session))
     }
 }

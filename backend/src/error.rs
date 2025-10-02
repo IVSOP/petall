@@ -26,10 +26,8 @@ pub enum AppError {
     UserCommunityAlreadyInUse(Uuid, Uuid),
     #[error("not found user {0} in community {1}")]
     UserCommunityNotFound(Uuid, Uuid),
-    #[error(transparent)]
-    JwtError(#[from] jsonwebtoken::errors::Error),
-    #[error("invalid jwt token")]
-    InvalidToken,
+    #[error("invalid session")]
+    InvalidSession,
     #[error("email already in use: {0}")]
     EmailAlreadyInUse(String),
     #[error("argon2 error: {0}")]
@@ -100,11 +98,7 @@ impl IntoResponse for AppError {
                 StatusCode::NOT_FOUND,
                 format!("not found user {} in community {}", user, community),
             ),
-            AppError::JwtError(error) => {
-                error!("JWT error: {:?}", error);
-                internal_server_error
-            }
-            AppError::InvalidToken => (StatusCode::UNAUTHORIZED, "Invalid token".to_string()),
+            AppError::InvalidSession => (StatusCode::UNAUTHORIZED, "Invalid session".to_string()),
             AppError::EmailAlreadyInUse(email) => (
                 StatusCode::CONFLICT,
                 format!("Email already in use: {}", email),

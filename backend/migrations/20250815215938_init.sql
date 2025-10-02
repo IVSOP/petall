@@ -16,12 +16,12 @@ CREATE TABLE IF NOT EXISTS "user" (
 
 CREATE INDEX IF NOT EXISTS "user_email_idx" ON "user" ("email");
 
-CREATE TABLE IF NOT EXISTS "token" (
+CREATE TABLE IF NOT EXISTS "session" (
     "id" UUID NOT NULL,
     "user_id" UUID NOT NULL,
     "expiration" TIMESTAMPTZ NOT NULL,
     PRIMARY KEY ("id"),
-    CONSTRAINT fk_token_user
+    CONSTRAINT fk_session_user
         FOREIGN KEY ("user_id")
         REFERENCES "user"("id")
         ON DELETE CASCADE
