@@ -1,10 +1,10 @@
 <script lang="ts">
 	import '../../app.css';
-	import type { LayoutProps } from '../$types';
 	import { Toaster } from '$lib/components/ui/sonner/index.js';
 	import favicon from '$lib/assets/favicon.svg';
 	import * as NavigationMenu from '$lib/components/ui/navigation-menu/index.js';
-	import Avatar from '../../components/Avatar.svelte';
+	import type { LayoutProps } from './$types';
+	import Avatar from '$lib/components/Avatar.svelte';
 
 	let { data, children }: LayoutProps = $props();
 </script>
@@ -29,7 +29,9 @@
 						</NavigationMenu.Item>
 					</NavigationMenu.List>
 				</NavigationMenu.Root>
-				<Avatar name={data.user.name} />
+				{#if data.user}
+					<Avatar name={data.user.name} />
+				{/if}
 			</div>
 		</div>
 	</div>

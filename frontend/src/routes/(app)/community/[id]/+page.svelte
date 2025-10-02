@@ -1,7 +1,7 @@
 <script lang="ts">
+	import EnergyChart from '$lib/components/EnergyChart.svelte';
+	import EnergyTable from '$lib/components/EnergyTable.svelte';
 	import type { PageProps } from './$types';
-	import EnergyTable from '../../../../components/EnergyTable.svelte';
-	import EnergyChart from '../../../../components/EnergyChart.svelte';
 	import { columns } from './columns';
 
 	const { data }: PageProps = $props();

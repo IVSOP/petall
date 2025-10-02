@@ -1,8 +1,8 @@
 <script lang="ts">
+	import DangerZone from '$lib/components/DangerZone.svelte';
+	import InfoZone from '$lib/components/InfoZone.svelte';
+	import ManageAccessZone from '$lib/components/ManageAccessZone.svelte';
 	import type { PageProps } from './$types';
-	import InfoZone from '../../../../../components/InfoZone.svelte';
-	import DangerZone from '../../../../../components/DangerZone.svelte';
-	import ManageAccessZone from '../../../../../components/ManageAccessZone.svelte';
 
 	const { data }: PageProps = $props();
 </script>
