@@ -19,7 +19,7 @@ impl AppState {
         .await
     }
 
-    pub async fn get_user_by_id(&self, user_id: &Uuid) -> sqlx::Result<Option<User>> {
+    pub async fn get_user_by_id(&self, user_id: Uuid) -> sqlx::Result<Option<User>> {
         sqlx::query_as!(
             User,
             r#"

@@ -30,7 +30,8 @@ CREATE TABLE IF NOT EXISTS "session" (
 CREATE TABLE IF NOT EXISTS "community" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "name" VARCHAR(255) NOT NULL UNIQUE,
-    "image" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "description" TEXT NOT NULL,
+    "image" VARCHAR(255),
     PRIMARY KEY ("id")
 );
 

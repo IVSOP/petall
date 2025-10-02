@@ -33,7 +33,7 @@ pub async fn get_user(
     State(state): State<AppState>,
     Path(user_id): Path<Uuid>,
 ) -> AppResult<impl IntoResponse> {
-    match state.get_user_by_id(&user_id).await? {
+    match state.get_user_by_id(user_id).await? {
         Some(user) => Ok((StatusCode::OK, Json(user))),
         None => Err(AppError::UserNotFoundId(user_id)),
     }
@@ -94,7 +94,7 @@ pub async fn get_user_energies(
 ) -> AppResult<impl IntoResponse> {
     query.validate()?;
     // TODO: Change this to a EXISTS query
-    if state.get_user_by_id(&user_id).await?.is_none() {
+    if state.get_user_by_id(user_id).await?.is_none() {
         return Err(AppError::UserNotFoundId(user_id));
     }
 

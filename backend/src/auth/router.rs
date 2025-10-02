@@ -153,7 +153,7 @@ async fn change_password_handler(
     request: Json<ChangePasswordRequest>,
 ) -> AppResult<impl IntoResponse> {
     let user = state
-        .get_user_by_id(&session.user_id)
+        .get_user_by_id(session.user_id)
         .await?
         .ok_or(AppError::InvalidSession)?;
 
@@ -190,7 +190,7 @@ async fn me_handler(
     State(state): State<AppState>,
 ) -> AppResult<impl IntoResponse> {
     let user = state
-        .get_user_by_id(&session.user_id)
+        .get_user_by_id(session.user_id)
         .await?
         .ok_or(AppError::InvalidSession)?;
 

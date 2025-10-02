@@ -7,7 +7,9 @@ use uuid::Uuid;
 pub struct Community {
     pub id: Uuid,
     pub name: String,
-    pub image: Uuid,
+    pub description: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub image: Option<String>,
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]

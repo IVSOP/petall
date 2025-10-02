@@ -1,6 +1,5 @@
 export type Participant = {
 	id: string;
-	role: 'manager' | 'supplier' | 'user';
 	name: string;
 	email: string;
 };
@@ -39,7 +38,4 @@ export type Community = {
 	supplier: string;
 };
 
-export type UserRoleData = {
-	community: Community;
-	role: string;
-};
+export type UserRole = 'manager' | 'supplier' | 'user';

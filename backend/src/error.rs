@@ -1,12 +1,34 @@
 use axum::Json;
+use axum::extract::rejection::JsonRejection;
+use axum::extract::{FromRequest, Request};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 use thiserror::Error;
 use tracing::error;
 use uuid::Uuid;
+use validator::Validate;
 
 use crate::auth;
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ValidatedJson<T>(pub T);
+
+impl<T, S> FromRequest<S> for ValidatedJson<T>
+where
+    T: DeserializeOwned + Validate,
+    S: Send + Sync,
+    Json<T>: FromRequest<S, Rejection = JsonRejection>,
+{
+    type Rejection = AppError;
+
+    async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
+        let Json(value) = Json::<T>::from_request(req, state).await?;
+        value.validate()?;
+        Ok(ValidatedJson(value))
+    }
+}
 
 pub type AppResult<T> = Result<T, AppError>;
 
@@ -34,16 +56,8 @@ pub enum AppError {
     Argon2Error(#[from] auth::password::Argon2Error),
     #[error("invalid credentials")]
     InvalidCredentials,
-    // #[error("user not found using email: {0}")]
-    // UserNotFoundEmail(String),
-    // #[error("manager not found using ID: {0}")]
-    // ManagerNotFoundId(Uuid),
-    // #[error("invalid password")]
-    // InvalidPassword,
-    // #[error("invalid token")]
-    // InvalidToken,
-    // #[error("unauthorized")]
-    // Unauthorized,
+    #[error(transparent)]
+    AxumJsonRejection(#[from] JsonRejection),
 }
 
 impl IntoResponse for AppError {
@@ -110,6 +124,7 @@ impl IntoResponse for AppError {
             AppError::InvalidCredentials => {
                 (StatusCode::UNAUTHORIZED, "Invalid credentials".to_string())
             }
+            AppError::AxumJsonRejection(err) => (StatusCode::BAD_REQUEST, err.to_string()),
         };
 
         let body = ErrorBody { error };

@@ -5,8 +5,9 @@
 	import CircleDollarSign from '@lucide/svelte/icons/circle-dollar-sign';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
+	import type { CommunityGetCommunitiesResponse } from '$lib/api/community';
 
-	const { community } = $props();
+	const { community }: { community: CommunityGetCommunitiesResponse } = $props();
 </script>
 
 <div
@@ -15,16 +16,16 @@
 	<Card.Root class="gap-3 overflow-hidden rounded-xl pt-0">
 		<Card.Header class="relative px-0 py-0">
 			<div class="relative h-48 w-full shadow-inner">
-				<a href={`/community/${community.community.id}`}>
+				<a href={`/community/${community.id}`}>
 					<img
 						src="https://images.jdmagicbox.com/rep/b2b/wall-paper/wall-paper-11.jpg"
-						alt={community.community.name}
+						alt={community.name}
 						class="h-full w-full object-cover"
 					/>
 				</a>
 				{#if community.role.includes('Manager')}
 					<button class="absolute top-2 right-2 rounded-full bg-white/70 p-2 hover:bg-white">
-						<a href={`/community/${community.community.id}/settings`}>
+						<a href={`/community/${community.id}/settings`}>
 							<Settings />
 						</a>
 					</button>
@@ -34,12 +35,12 @@
 		<Card.Content class="px-4">
 			<div class="flex flex-col justify-between xl:flex-row">
 				<div class="truncate text-lg font-semibold">
-					<a href={`/community/${community.community.id}`}>
-						{community.community.name}
+					<a href={`/community/${community.id}`}>
+						{community.name}
 					</a>
 				</div>
 				<div class="mt-2 flex flex-wrap gap-1 sm:mt-0">
-					{#if community.role == 'UserManager'}
+					{#if community.role == 'manager'}
 						<Badge>User</Badge>
 						<Badge>Manager</Badge>
 					{:else}

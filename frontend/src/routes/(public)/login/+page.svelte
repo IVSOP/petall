@@ -5,6 +5,7 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import '../../../app.css';
+	import ErrorDialog from '$lib/components/ErrorDialog.svelte';
 
 	let { form }: PageProps = $props();
 </script>
@@ -19,12 +20,9 @@
 				</Card.Header>
 				<Card.Content>
 					{#if form?.error}
-						<p
-							class="mb-3 rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive"
-							role="alert"
-						>
+						<ErrorDialog>
 							{form.error}
-						</p>
+						</ErrorDialog>
 					{/if}
 					<form method="POST">
 						<div class="grid gap-6">
