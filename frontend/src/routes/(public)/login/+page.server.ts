@@ -4,7 +4,7 @@ import type { LoginRequest, LoginResponse } from '$lib/api/auth';
 import type { ErrorResponse } from '$lib/api';
 
 export const actions = {
-	default: async ({ cookies, request, fetch }) => {
+	default: async ({ cookies, request, fetch, url }) => {
 		const data = await request.formData();
 		const email = data.get('email')?.toString().trim();
 		const password = data.get('password')?.toString();
@@ -42,7 +42,11 @@ export const actions = {
 			httpOnly: true
 		});
 
-		redirect(302, '/');
+		if (url.searchParams.has('redirectTo')) {
+			redirect(303, url.searchParams.get('redirectTo') ?? '/');
+		} else {
+			redirect(303, '/');
+		}
 
 		return { success: true };
 	}
