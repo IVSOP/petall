@@ -3,13 +3,30 @@ use crate::error::{AppError, AppResult};
 use crate::models::db::user::{User, UserRole};
 use axum::http::StatusCode;
 use axum::{
-    Json, debug_handler,
+    Json, Router, debug_handler,
     extract::{Path, State},
     response::IntoResponse,
+    routing::{delete, get, post},
 };
 use serde::Deserialize;
 use uuid::Uuid;
 use validator::Validate;
+
+pub fn router() -> Router<AppState> {
+    Router::new()
+        .route("/communities", get(get_communities))
+        .route("/community/{id}", get(get_community))
+        .route("/community/{community_id}/users", get(get_community_users))
+        .route("/community/register", post(register_community))
+        .route(
+            "/community/{community_id}/user",
+            post(register_user_community),
+        )
+        .route(
+            "/community/{community_id}/user/{user_id}",
+            delete(remove_user_community),
+        )
+}
 
 #[debug_handler]
 pub async fn get_community(

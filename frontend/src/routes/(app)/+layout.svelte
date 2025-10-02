@@ -29,7 +29,7 @@
 						</NavigationMenu.Item>
 					</NavigationMenu.List>
 				</NavigationMenu.Root>
-				<Avatar name={data.name} />
+				<Avatar name={data.user.name} />
 			</div>
 		</div>
 	</div>

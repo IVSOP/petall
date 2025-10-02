@@ -1,10 +1,12 @@
-use crate::models::db::community::Community;
-use crate::models::db::user::UserRole;
 use crate::AppState;
 use crate::error::{AppError, AppResult};
+use crate::models::db::community::Community;
+use crate::models::db::user::UserRole;
 use crate::models::http::OrderDirection;
+use axum::Router;
 use axum::extract::Query;
 use axum::http::StatusCode;
+use axum::routing::get;
 use axum::{
     Json, debug_handler,
     extract::{Path, State},
@@ -14,6 +16,17 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
+
+pub fn router() -> Router<AppState> {
+    Router::new()
+        .route("/users", get(get_users))
+        .route("/user/{user_id}", get(get_user))
+        .route("/user/{user_id}/communities", get(get_user_communities))
+        .route(
+            "/community/{community_id}/energy/{user_id}",
+            get(get_user_energies),
+        )
+}
 
 #[debug_handler]
 pub async fn get_user(

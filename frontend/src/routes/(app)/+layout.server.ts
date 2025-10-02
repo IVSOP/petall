@@ -1,19 +1,20 @@
+import type { User } from '$lib/api';
 import type { MeResponse } from '$lib/api/auth';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ fetch, cookies }) => {
-	const accessToken = cookies.get('accessToken') ?? '';
+	const sessionId = cookies.get('sessionId') ?? '';
 	const response = await fetch(`/api/auth/me`, {
 		method: 'POST',
 		headers: {
-			Authorization: accessToken,
+			Authorization: sessionId,
 			'Content-Type': 'application/json'
 		}
 	});
-	const me: MeResponse = await response.json();
+	const me: User = await response.json();
 
 	return {
-		...me,
+		user: me,
 		image: 'https://github.com/DigoqueDigo.png'
 	};
 };

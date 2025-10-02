@@ -31,13 +31,9 @@ export const actions = {
 			return fail(response.status, { email, error: error.error });
 		}
 
-		const { accessToken, refreshToken }: LoginResponse = await response.json();
+		const { sessionId }: LoginResponse = await response.json();
 
-		cookies.set('accessToken', accessToken, {
-			path: '/',
-			httpOnly: true
-		});
-		cookies.set('refreshToken', refreshToken, {
+		cookies.set('sessionId', sessionId, {
 			path: '/',
 			httpOnly: true
 		});
