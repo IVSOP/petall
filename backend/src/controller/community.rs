@@ -1,6 +1,8 @@
 use crate::AppState;
-use crate::models::db::community::Community;
-use crate::models::db::user::{UserCommunity, UserRole};
+use crate::models::{Community, EnergyRecord, UserCommunity, UserRole};
+use crate::router::community::OrderDirection;
+use chrono::NaiveDateTime;
+use sqlx::QueryBuilder;
 use uuid::Uuid;
 
 impl AppState {
@@ -77,17 +79,34 @@ impl AppState {
         Ok(community)
     }
 
-    pub async fn get_community_by_id(&self, id: &Uuid) -> sqlx::Result<Option<Community>> {
-        sqlx::query_as!(
-            Community,
+    pub async fn get_community_by_id(
+        &self,
+        user_id: Uuid,
+        id: Uuid,
+    ) -> sqlx::Result<Option<(Community, UserRole)>> {
+        let rows = sqlx::query!(
             r#"
-            SELECT * FROM community
-            WHERE id = $1
+            SELECT c.id, c.name, c.description, c.image, uc.role as "role: UserRole" FROM community c
+            JOIN user_community uc ON c.id = uc.community_id
+            WHERE c.id = $1 AND uc.user_id = $2
             "#,
-            id
+            id,
+            user_id
         )
         .fetch_optional(&self.pg_pool)
-        .await
+        .await?;
+
+        Ok(rows.map(|row| {
+            (
+                Community {
+                    id: row.id,
+                    name: row.name,
+                    description: row.description,
+                    image: row.image,
+                },
+                row.role,
+            )
+        }))
     }
 
     pub async fn register_user_community(
@@ -131,5 +150,50 @@ impl AppState {
         )
         .fetch_one(&self.pg_pool)
         .await
+    }
+
+    pub async fn get_user_energy_records(
+        &self,
+        user_id: Uuid,
+        community_id: Uuid,
+        page: u32,
+        size: u32,
+        order_dir: OrderDirection,
+        start: Option<NaiveDateTime>,
+        end: Option<NaiveDateTime>,
+    ) -> sqlx::Result<Vec<EnergyRecord>> {
+        let mut query_builder = QueryBuilder::new(
+            r#"
+            SELECT id, user_id, community_id, generated, consumed, consumer_price, seller_price, start
+            FROM energy_record
+            WHERE user_id = "#,
+        );
+
+        query_builder.push_bind(user_id);
+        query_builder.push(" AND community_id = ");
+        query_builder.push_bind(community_id);
+
+        if let Some(start) = start {
+            query_builder.push(" AND start >= ");
+            query_builder.push_bind(start);
+        }
+
+        if let Some(end) = end {
+            query_builder.push(" AND start <= ");
+            query_builder.push_bind(end);
+        }
+
+        let order_dir = match order_dir {
+            OrderDirection::Ascending => "ASC",
+            OrderDirection::Descending => "DESC",
+        };
+
+        query_builder.push(format!(" ORDER BY start {}", order_dir));
+        query_builder.push(format!(" LIMIT {} OFFSET {}", size, page * size));
+
+        query_builder
+            .build_query_as::<EnergyRecord>()
+            .fetch_all(&self.pg_pool)
+            .await
     }
 }

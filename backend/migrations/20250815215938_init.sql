@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS "user_community" (
         ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS "energypool" (
+CREATE TABLE IF NOT EXISTS "energy_record" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "user_id" UUID NOT NULL,
     "community_id" UUID NOT NULL,
@@ -62,11 +62,11 @@ CREATE TABLE IF NOT EXISTS "energypool" (
     "seller_price" NUMERIC(11,2) NOT NULL CHECK ("consumed" >= 0),
     "start" TIMESTAMP NOT NULL,
     PRIMARY KEY ("id"),
-    CONSTRAINT fk_energypool_user
+    CONSTRAINT fk_energy_record_user
         FOREIGN KEY ("user_id")
         REFERENCES "user"("id")
         ON DELETE CASCADE,
-    CONSTRAINT fk_energypool_community
+    CONSTRAINT fk_energy_record_community
         FOREIGN KEY ("community_id")
         REFERENCES "community"("id")
         ON DELETE CASCADE

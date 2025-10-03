@@ -56,7 +56,7 @@
 				name="image"
 				type="url"
 				placeholder="https://example.com/image.jpg"
-				value={form?.url ?? ''}
+				value={form?.image ?? ''}
 				class="h-10"
 			/>
 			<p class="text-xs text-muted-foreground">

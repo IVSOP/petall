@@ -1,3 +1,4 @@
+use crate::models::UserRole;
 use bigdecimal::BigDecimal;
 use chrono::{Duration, Utc};
 use fake::{Fake, faker::internet::pt_pt::FreeEmail};
@@ -6,8 +7,6 @@ use rand::{Rng, seq::IteratorRandom};
 use sqlx::postgres::PgPool;
 use std::{collections::HashMap, str::FromStr};
 use uuid::Uuid;
-
-use crate::models::db::user::UserRole;
 
 #[derive(Debug, Clone, clap::Parser)]
 pub struct SeedSettings {
@@ -41,7 +40,7 @@ pub async fn run_seed(pg_pool: &PgPool, seed_settings: SeedSettings) -> anyhow::
     )
     .await?;
 
-    seed_energypool(
+    seed_energy_record(
         pg_pool,
         &seed_settings.energy_days,
         &seed_settings.energy_interval,
@@ -175,7 +174,7 @@ pub async fn seed_user_community(
     Ok(user_community_map)
 }
 
-pub async fn seed_energypool(
+pub async fn seed_energy_record(
     pool: &PgPool,
     energy_days: &i64,
     energy_interval: &i64,
@@ -191,7 +190,7 @@ pub async fn seed_energypool(
             for community in communities {
                 sqlx::query!(
                     r#"
-                    INSERT INTO "energypool" ("user_id", "community_id", "generated", "consumed", "consumer_price", "seller_price", "start")
+                    INSERT INTO "energy_record" ("user_id", "community_id", "generated", "consumed", "consumer_price", "seller_price", "start")
                     VALUES ($1, $2, $3, $4, $5, $6, $7)
                     "#,
                     user,
