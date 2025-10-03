@@ -9,15 +9,15 @@ export type ParticipantCommunity = {
 	community_id: string;
 };
 
-export type Energy = {
+export type EnergyRecord = {
 	id: string;
-	participant: string;
-	community: string;
+	userId: string;
+	communityId: string;
 	generated: number;
 	consumed: number;
-	coefficient: number;
+	consumerPrice: number;
+	sellerPrice: number;
 	start: string;
-	end: string;
 };
 
 export type ProcessedEnergy = {

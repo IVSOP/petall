@@ -1,4 +1,4 @@
-import type { Energy } from '$lib';
+import type { EnergyRecord } from '$lib';
 import type { ColumnDef } from '@tanstack/table-core';
 import { createRawSnippet } from 'svelte';
 import { renderComponent } from '$lib/components/ui/data-table/index.js';
@@ -6,37 +6,12 @@ import { renderSnippet } from '$lib/components/ui/data-table/index.js';
 import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 import { format } from 'date-fns';
 
-export const columns: ColumnDef<Energy>[] = [
-	{
-		id: 'select',
-		header: ({ table }) =>
-			renderComponent(Checkbox, {
-				checked: table.getIsAllPageRowsSelected(),
-				indeterminate: table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected(),
-				onCheckedChange: (value) => table.toggleAllPageRowsSelected(!!value),
-				'aria-label': 'Select all'
-			}),
-		cell: ({ row }) =>
-			renderComponent(Checkbox, {
-				checked: row.getIsSelected(),
-				onCheckedChange: (value) => row.toggleSelected(!!value),
-				'aria-label': 'Select row'
-			}),
-		enableSorting: false,
-		enableHiding: false
-	},
+export const columns: ColumnDef<EnergyRecord>[] = [
 	{
 		accessorKey: 'start',
 		header: 'Start',
 		cell: ({ row }) => {
 			return format(row.getValue('start'), 'd/M/yyyy HH:mm');
-		}
-	},
-	{
-		accessorKey: 'end',
-		header: 'End',
-		cell: ({ row }) => {
-			return format(row.getValue('end'), 'd/M/yyyy HH:mm');
 		}
 	},
 	{
@@ -106,7 +81,7 @@ export const columns: ColumnDef<Energy>[] = [
 		}
 	},
 	{
-		accessorKey: 'delta',
+		id: 'delta',
 		header: () => {
 			const energyHeaderSnippet = createRawSnippet(() => ({
 				render: () => `<div class="text-right">Energy Δ (Wh)</div>`
@@ -119,22 +94,22 @@ export const columns: ColumnDef<Energy>[] = [
 				maximumFractionDigits: 2
 			});
 
-			const energyCellSnippet = createRawSnippet<[string]>((getEnergyWh) => {
-				const delta_wh = getEnergyWh();
-				const colorClass = parseFloat(delta_wh) < 0 ? 'bg-red-100' : 'bg-green-100';
-				const textColorClass = parseFloat(delta_wh) < 0 ? 'text-red-500' : 'text-green-500';
+			const energyCellSnippet = createRawSnippet<[number]>((getDelta) => {
+				const delta = getDelta();
+				const colorClass = delta < 0 ? 'bg-red-100' : 'bg-green-100';
+				const textColorClass = delta < 0 ? 'text-red-500' : 'text-green-500';
 
 				return {
 					render: () => {
 						return `
 						<div class="box-content flex justify-end">
-							<div class="inline-block text-right font-medium ${colorClass} ${textColorClass} py-1.5 px-3 rounded-md text-sm">${delta_wh}</div>
+							<div class="inline-block text-right font-medium ${colorClass} ${textColorClass} py-1.5 px-3 rounded-md text-sm">${delta}</div>
 						</div>`;
 					}
 				};
 			});
 
-			return renderSnippet(energyCellSnippet, formatter.format(parseFloat(row.getValue('delta'))));
+			return renderSnippet(energyCellSnippet, row.original.generated - row.original.consumed);
 		}
 	}
 ];

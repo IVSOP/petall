@@ -13,6 +13,7 @@ pub struct Community {
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
+#[serde(rename_all = "camelCase")]
 pub struct EnergyRecord {
     pub id: Uuid,
     pub user_id: Uuid,

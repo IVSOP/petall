@@ -69,29 +69,6 @@
 
 <div>
 	<div class="mb-4 flex items-center justify-between space-x-2">
-		<Menubar.Root>
-			<Menubar.Menu>
-				<Menubar.Trigger>View</Menubar.Trigger>
-				<Menubar.Content>
-					<Menubar.Item>Today</Menubar.Item>
-					<Menubar.Item>Last 7 days</Menubar.Item>
-					<Menubar.Item>Last 30 days</Menubar.Item>
-					<Menubar.Item>This year</Menubar.Item>
-					<Menubar.Item>Older</Menubar.Item>
-				</Menubar.Content>
-			</Menubar.Menu>
-
-			<Menubar.Menu>
-				<Menubar.Trigger onclick={() => (showFilters = !showFilters)}>Filters</Menubar.Trigger>
-			</Menubar.Menu>
-			<Menubar.Menu>
-				<Menubar.Trigger>Export</Menubar.Trigger>
-				<Menubar.Content>
-					<Menubar.Item>CSV</Menubar.Item>
-					<Menubar.Item>JSON</Menubar.Item>
-				</Menubar.Content>
-			</Menubar.Menu>
-		</Menubar.Root>
 		<Button
 			variant="outline"
 			disabled={!table.getFilteredSelectedRowModel().rows.length}
