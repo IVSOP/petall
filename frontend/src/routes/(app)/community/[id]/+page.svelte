@@ -3,6 +3,7 @@
 	import EnergyChart from '$lib/components/EnergyChart.svelte';
 	import type { PageProps } from './$types';
 	import { columns } from './columns';
+	import EnergyBlocks from './EnergyBlocks.svelte';
 	import EnergyTable from './EnergyTable.svelte';
 
 	const { data }: PageProps = $props();
@@ -43,7 +44,16 @@
 
 <div class="container">
 	<div class="grid grid-cols-1 gap-4">
-		<!-- <EnergyChart energyTransfers={data.energyTransfers} participant_id={data.participantId} /> -->
+
+        <div class="flex flex-1 flex-col">
+            <div class="@container/main flex flex-1 flex-col gap-2">
+                <div class="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+                    <EnergyBlocks energyTransfers={energyTransfers}/>
+                </div>
+            </div>
+        </div>
+
+        <!-- <EnergyChart energyTransfers={data.energyTransfers} participant_id={data.participantId} /> -->
 		<EnergyTable data={energyTransfers} {columns} />
 	</div>
 </div>
