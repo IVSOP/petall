@@ -98,13 +98,13 @@ pub async fn seed_user(
             // )
             sqlx::query_scalar!(
                 r#"
-                INSERT INTO "user" ("email", "name", "password")
-                VALUES ($1, $2, $3)
+                INSERT INTO "user" ("email", "name")
+                VALUES ($1, $2)
                 RETURNING id
                 "#,
                 FreeEmail().fake::<String>(),
-                generator.next().unwrap(),
-                "password"
+                // "password"
+                generator.next().unwrap()
             )
             .fetch_one(pool)
             .await?,
@@ -119,14 +119,16 @@ pub async fn seed_community(pool: &PgPool, count: &usize) -> anyhow::Result<Vec<
     let mut communities = Vec::new();
 
     for _ in 0..*count {
+        let description = format!("Comunidade Energética");
         communities.push(
             sqlx::query_scalar!(
                 r#"
-                INSERT INTO "community" ("name")
-                VALUES ($1)
+                INSERT INTO "community" ("name" , "description")
+                VALUES ($1, $2)
                 RETURNING id
                 "#,
                 generator.next().unwrap(),
+                description,
             )
             .fetch_one(pool)
             .await?,

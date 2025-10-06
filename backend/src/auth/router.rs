@@ -2,6 +2,7 @@ use crate::{
     AppState,
     auth::{Session, extractor::ExtractSession, password},
     error::{AppError, AppResult},
+    models::Key,
 };
 use axum::{Json, Router, debug_handler, extract::State, response::IntoResponse, routing::post};
 use uuid::Uuid;
@@ -51,8 +52,8 @@ async fn register_handler(
 ) -> AppResult<impl IntoResponse> {
     request.validate()?;
 
+    // email already exists
     if state.get_user_by_email(&request.email).await?.is_some() {
-        // email already exists
         return Err(AppError::EmailAlreadyInUse(request.email));
     }
 
@@ -92,12 +93,25 @@ async fn login_handler(
     State(state): State<AppState>,
     Json(request): Json<LoginRequest>,
 ) -> AppResult<impl IntoResponse> {
+
     let user = state
         .get_user_by_email(&request.email)
         .await?
         .ok_or(AppError::InvalidCredentials)?;
 
-    if !password::verify_password(&request.password, &user.password)? {
+    // search key 
+    let key_id = Key::email_key_id(&request.email);
+    let key = state
+        .get_key(&key_id)
+        .await?
+        .ok_or(AppError::InvalidCredentials)?;
+
+    // does key have password? 
+    let hashed_password = key
+        .hashed_password
+        .ok_or(AppError::InvalidCredentials)?;
+
+    if !password::verify_password(&request.password, &hashed_password)? {
         return Err(AppError::InvalidCredentials);
     }
 
@@ -152,22 +166,34 @@ async fn change_password_handler(
     State(state): State<AppState>,
     request: Json<ChangePasswordRequest>,
 ) -> AppResult<impl IntoResponse> {
+
     let user = state
         .get_user_by_id(session.user_id)
         .await?
         .ok_or(AppError::InvalidSession)?;
 
-    if !password::verify_password(&request.old_password, &user.password)? {
+
+    let key_id = Key::email_key_id(&user.email);
+    let key = state
+        .get_key(&key_id)
+        .await?
+        .ok_or(AppError::InvalidCredentials)?;
+
+    let hashed_password = key
+        .hashed_password
+        .ok_or(AppError::InvalidCredentials)?;
+
+    if !password::verify_password(&request.old_password, &hashed_password)? {
         return Err(AppError::InvalidCredentials);
     }
 
     state
-        .update_user_password(&user.id, &request.new_password)
+        .update_user_password(&user.id, &user.email, &request.new_password)
         .await?;
 
-    let session = Session::new_random_from(user.id);
     state.delete_all_sessions(user.id).await?;
 
+    let session = Session::new_random_from(user.id);
     state.store_session(&session).await?;
 
     Ok(Json(ChangePasswordResponse {
