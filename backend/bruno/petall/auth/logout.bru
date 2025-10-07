@@ -1,0 +1,19 @@
+meta {
+  name: logout
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{host}}/auth/revoke
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{sessionId}}
+}
+
+settings {
+  encodeUrl: true
+}

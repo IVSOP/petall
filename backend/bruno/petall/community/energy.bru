@@ -1,0 +1,31 @@
+meta {
+  name: energy
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{host}}/community/:communityId/energy
+  body: json
+  auth: inherit
+}
+
+params:path {
+  communityId: 5e182df2-e1ef-4383-abf5-5542161e9975
+}
+
+headers {
+  Authorization: {{sessionId}}
+}
+
+body:json {
+  {
+    "page": 1,
+    "size": 10,
+    "orderDir": "asc"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

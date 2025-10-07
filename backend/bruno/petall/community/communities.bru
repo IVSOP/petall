@@ -1,0 +1,19 @@
+meta {
+  name: communities
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/community
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: {{sessionId}}
+}
+
+settings {
+  encodeUrl: true
+}

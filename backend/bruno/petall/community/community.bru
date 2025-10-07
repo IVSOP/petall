@@ -1,0 +1,23 @@
+meta {
+  name: community
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/community/:communityId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  communityId: 5e182df2-e1ef-4383-abf5-5542161e9975
+}
+
+headers {
+  Authorization: {{sessionId}}
+}
+
+settings {
+  encodeUrl: true
+}
