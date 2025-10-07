@@ -5,7 +5,7 @@
 	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
-    
+
 	let { participants, roleItems } = $props();
 </script>
 

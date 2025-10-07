@@ -46,7 +46,7 @@
 	</div>
 </div>
 
-<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+<div class="grid grid-cols-1 gap-4">
 	{#if filteredCommunities.length > 0}
 		{#each filteredCommunities as community}
 			<CommunityCard {community} />
