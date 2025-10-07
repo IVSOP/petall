@@ -58,8 +58,6 @@ pub enum AppError {
     InvalidCredentials,
     #[error(transparent)]
     AxumJsonRejection(#[from] JsonRejection),
-    #[error("OAuth error: {0}")]
-    OAuthError(String),
 }
 
 impl IntoResponse for AppError {
@@ -75,10 +73,6 @@ impl IntoResponse for AppError {
         );
 
         let (status, error) = match &self {
-            AppError::OAuthError(msg) => (
-                axum::http::StatusCode::BAD_REQUEST,
-                format!("OAuth error: {}", msg)
-            ),
             AppError::CommunityNotFound(id) => (
                 StatusCode::NOT_FOUND,
                 format!("Community not found: {}", id),
