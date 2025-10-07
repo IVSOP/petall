@@ -29,7 +29,7 @@
 >
 	<Card.Root class="@container/card">
 		<Card.Header>
-			<Card.Description>Balanço total</Card.Description>
+			<Card.Description>Total Balance</Card.Description>
 			<Card.Title class="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
 				€{total_price.toFixed(2)}
 			</Card.Title>

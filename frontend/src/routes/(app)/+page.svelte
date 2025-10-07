@@ -1,6 +1,5 @@
 <script lang="ts">
 	import CommunityCard from '$lib/components/CommunityCard.svelte';
-	import CommunityDialog from '$lib/components/CommunityDialog.svelte';
 	import SearchBar from '$lib/components/SearchBar.svelte';
 	import SmartSelect from '$lib/components/SmartSelect.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
