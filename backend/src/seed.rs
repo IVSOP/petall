@@ -84,7 +84,10 @@ pub async fn seed_user(
     let mut users = Vec::new();
 
     for _ in 0..*count {
-        users.push(
+        let email = FreeEmail().fake::<String>();
+        let name = generator.next().unwrap();
+        
+        let user_id = 
             // sqlx::query_scalar!(
             //     r#"
             //     INSERT INTO "user" ("email", "name", "supplier", "password")
@@ -102,13 +105,28 @@ pub async fn seed_user(
                 VALUES ($1, $2)
                 RETURNING id
                 "#,
-                FreeEmail().fake::<String>(),
-                // "password"
-                generator.next().unwrap()
+                email,
+                name
             )
             .fetch_one(pool)
-            .await?,
+            .await?;
+        
+        let key_id = format!("email:{}", email);
+        let hashed_password = crate::auth::password::hash_password("password")?;
+        
+        sqlx::query!(
+            r#"
+            INSERT INTO "key" ("id", "user_id", "hashed_password")
+            VALUES ($1, $2, $3)
+            "#,
+            key_id,
+            user_id,
+            hashed_password
         )
+        .execute(pool)
+        .await?;
+        
+        users.push(user_id);
     }
 
     Ok(users)

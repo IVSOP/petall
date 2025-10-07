@@ -7,6 +7,8 @@ use crate::{
 use axum::{Json, Router, debug_handler, extract::State, response::IntoResponse, routing::post};
 use uuid::Uuid;
 use validator::Validate;
+use crate::auth::oauth;
+use oauth2::TokenResponse;
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -15,6 +17,8 @@ pub fn router() -> Router<AppState> {
         .route("/revoke", post(revoke_handler))
         .route("/changepassword", post(change_password_handler))
         .route("/me", post(me_handler))
+        .route("/oauth/google", axum::routing::get(google_oauth_handler))
+        .route("/callback", axum::routing::get(google_callback_handler))
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Validate)]
@@ -86,6 +90,110 @@ struct LoginResponse {
     name: String,
     email: String,
     session_id: Uuid,
+}
+
+
+#[debug_handler]
+async fn google_oauth_handler(
+    State(state): State<AppState>,
+) -> AppResult<impl IntoResponse> {
+    let (auth_url, _csrf_token) = state.google_oauth.get_authorization_url();
+    
+    //TODO: save CRSF TOKEN in user session and verify it in callbacks
+    
+    Ok(axum::response::Redirect::to(auth_url.as_str()))
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct OAuthCallbackQuery {
+    code: String,
+    state: String,  
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct OAuthCallbackResponse {
+    uuid: Uuid,
+    name: String,
+    email: String,
+    session_id: Uuid,
+    is_new_user: bool,
+}
+
+#[debug_handler]
+async fn google_callback_handler(
+    State(state): State<AppState>,
+    axum::extract::Query(query): axum::extract::Query<OAuthCallbackQuery>,
+) -> AppResult<impl IntoResponse> {
+    // TODO: verify CRSF here
+    let token_response = state
+        .google_oauth
+        .exchange_code(query.code)
+        .await
+        .map_err(|e| AppError::OAuthError(e))?;
+
+    let access_token = token_response.access_token().secret();
+
+    let google_user = oauth::get_google_user_info(access_token)
+        .await
+        .map_err(|e| AppError::OAuthError(e))?;
+
+    if !google_user.email_verified {
+        return Err(AppError::OAuthError(
+            "Email not verified by Google".to_string()
+        ));
+    }
+
+    let key_id = Key::oauth_key_id("google", &google_user.sub);
+
+    let mut is_new_user = false;
+    let user = if let Some(key) = state.get_key(&key_id).await? {
+        // user already exists
+        state
+            .get_user_by_id(key.user_id)
+            .await?
+            .ok_or(AppError::InvalidSession)?
+    } else {
+        if let Some(existing_user) = state.get_user_by_email(&google_user.email).await? {
+            //email already exists
+            state
+                .create_key(&key_id, existing_user.id, None)
+                .await?;
+            existing_user
+        } else {
+            is_new_user = true;
+            let new_user = sqlx::query_as!(
+                crate::models::User,
+                r#"
+                INSERT INTO "user" (email, name)
+                VALUES ($1, $2)
+                RETURNING *
+                "#,
+                google_user.email,
+                google_user.name
+            )
+            .fetch_one(&state.pg_pool)
+            .await?;
+
+            state
+                .create_key(&key_id, new_user.id, None)
+                .await?;
+
+            new_user
+        }
+    };
+
+    let session = Session::new_random_from(user.id);
+    state.store_session(&session).await?;
+
+    Ok(Json(OAuthCallbackResponse {
+        uuid: user.id,
+        name: user.name,
+        email: user.email,
+        session_id: session.id,
+        is_new_user,
+    }))
 }
 
 #[debug_handler]
