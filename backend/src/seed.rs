@@ -84,7 +84,10 @@ pub async fn seed_user(
     let mut users = Vec::new();
 
     for _ in 0..*count {
-        users.push(
+        let email = FreeEmail().fake::<String>();
+        let name = generator.next().unwrap();
+        
+        let user_id = 
             // sqlx::query_scalar!(
             //     r#"
             //     INSERT INTO "user" ("email", "name", "supplier", "password")
@@ -98,17 +101,32 @@ pub async fn seed_user(
             // )
             sqlx::query_scalar!(
                 r#"
-                INSERT INTO "user" ("email", "name", "password")
-                VALUES ($1, $2, $3)
+                INSERT INTO "user" ("email", "name")
+                VALUES ($1, $2)
                 RETURNING id
                 "#,
-                FreeEmail().fake::<String>(),
-                generator.next().unwrap(),
-                "password"
+                email,
+                name
             )
             .fetch_one(pool)
-            .await?,
+            .await?;
+        
+        let key_id = format!("email:{}", email);
+        let hashed_password = crate::auth::password::hash_password("password")?;
+        
+        sqlx::query!(
+            r#"
+            INSERT INTO "key" ("id", "user_id", "hashed_password")
+            VALUES ($1, $2, $3)
+            "#,
+            key_id,
+            user_id,
+            hashed_password
         )
+        .execute(pool)
+        .await?;
+        
+        users.push(user_id);
     }
 
     Ok(users)
@@ -119,14 +137,16 @@ pub async fn seed_community(pool: &PgPool, count: &usize) -> anyhow::Result<Vec<
     let mut communities = Vec::new();
 
     for _ in 0..*count {
+        let description = format!("Comunidade Energética");
         communities.push(
             sqlx::query_scalar!(
                 r#"
-                INSERT INTO "community" ("name")
-                VALUES ($1)
+                INSERT INTO "community" ("name" , "description")
+                VALUES ($1, $2)
                 RETURNING id
                 "#,
                 generator.next().unwrap(),
+                description,
             )
             .fetch_one(pool)
             .await?,

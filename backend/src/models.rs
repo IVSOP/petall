@@ -42,7 +42,7 @@ pub struct User {
     pub id: Uuid,
     pub email: String,
     pub name: String,
-    pub password: String,
+    //pub password: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -50,4 +50,23 @@ pub struct UserCommunity {
     pub user_id: Uuid,
     pub community_id: Uuid,
     pub role: UserRole,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Key {
+    pub id: String,  // "email:user@example.com" or "oauth:github:123456"
+    pub user_id: Uuid,
+    pub hashed_password: Option<String>,  // Null for OAuth users
+}
+
+
+impl Key {
+    pub fn email_key_id(email: &str) -> String {
+        format!("email:{}", email)
+    }
+
+    //TODO: implement oauth 
+    pub fn oauth_key_id(provider: &str, provider_user_id: &str) -> String {
+        format!("oauth:{}:{}", provider, provider_user_id)
+    }
 }

@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 pub mod extractor;
+pub mod key_store; 
+pub mod oauth; 
 pub mod password;
 pub mod router;
 pub mod session_store;

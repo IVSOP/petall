@@ -10,11 +10,23 @@ CREATE TABLE IF NOT EXISTS "user" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "name" VARCHAR(255) NOT NULL,
     "email" VARCHAR(255) NOT NULL UNIQUE,
-    "password" VARCHAR(255) NOT NULL,
     PRIMARY KEY ("id")
 );
 
 CREATE INDEX IF NOT EXISTS "user_email_idx" ON "user" ("email");
+
+CREATE TABLE IF NOT EXISTS "key" (
+    "id" VARCHAR(255) NOT NULL,
+    "user_id" UUID NOT NULL,
+    "hashed_password" VARCHAR(255),
+    PRIMARY KEY ("id"),
+    CONSTRAINT fk_key_user
+        FOREIGN KEY ("user_id")
+        REFERENCES "user"("id")
+        ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS "key_user_id_idx" ON "key" ("user_id");
 
 CREATE TABLE IF NOT EXISTS "session" (
     "id" UUID NOT NULL,
