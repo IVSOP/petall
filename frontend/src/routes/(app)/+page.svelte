@@ -27,7 +27,7 @@
 
 <div class="flex flex-col gap-2 pb-4 md:flex-row md:items-center">
 	<div class="order-2 w-full md:order-none">
-		<SearchBar bind:value={filterCommunityName} placeholder="Find community..." />
+		<SearchBar bind:filter={filterCommunityName} placeholder="Find community..." />
 	</div>
 	<div class="order-3 flex flex-row gap-2 md:order-none">
 		<SmartSelect type="multiple" label="Role" items={roleItems} />

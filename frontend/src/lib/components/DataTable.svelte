@@ -55,14 +55,10 @@
 		getCoreRowModel,
 		getFacetedRowModel,
 		getFacetedUniqueValues,
-		getFilteredRowModel,
 		getPaginationRowModel,
-		getSortedRowModel,
 		type ColumnDef,
-		type ColumnFiltersState,
 		type PaginationState,
 		type Row,
-		type SortingState,
 		type VisibilityState
 	} from '@tanstack/table-core';
 	import type { Schema } from './schemas.js';
@@ -89,54 +85,42 @@
 	import { DragDropProvider } from '@dnd-kit-svelte/svelte';
 	import { move } from '@dnd-kit/helpers';
 
-	let { data }: { data: Schema[] } = $props();
-	let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: 10 });
-	let sorting = $state<SortingState>([]);
-	let columnFilters = $state<ColumnFiltersState>([]);
+	let {
+		data,
+		pageIndex = $bindable(),
+		pageSize = $bindable(),
+		pageLimit = $bindable(),
+		...props
+	}: {
+		data: Schema[];
+		pageIndex: number;
+		pageSize: number;
+		pageLimit: number;
+	} = $props();
+
+
+
 	let columnVisibility = $state<VisibilityState>({});
 
-	
-
 	const table = createSvelteTable({
-	get data() {
-		return data;
-	},
-	columns,
-	state: {
-		get pagination() {
-			return pagination;
+		get data() {
+			return data;
 		},
-		get sorting() {
-			return sorting;
+		columns,
+		state: {
+			get columnVisibility() {
+				return columnVisibility;
+			},
 		},
-		get columnVisibility() {
-			return columnVisibility;
-		},
-		get columnFilters() {
-			return columnFilters;
+		getRowId: (row) => row.id.toString(),
+		getCoreRowModel: getCoreRowModel(),
+		getFacetedRowModel: getFacetedRowModel(),
+		getFacetedUniqueValues: getFacetedUniqueValues(),
+		onColumnVisibilityChange: (updater) => {
+			columnVisibility = typeof updater === 'function' ? updater(columnVisibility) : updater;
 		}
-	},
-	getRowId: (row) => row.id.toString(),
-	getCoreRowModel: getCoreRowModel(),
-	getPaginationRowModel: getPaginationRowModel(),
-	getSortedRowModel: getSortedRowModel(),
-	getFacetedRowModel: getFacetedRowModel(),
-	getFacetedUniqueValues: getFacetedUniqueValues(),
-	getFilteredRowModel: getFilteredRowModel(),
-	onPaginationChange: (updater) => {
-		pagination = typeof updater === 'function' ? updater(pagination) : updater;
-	},
-	onSortingChange: (updater) => {
-		sorting = typeof updater === 'function' ? updater(sorting) : updater;
-	},
-	onColumnFiltersChange: (updater) => {
-		columnFilters = typeof updater === 'function' ? updater(columnFilters) : updater;
-	},
-	onColumnVisibilityChange: (updater) => {
-		columnVisibility = typeof updater === 'function' ? updater(columnVisibility) : updater;
-	}
-});
-
+	});
+	
 	let views = [
 		{
 			id: 'detailed information',
@@ -251,11 +235,11 @@
 					<Select.Root
 						type="single"
 						bind:value={
-							() => `${table.getState().pagination.pageSize}`, (v) => table.setPageSize(Number(v))
+							() => `${pageSize}`, (v) => pageSize = Number(v)
 						}
 					>
 						<Select.Trigger size="sm" class="w-20" id="rows-per-page">
-							{table.getState().pagination.pageSize}
+							{pageSize}
 						</Select.Trigger>
 						<Select.Content side="top">
 							{#each [10, 20, 30, 40, 50] as pageSize (pageSize)}
@@ -267,15 +251,15 @@
 					</Select.Root>
 				</div>
 				<div class="flex w-fit items-center justify-center text-sm font-medium">
-					Page {table.getState().pagination.pageIndex + 1} of
-					{table.getPageCount()}
+					Page {pageIndex} of
+					{pageLimit}
 				</div>
 				<div class="ml-auto flex items-center gap-2 lg:ml-0">
 					<Button
 						variant="outline"
 						class="hidden h-8 w-8 p-0 lg:flex"
-						onclick={() => table.setPageIndex(0)}
-						disabled={!table.getCanPreviousPage()}
+						onclick={() => pageIndex = 0}
+						disabled={pageIndex === 1}
 					>
 						<span class="sr-only">Go to first page</span>
 						<ChevronsLeftIcon />
@@ -284,8 +268,8 @@
 						variant="outline"
 						class="size-8"
 						size="icon"
-						onclick={() => table.previousPage()}
-						disabled={!table.getCanPreviousPage()}
+						onclick={() => pageIndex--}
+						disabled={pageIndex === 1}
 					>
 						<span class="sr-only">Go to previous page</span>
 						<ChevronLeftIcon />
@@ -294,8 +278,8 @@
 						variant="outline"
 						class="size-8"
 						size="icon"
-						onclick={() => table.nextPage()}
-						disabled={!table.getCanNextPage()}
+						onclick={() => pageIndex++}
+						disabled={pageIndex >= pageLimit - 1}
 					>
 						<span class="sr-only">Go to next page</span>
 						<ChevronRightIcon />
@@ -304,8 +288,8 @@
 						variant="outline"
 						class="hidden size-8 lg:flex"
 						size="icon"
-						onclick={() => table.setPageIndex(table.getPageCount() - 1)}
-						disabled={!table.getCanNextPage()}
+						onclick={() => pageIndex = pageLimit - 1}
+						disabled={pageIndex >= pageLimit - 1}
 					>
 						<span class="sr-only">Go to last page</span>
 						<ChevronsRightIcon />

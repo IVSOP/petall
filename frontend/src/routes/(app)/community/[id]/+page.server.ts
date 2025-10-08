@@ -4,6 +4,8 @@ import type { EnergyRecord } from '$lib';
 
 export const load: PageServerLoad = async ({ fetch, params, cookies }) => {
 	const sessionId = cookies.get('sessionId');
+	const communityId = params.id;
+
 	if (!sessionId) {
 		redirect(302, '/login');
 	}
@@ -16,8 +18,8 @@ export const load: PageServerLoad = async ({ fetch, params, cookies }) => {
 		},
 		body: JSON.stringify({
 			"page": 1,
-			"size": 35,
-			"orderDir": "asc"
+			"size": 10,
+			"orderDir": "desc"
 		})
 	});
 
@@ -32,6 +34,8 @@ export const load: PageServerLoad = async ({ fetch, params, cookies }) => {
 	const energyRecords: EnergyRecord[] = await response.json();
 
 	return {
+		sessionId,
+		communityId,
 		energyRecords
 	};
 };
