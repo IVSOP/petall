@@ -1,4 +1,4 @@
-use crate::models::UserRole;
+use crate::models::{AuthProvider, UserRole};
 use bigdecimal::BigDecimal;
 use chrono::{Duration, Utc};
 use fake::{Fake, faker::internet::pt_pt::FreeEmail};
@@ -111,15 +111,15 @@ pub async fn seed_user(
             .fetch_one(pool)
             .await?;
 
-        let key_id = format!("email:{}", email);
         let hashed_password = crate::auth::password::hash_password("password")?;
 
         sqlx::query!(
             r#"
-            INSERT INTO "key" ("id", "user_id", "hashed_password")
-            VALUES ($1, $2, $3)
+            INSERT INTO "key" ("provider", "id", "user_id", "hashed_password")
+            VALUES ($1, $2, $3, $4)
             "#,
-            key_id,
+            AuthProvider::Email as AuthProvider,
+            email,
             user_id,
             hashed_password
         )

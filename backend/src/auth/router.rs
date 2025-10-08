@@ -3,7 +3,7 @@ use crate::{
     AppState,
     auth::{Session, extractor::ExtractSession, password},
     error::{AppError, AppResult},
-    models::Key,
+    models::AuthProvider,
 };
 use axum::{Json, Router, debug_handler, extract::State, response::IntoResponse, routing::post};
 use oauth2::TokenResponse;
@@ -107,16 +107,6 @@ struct OAuthCallbackQuery {
     code: String,
 }
 
-#[derive(serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-struct OAuthCallbackResponse {
-    uuid: Uuid,
-    name: String,
-    email: String,
-    session_id: Uuid,
-    is_new_user: bool,
-}
-
 #[debug_handler]
 async fn google_callback_handler(
     State(state): State<AppState>,
@@ -141,10 +131,10 @@ async fn google_callback_handler(
         ));
     }
 
-    let key_id = Key::oauth_key_id("google", &google_user.sub);
+    let key_id = google_user.sub;
 
     let mut is_new_user = false;
-    let user = if let Some(key) = state.get_key(&key_id).await? {
+    let user = if let Some(key) = state.get_key(AuthProvider::Google, &key_id).await? {
         // user already exists
         state
             .get_user_by_id(key.user_id)
@@ -153,7 +143,7 @@ async fn google_callback_handler(
     } else {
         if let Some(existing_user) = state.get_user_by_email(&google_user.email).await? {
             //email already exists
-            state.create_key(&key_id, existing_user.id, None).await?;
+            state.create_key(AuthProvider::Google, &key_id, existing_user.id, None).await?;
             existing_user
         } else {
             is_new_user = true;
@@ -170,7 +160,7 @@ async fn google_callback_handler(
             .fetch_one(&state.pg_pool)
             .await?;
 
-            state.create_key(&key_id, new_user.id, None).await?;
+            state.create_key(AuthProvider::Google, &key_id, new_user.id, None).await?;
 
             new_user
         }
@@ -179,13 +169,13 @@ async fn google_callback_handler(
     let session = Session::new_random_from(user.id);
     state.store_session(&session).await?;
 
-    Ok(Json(OAuthCallbackResponse {
-        uuid: user.id,
-        name: user.name,
-        email: user.email,
-        session_id: session.id,
-        is_new_user,
-    }))
+    let redirect_url = if is_new_user {
+        format!("http://localhost:5173/callback?sessionId={}&isNewUser=true", session.id)
+    } else {
+        format!("http://localhost:5173/callback?sessionId={}", session.id)
+    };
+
+    Ok(axum::response::Redirect::to(&redirect_url))
 }
 
 #[debug_handler]
@@ -199,9 +189,8 @@ async fn login_handler(
         .ok_or(AppError::InvalidCredentials)?;
 
     // search key
-    let key_id = Key::email_key_id(&request.email);
     let key = state
-        .get_key(&key_id)
+        .get_key(AuthProvider::Email, &request.email)
         .await?
         .ok_or(AppError::InvalidCredentials)?;
 
@@ -268,9 +257,8 @@ async fn change_password_handler(
         .await?
         .ok_or(AppError::InvalidSession)?;
 
-    let key_id = Key::email_key_id(&user.email);
     let key = state
-        .get_key(&key_id)
+        .get_key(AuthProvider::Email, &user.email)
         .await?
         .ok_or(AppError::InvalidCredentials)?;
 
@@ -332,7 +320,17 @@ mod tests {
         ChangePasswordRequest, LoginRequest, MeResponse, RegisterRequest, RegisterResponse,
     };
     fn server(pg_pool: PgPool) -> TestServer {
-        let state = crate::AppState { pg_pool };
+        let google_oauth = crate::auth::oauth::GoogleOAuthClient::new(
+            "test-client-id".to_string(),
+            "test-client-secret".to_string(),
+            "http://localhost:8080/auth/callback".to_string(),
+        )
+        .unwrap();
+
+        let state = crate::AppState {
+            pg_pool,
+            google_oauth,
+        };
         let router = crate::auth::router::router()
             .with_state(state)
             .layer(TraceLayer::new_for_http());

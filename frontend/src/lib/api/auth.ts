@@ -19,3 +19,11 @@ export type ChangePasswordResponse = { message: string; sessionId: string };
 
 export type RevokeResponse = { message: string };
 export type MeResponse = { id: string; email: string; name: string };
+
+export type OAuthCallbackResponse = {
+	uuid: string;
+	name: string;
+	email: string;
+	sessionId: string;
+	isNewUser: boolean;
+};

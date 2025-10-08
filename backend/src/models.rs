@@ -52,19 +52,18 @@ pub struct UserCommunity {
     pub role: UserRole,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Key {
-    pub id: String, // "email:user@example.com" or "oauth:github:123456"
-    pub user_id: Uuid,
-    pub hashed_password: Option<String>, // Null for OAuth users
+#[derive(Debug, Copy, Clone, Deserialize, Serialize, sqlx::Type, PartialEq)]
+#[sqlx(type_name = "auth_provider", rename_all = "lowercase")]
+pub enum AuthProvider {
+    Email,
+    Google,
+    GitHub,
 }
 
-impl Key {
-    pub fn email_key_id(email: &str) -> String {
-        format!("email:{}", email)
-    }
-
-    pub fn oauth_key_id(provider: &str, provider_user_id: &str) -> String {
-        format!("oauth:{}:{}", provider, provider_user_id)
-    }
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Key {
+    pub id: String, 
+    pub provider: AuthProvider,
+    pub user_id: Uuid,
+    pub hashed_password: Option<String>, 
 }

@@ -6,6 +6,12 @@ CREATE TYPE user_role AS ENUM (
     'usermanager'
 );
 
+CREATE TYPE auth_provider AS ENUM (
+    'email',
+    'github',
+    'google'
+);
+
 CREATE TABLE IF NOT EXISTS "user" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "name" VARCHAR(255) NOT NULL,
@@ -16,10 +22,11 @@ CREATE TABLE IF NOT EXISTS "user" (
 CREATE INDEX IF NOT EXISTS "user_email_idx" ON "user" ("email");
 
 CREATE TABLE IF NOT EXISTS "key" (
+    "provider" auth_provider NOT NULL,
     "id" VARCHAR(255) NOT NULL,
     "user_id" UUID NOT NULL,
     "hashed_password" VARCHAR(255),
-    PRIMARY KEY ("id"),
+    PRIMARY KEY ("provider", "id"),
     CONSTRAINT fk_key_user
         FOREIGN KEY ("user_id")
         REFERENCES "user"("id")
@@ -27,6 +34,7 @@ CREATE TABLE IF NOT EXISTS "key" (
 );
 
 CREATE INDEX IF NOT EXISTS "key_user_id_idx" ON "key" ("user_id");
+CREATE INDEX IF NOT EXISTS "key_provider_id_idx" ON "key" ("provider", "id");
 
 CREATE TABLE IF NOT EXISTS "session" (
     "id" UUID NOT NULL,
@@ -70,8 +78,8 @@ CREATE TABLE IF NOT EXISTS "energy_record" (
     "community_id" UUID NOT NULL,
     "generated" NUMERIC(11,2) NOT NULL CHECK ("generated" >= 0),
     "consumed" NUMERIC(11,2) NOT NULL CHECK ("consumed" >= 0),
-    "consumer_price" NUMERIC(11,2) NOT NULL CHECK ("generated" >= 0),
-    "seller_price" NUMERIC(11,2) NOT NULL CHECK ("consumed" >= 0),
+    "consumer_price" NUMERIC(11,2) NOT NULL CHECK ("consumer_price" >= 0),
+    "seller_price" NUMERIC(11,2) NOT NULL CHECK ("seller_price" >= 0),
     "start" TIMESTAMP NOT NULL,
     PRIMARY KEY ("id"),
     CONSTRAINT fk_energy_record_user

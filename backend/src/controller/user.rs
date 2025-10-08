@@ -1,5 +1,5 @@
 use crate::error::AppResult;
-use crate::models::{Key, User, UserCommunity, UserRole};
+use crate::models::{AuthProvider, User, UserCommunity, UserRole};
 use crate::{AppState, auth};
 use uuid::Uuid;
 
@@ -58,9 +58,8 @@ impl AppState {
 
         // create the password for this users email
         let hashed_password = auth::password::hash_password(password)?;
-        let key_id = Key::email_key_id(email);
 
-        self.create_key(&key_id, user.id, Some(hashed_password))
+        self.create_key(AuthProvider::Email, email, user.id, Some(hashed_password))
             .await?;
 
         Ok(user)
@@ -74,9 +73,8 @@ impl AppState {
         new_password: &str,
     ) -> AppResult<()> {
         let hashed_password = auth::password::hash_password(new_password)?;
-        let key_id = Key::email_key_id(email);
 
-        self.update_key_password(&key_id, hashed_password).await
+        self.update_key_password(AuthProvider::Email, email, hashed_password).await
     }
 
     pub async fn get_user_communities(&self, user: &Uuid) -> sqlx::Result<Vec<UserCommunity>> {
