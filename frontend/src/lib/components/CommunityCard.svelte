@@ -19,8 +19,6 @@
 		const timer = setTimeout(() => ((value = Math.floor(Math.random() * 100)), 100));
 		return () => clearTimeout(timer);
 	});
-
-	console.log(community);
 </script>
 
 <a href={`/community/${community.id}`}>
