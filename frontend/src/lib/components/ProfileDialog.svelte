@@ -29,7 +29,7 @@
 <Dialog.Root>
 	<Dialog.Trigger class="w-full focus:outline-none">
 		<DropdownMenu.Item onSelect={(e) => e.preventDefault()} class="cursor-pointer">
-			Edit Profile
+			Edit profile
 		</DropdownMenu.Item>
 	</Dialog.Trigger>
 

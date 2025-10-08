@@ -1,7 +1,7 @@
 <script lang="ts">
 	import SectionCards from '$lib/components/SectionCards.svelte';
-	import ChartAreaInteractive from '$lib/components/ChartAreaInteractive.svelte';
 	import DataTable from '$lib/components/DataTable.svelte';
+	import ChartAreaInteractive from '$lib/components/ChartAreaInteractive.svelte';
 
 	const { data } = $props();
 
@@ -37,6 +37,10 @@
 		loadEnergyRecords(pageIndex, pageSize);
 	});
 </script>
+
+<svelte:head>
+	<title>{data.communityId}</title>
+</svelte:head>
 
 <div class="container">
 	<div class="flex flex-1 flex-col">

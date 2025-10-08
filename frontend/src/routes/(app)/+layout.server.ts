@@ -3,7 +3,7 @@ import type { LayoutServerLoad } from './$types';
 import type { GetCommunitiesResponse as CommunityResponse } from '$lib/api/community';
 
 
-export const load: LayoutServerLoad = async ({ fetch, locals, cookies }) => {
+export const load: LayoutServerLoad = async ({ fetch, locals, cookies, url }) => {
 	const sessionId = cookies.get('sessionId');
 
 	if (!sessionId) {
@@ -22,6 +22,16 @@ export const load: LayoutServerLoad = async ({ fetch, locals, cookies }) => {
 	}
 
 	const communities: CommunityResponse = await response.json();
+	const pathParts = url.pathname.split('/');
+
+	console.log(pathParts)
+
+	if (communities.length >= 1 && pathParts.length == 2 && pathParts[1] === '') {
+		throw redirect(
+			307,
+			`/community/${communities[0].id}`
+		);
+	}
 
 	return {
 		communities,
