@@ -11,7 +11,6 @@
 	let pageLimit = $state(5);
 
 	async function loadEnergyRecords(page: number, size: number) {
-		console.log("aqui");
 		const response = await fetch(`/api/community/${data.communityId}/energy`, {
 			method: 'POST',
 			headers: {

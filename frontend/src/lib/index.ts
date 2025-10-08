@@ -38,4 +38,4 @@ export type Community = {
 	supplier: string;
 };
 
-export type UserRole = 'manager' | 'supplier' | 'user';
+export type UserRole = 'Manager' | 'User';

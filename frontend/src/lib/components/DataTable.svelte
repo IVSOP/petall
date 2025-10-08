@@ -258,7 +258,7 @@
 					<Button
 						variant="outline"
 						class="hidden h-8 w-8 p-0 lg:flex"
-						onclick={() => pageIndex = 0}
+						onclick={() => pageIndex = 1}
 						disabled={pageIndex === 1}
 					>
 						<span class="sr-only">Go to first page</span>
@@ -279,7 +279,7 @@
 						class="size-8"
 						size="icon"
 						onclick={() => pageIndex++}
-						disabled={pageIndex >= pageLimit - 1}
+						disabled={pageIndex >= pageLimit}
 					>
 						<span class="sr-only">Go to next page</span>
 						<ChevronRightIcon />
@@ -288,8 +288,8 @@
 						variant="outline"
 						class="hidden size-8 lg:flex"
 						size="icon"
-						onclick={() => pageIndex = pageLimit - 1}
-						disabled={pageIndex >= pageLimit - 1}
+						onclick={() => pageIndex = pageLimit}
+						disabled={pageIndex >= pageLimit}
 					>
 						<span class="sr-only">Go to last page</span>
 						<ChevronsRightIcon />

@@ -1,27 +1,32 @@
 <script lang="ts">
 	import CommunityCard from '$lib/components/CommunityCard.svelte';
 	import SearchBar from '$lib/components/SearchBar.svelte';
-	import SmartSelect from '$lib/components/SmartSelect.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import SquarePlus from '@lucide/svelte/icons/square-plus';
+	import * as Select from '$lib/components/ui/select/index.js';
+	import type { UserRole } from '$lib';
 
 	const { data } = $props();
 
 	let filterCommunityName = $state('');
+	let selectedRoles = $state<UserRole[]>([]);
 
-	let roleItems = [
-		{ value: 'user', label: 'User' },
-		{ value: 'manager', label: 'Manager' }
+	let roles = [
+		{ value: 'User', label: 'User' },
+		{ value: 'Manager', label: 'Manager' }
 	];
 
-	let sortItems = [
-		{ value: 'byDate', label: 'Date' },
-		{ value: 'byName', label: 'Name' },
-		{ value: 'byParticipants', label: 'Participants' }
-	];
+	const triggerRole = $derived(
+		selectedRoles.length > 0
+			? selectedRoles.map((value) => roles.find((role) => role.value === value)?.label).join(', ') || 'Select a role'
+			: 'Select a role'
+	);
 
-	let filteredCommunities = $derived(
-		data.communities.filter((c) => c.name.toLowerCase().includes(filterCommunityName.toLowerCase()))
+	let filteredCommunities = $derived.by(() => {
+		return data.communities
+			.filter((c) => c.name.toLowerCase().includes(filterCommunityName.toLowerCase()))
+			.filter((c) => selectedRoles.length === 0 || selectedRoles.includes(c.role));
+		}
 	);
 </script>
 
@@ -30,8 +35,23 @@
 		<SearchBar bind:filter={filterCommunityName} placeholder="Find community..." />
 	</div>
 	<div class="order-3 flex flex-row gap-2 md:order-none">
-		<SmartSelect type="multiple" label="Role" items={roleItems} />
-		<SmartSelect type="single" label="Sort" items={sortItems} />
+		<Select.Root type="multiple" name="selectRole" bind:value={selectedRoles}>
+			<Select.Trigger class="w-full md:w-[180px]">
+				{triggerRole}
+			</Select.Trigger>
+			<Select.Content>
+				<Select.Group>
+					{#each roles as role (role.value)}
+						<Select.Item
+						value={role.value}
+						label={role.label}
+						>
+						{role.label}
+						</Select.Item>
+					{/each}
+				</Select.Group>
+			</Select.Content>
+		</Select.Root>
 	</div>
 	<div class="order-1 md:order-none">
 		<Button
