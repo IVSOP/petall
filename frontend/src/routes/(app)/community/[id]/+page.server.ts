@@ -17,9 +17,9 @@ export const load: PageServerLoad = async ({ fetch, params, cookies }) => {
 			'Content-Type': 'application/json'
 		},
 		body: JSON.stringify({
-			"page": 1,
-			"size": 10,
-			"orderDir": "desc"
+			page: 1,
+			size: 10,
+			orderDir: 'desc'
 		})
 	});
 

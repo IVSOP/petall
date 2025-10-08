@@ -18,7 +18,9 @@
 
 	const triggerRole = $derived(
 		selectedRoles.length > 0
-			? selectedRoles.map((value) => roles.find((role) => role.value === value)?.label).join(', ') || 'Select a role'
+			? selectedRoles
+					.map((value) => roles.find((role) => role.value === value)?.label)
+					.join(', ') || 'Select a role'
 			: 'Select a role'
 	);
 
@@ -26,8 +28,7 @@
 		return data.communities
 			.filter((c) => c.name.toLowerCase().includes(filterCommunityName.toLowerCase()))
 			.filter((c) => selectedRoles.length === 0 || selectedRoles.includes(c.role));
-		}
-	);
+	});
 </script>
 
 <div class="flex flex-col gap-2 pb-4 md:flex-row md:items-center">
@@ -42,11 +43,8 @@
 			<Select.Content>
 				<Select.Group>
 					{#each roles as role (role.value)}
-						<Select.Item
-						value={role.value}
-						label={role.label}
-						>
-						{role.label}
+						<Select.Item value={role.value} label={role.label}>
+							{role.label}
 						</Select.Item>
 					{/each}
 				</Select.Group>

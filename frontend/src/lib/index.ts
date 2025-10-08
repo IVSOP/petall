@@ -36,6 +36,7 @@ export type Community = {
 	id: string;
 	name: string;
 	supplier: string;
+	description: string;
 };
 
 export type UserRole = 'Manager' | 'User';
