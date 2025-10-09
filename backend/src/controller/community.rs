@@ -1,6 +1,6 @@
+use crate::router::OrderDirection;
 use crate::AppState;
 use crate::models::{Community, EnergyRecord, UserCommunity, UserRole};
-use crate::router::community::OrderDirection;
 use bigdecimal::{BigDecimal, FromPrimitive};
 use chrono::{Duration, NaiveDateTime, Utc};
 use sqlx::QueryBuilder;

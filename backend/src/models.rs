@@ -5,7 +5,7 @@ use chrono::{Duration, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Community {
     pub id: Uuid,
     pub name: String,
@@ -84,7 +84,7 @@ impl EnergyRecord {
     }
 }
 
-#[derive(Debug, Copy, Clone, Deserialize, Serialize, sqlx::Type)]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize, sqlx::Type, PartialEq, Eq)]
 #[sqlx(type_name = "user_role", rename_all = "lowercase")]
 pub enum UserRole {
     Participant,
