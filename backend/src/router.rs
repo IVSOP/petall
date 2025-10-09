@@ -121,7 +121,7 @@ pub enum OrderDirection {
 #[derive(Debug, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct EnergyFilter {
-    #[validate(range(min = 1, max = 100))]
+    #[validate(range(min = 1))]
     pub page: u32,
     #[validate(range(min = 1, max = 100))]
     pub size: u32,

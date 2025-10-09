@@ -1,14 +1,13 @@
 <script lang="ts">
-	import DataTable from '$lib/components/DataTable.svelte';
-	import ChartAreaInteractive from '$lib/components/ChartAreaInteractive.svelte';
+	import ChartAreaInteractive from './ChartAreaInteractive.svelte';
+	import DataTable from './DataTable.svelte';
 	import EnergyBlocks from './EnergyBlocks.svelte';
 
 	const { data } = $props();
 
-	let energyRecords = $state(data.energyRecords);
+	let paginatedEnergyRecords = $state(data.energyRecords);
 	let pageIndex = $state(1);
 	let pageSize = $state(10);
-	let pageLimit = $state(5);
 
 	async function loadEnergyRecords(page: number, size: number) {
 		const response = await fetch(`/api/community/${data.communityId}/energy`, {
@@ -29,7 +28,7 @@
 		console.log(response.ok);
 
 		if (response.ok) {
-			energyRecords = await response.json();
+			paginatedEnergyRecords = await response.json();
 		}
 	}
 
@@ -46,9 +45,9 @@
 	<div class="flex flex-1 flex-col">
 		<div class="@container/main flex flex-1 flex-col gap-2">
 			<div class="flex flex-col gap-6">
-				<EnergyBlocks energyTransfers={energyRecords} />
+				<EnergyBlocks energyRecords={paginatedEnergyRecords.records} />
 				<ChartAreaInteractive />
-				<DataTable data={energyRecords} bind:pageIndex bind:pageLimit bind:pageSize />
+				<DataTable data={paginatedEnergyRecords} bind:pageIndex bind:pageSize />
 			</div>
 		</div>
 	</div>

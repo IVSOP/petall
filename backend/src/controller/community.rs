@@ -1,11 +1,20 @@
-use crate::router::OrderDirection;
 use crate::AppState;
 use crate::models::{Community, EnergyRecord, UserCommunity, UserRole};
+use crate::router::OrderDirection;
 use bigdecimal::{BigDecimal, FromPrimitive};
 use chrono::{Duration, NaiveDateTime, Utc};
+use serde::{Deserialize, Serialize};
 use sqlx::QueryBuilder;
+use sqlx::Row;
 use tracing::info;
 use uuid::Uuid;
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PaginatedEnergyRecords {
+    pub records: Vec<EnergyRecord>,
+    pub total_count: i64,
+}
 
 impl AppState {
     pub async fn get_communities_from_user(
@@ -219,7 +228,30 @@ impl AppState {
         order_dir: OrderDirection,
         start: Option<NaiveDateTime>,
         end: Option<NaiveDateTime>,
-    ) -> sqlx::Result<Vec<EnergyRecord>> {
+    ) -> sqlx::Result<PaginatedEnergyRecords> {
+        let mut count_builder = QueryBuilder::new(
+            r#"
+            SELECT COUNT(*)
+            FROM energy_record
+            WHERE user_id = "#,
+        );
+
+        count_builder.push_bind(user_id);
+        count_builder.push(" AND community_id = ");
+        count_builder.push_bind(community_id);
+
+        if let Some(start_time) = start {
+            count_builder.push(" AND start >= ");
+            count_builder.push_bind(start_time);
+        }
+
+        if let Some(end_time) = end {
+            count_builder.push(" AND start <= ");
+            count_builder.push_bind(end_time);
+        }
+
+        let total_count: i64 = count_builder.build().fetch_one(&self.pg_pool).await?.get(0);
+
         let mut query_builder = QueryBuilder::new(
             r#"
             SELECT id, user_id, community_id, generated, consumed, consumer_price, seller_price, start
@@ -231,14 +263,14 @@ impl AppState {
         query_builder.push(" AND community_id = ");
         query_builder.push_bind(community_id);
 
-        if let Some(start) = start {
+        if let Some(start_time) = start {
             query_builder.push(" AND start >= ");
-            query_builder.push_bind(start);
+            query_builder.push_bind(start_time);
         }
 
-        if let Some(end) = end {
+        if let Some(end_time) = end {
             query_builder.push(" AND start <= ");
-            query_builder.push_bind(end);
+            query_builder.push_bind(end_time);
         }
 
         let order_dir = match order_dir {
@@ -247,11 +279,16 @@ impl AppState {
         };
 
         query_builder.push(format!(" ORDER BY start {}", order_dir));
-        query_builder.push(format!(" LIMIT {} OFFSET {}", size, page * size));
+        query_builder.push(format!(" LIMIT {} OFFSET {}", size, (page - 1) * size));
 
-        query_builder
+        let records = query_builder
             .build_query_as::<EnergyRecord>()
             .fetch_all(&self.pg_pool)
-            .await
+            .await?;
+
+        Ok(PaginatedEnergyRecords {
+            records,
+            total_count,
+        })
     }
 }

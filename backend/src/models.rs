@@ -14,7 +14,7 @@ pub struct Community {
     pub image: Option<String>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct EnergyRecord {
     pub id: Uuid,
