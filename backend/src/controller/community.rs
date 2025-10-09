@@ -1,8 +1,10 @@
 use crate::AppState;
 use crate::models::{Community, EnergyRecord, UserCommunity, UserRole};
 use crate::router::community::OrderDirection;
-use chrono::NaiveDateTime;
+use bigdecimal::{BigDecimal, FromPrimitive};
+use chrono::{Duration, NaiveDateTime, Utc};
 use sqlx::QueryBuilder;
+use tracing::info;
 use uuid::Uuid;
 
 impl AppState {
@@ -76,6 +78,37 @@ impl AppState {
 
         tx.commit().await?;
 
+        ///////////////////////////////////////////////////////////////
+        let energy_min = BigDecimal::from_f64(0.1).unwrap();
+        let energy_max = BigDecimal::from(5000);
+        let energy_range = energy_min..energy_max;
+
+        let price_min = BigDecimal::from_f64(0.1).unwrap();
+        let price_max = BigDecimal::from(20);
+        let price_range = price_min..price_max;
+
+        // enery records are 3.5 months into the past
+        let end = Utc::now().naive_utc();
+        let days: f32 = 30.0 * 3.5;
+        let start = end - Duration::days(days.floor() as i64);
+        let date_range = start..end;
+
+        let random_records = EnergyRecord::random_vec(
+            &creator_user_id,
+            &community.id,
+            date_range,
+            energy_range,
+            price_range,
+        );
+
+        info!(
+            "Generated {} new random energy records",
+            random_records.len()
+        );
+
+        self.add_energy_records(&random_records).await?;
+        ///////////////////////////////////////////////////////////////
+
         Ok(community)
     }
 
@@ -109,6 +142,7 @@ impl AppState {
         }))
     }
 
+    // FIX: ISTO NUNCA É USADO
     pub async fn register_user_community(
         &self,
         community: &Uuid,
@@ -130,6 +164,30 @@ impl AppState {
         )
         .fetch_one(&self.pg_pool)
         .await
+    }
+
+    pub async fn add_energy_records(&self, records: &Vec<EnergyRecord>) -> sqlx::Result<()> {
+        const CHUNK_SIZE: usize = 1000; // estava a chegar a limite de argumentos para a query
+
+        for chunk in records.chunks(CHUNK_SIZE) {
+            let mut query_builder = QueryBuilder::new(
+                "INSERT INTO energy_record (user_id, community_id, generated, consumed, consumer_price, seller_price, start) ",
+            );
+
+            query_builder.push_values(chunk, |mut b, record| {
+                b.push_bind(record.user_id)
+                    .push_bind(record.community_id)
+                    .push_bind(record.generated.clone())
+                    .push_bind(record.consumed.clone())
+                    .push_bind(record.consumer_price.clone())
+                    .push_bind(record.seller_price.clone())
+                    .push_bind(record.start);
+            });
+
+            query_builder.build().execute(&self.pg_pool).await?;
+        }
+
+        Ok(())
     }
 
     pub async fn remove_user_community(
