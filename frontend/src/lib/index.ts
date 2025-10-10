@@ -20,6 +20,11 @@ export type EnergyRecord = {
 	start: string;
 };
 
+export type EnergyStats = {
+    periodStart: Date,
+    generatedSum: number,
+}
+
 export type ProcessedEnergy = {
 	id: string;
 	participant: string;

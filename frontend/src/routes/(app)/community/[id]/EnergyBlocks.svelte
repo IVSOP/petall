@@ -3,20 +3,34 @@
 	import TrendingUpIcon from '@tabler/icons-svelte/icons/trending-up';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
+	import type { EnergyStats } from '$lib';
 
-	let { energyTransfers = [] } = $props();
+    interface $$Props {
+        statsAll: EnergyStats; // Optional prop
+        // Add other props here
+    }
 
-	let prices = $derived(
-		energyTransfers.map((transfer) => {
-			let price_consumed = (transfer.consumed || 0) * (transfer.consumerPrice || 0);
-			let price_generated = (transfer.generated || 0) * (transfer.sellerPrice || 0);
-			return price_generated - price_consumed;
-		})
-	);
+    let { statsAll = {} } = $props();
 
-	let total_price = $derived.by(() => {
-		return prices.reduce((total, price) => total + (isNaN(price) ? 0 : price), 0);
-	});
+	// let prices = $derived(
+	// 	energyTransfers.map((transfer) => {
+	// 		let price_consumed = (transfer.consumed || 0) * (transfer.consumerPrice || 0);
+	// 		let price_generated = (transfer.generated || 0) * (transfer.sellerPrice || 0);
+	// 		return price_generated - price_consumed;
+	// 	})
+	// );
+
+	// let total_price = $derived.by(() => {
+	// 	return prices.reduce((total, price) => total + (isNaN(price) ? 0 : price), 0);
+	// });
+
+    let total_price = $derived.by(() => {
+        return statsAll.generatedSum;
+    })
+
+    $effect(() => {
+        console.log(`total_price ${total_price} and has type ${typeof total_price}`);
+    })
 
 	//   $effect(() => {
 	//     console.log('Prices:', prices);
@@ -31,7 +45,8 @@
 		<Card.Header>
 			<Card.Description>Total Balance</Card.Description>
 			<Card.Title class="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-				€{total_price.toFixed(2)}
+				<!-- €{total_price.toFixed(2)} -->
+				€{total_price}
 			</Card.Title>
 			<Card.Action>
 				<Badge variant="outline">

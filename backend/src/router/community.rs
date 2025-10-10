@@ -10,8 +10,11 @@ use axum::{
     response::IntoResponse,
     routing::{get, post},
 };
+use bigdecimal::BigDecimal;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
+use tracing::info;
 use uuid::Uuid;
 use validator::Validate;
 
@@ -21,6 +24,7 @@ pub fn router() -> Router<AppState> {
         .route("/community", post(create_community))
         .route("/community/{id}", get(get_community_by_id))
         .route("/community/{id}/energy", post(list_user_energy_records))
+        .route("/community/{id}/stats", post(get_stats))
 }
 
 #[derive(Debug, Serialize)]
@@ -135,4 +139,64 @@ pub async fn list_user_energy_records(
         )
         .await?;
     Ok(Json(energy))
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum StatsGranularity {
+    All,
+    Daily,
+    Weekly,
+    Monthly,
+    Yearly
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StatsFilter {
+    pub start: NaiveDateTime,
+    pub end: NaiveDateTime,
+    pub granularity: StatsGranularity,
+}
+
+#[derive(Debug, Serialize, sqlx::FromRow)]
+#[serde(rename_all = "camelCase")]
+pub struct EnergyStats {
+    pub period_start: NaiveDateTime,
+    #[serde(with = "bigdecimal::serde::json_num")]
+    pub generated_sum: BigDecimal,
+}
+
+#[debug_handler]
+pub async fn get_stats(
+    ExtractSession(session): ExtractSession,
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+    Json(query): Json<StatsFilter>,
+) -> AppResult<impl IntoResponse> {
+    let stats = state
+        .get_energy_records_stats(
+            session.user_id,
+            id,
+            &query
+        )
+        .await?;
+
+    // let stats_filter = StatsFilter {
+    //     start: NaiveDateTime::parse_from_str("2025-01-01 00:00:00", "%Y-%m-%d %H:%M:%S")
+    //         .expect("Failed to parse start date"),
+    //     end: NaiveDateTime::parse_from_str("2025-12-31 23:59:59", "%Y-%m-%d %H:%M:%S")
+    //         .expect("Failed to parse end date"),
+    //     granularity: StatsGranularity::Monthly,
+    // };
+
+    // // Serialize to JSON
+    // let json_output = serde_json::to_string_pretty(&stats_filter).unwrap();
+    // error!("{}", json_output);
+    // let stats: Vec<EnergyStats> = Vec::new();
+
+    // info!("returning {} stats", stats.len());
+
+
+    Ok(Json(stats))
 }

@@ -1,9 +1,9 @@
 use crate::AppState;
 use crate::models::{Community, EnergyRecord, UserCommunity, UserRole};
-use crate::router::community::OrderDirection;
+use crate::router::community::{EnergyStats, OrderDirection, StatsFilter, StatsGranularity};
 use bigdecimal::{BigDecimal, FromPrimitive};
 use chrono::{Duration, NaiveDateTime, Utc};
-use sqlx::QueryBuilder;
+use sqlx::{Execute, QueryBuilder};
 use tracing::info;
 use uuid::Uuid;
 
@@ -253,5 +253,73 @@ impl AppState {
             .build_query_as::<EnergyRecord>()
             .fetch_all(&self.pg_pool)
             .await
+    }
+
+    // FIX: isto nao esta a retornar absolutamente nada, wtf???
+    // acho que se puser os logs em debug ele me mostra a string da query
+    /*
+    SELECT DATE_TRUNC(week, start) AS period_start, SUM(generated) AS generated_sum 
+    FROM energy_record
+    WHERE user_id = a4567ef9-0a28-4692-a3dc-59a201d54ee0 AND community_id = 53d11c36-bd41-4eeb-9088-6efffd16a96f AND start >= 2025-10-10 19:59:44 AND start <= 2025-07-10 19:59:44
+    GROUP BY period_start
+    ORDER BY period_start ASC
+    */
+    pub async fn get_energy_records_stats(
+        &self,
+        user_id: Uuid,
+        community_id: Uuid,
+        filter: &StatsFilter,
+    ) -> sqlx::Result<Vec<EnergyStats>> {
+        // Choose date_trunc precision based on granularity
+        let date_trunc_unit = match filter.granularity {
+            StatsGranularity::All => None,
+            StatsGranularity::Daily => Some("day"),
+            StatsGranularity::Weekly => Some("week"),
+            StatsGranularity::Monthly => Some("month"),
+            StatsGranularity::Yearly => Some("year"),
+        };
+
+        let mut query_builder = QueryBuilder::new("SELECT ");
+
+        if let Some(unit) = date_trunc_unit {
+            query_builder.push("DATE_TRUNC(");
+            query_builder.push_bind(unit);
+            // info!("$1 is {}", unit);
+            query_builder.push(", start) AS period_start, ");
+        } else {
+            query_builder.push("MIN(start) AS period_start, ");
+        }
+
+        query_builder.push("SUM(generated) AS generated_sum ");
+        query_builder.push("FROM energy_record WHERE user_id = ");
+        query_builder.push_bind(user_id);
+        // info!("$2 is {}", user_id);
+        query_builder.push(" AND community_id = ");
+        query_builder.push_bind(community_id);
+        // info!("$3 is {}", community_id);
+        query_builder.push(" AND start >= ");
+        query_builder.push_bind(filter.start);
+        // info!("$4 is {}", filter.start);
+        query_builder.push(" AND start <= ");
+        query_builder.push_bind(filter.end);
+        // info!("$5 is {}", filter.end);
+
+        if date_trunc_unit.is_some() {
+            query_builder.push(" GROUP BY period_start ORDER BY period_start ASC");
+        }
+
+        // let sql = query_builder
+        //     .build_query_as::<EnergyStats>()
+        //     .sql();
+
+        // info!("Executing query: {}", sql);
+
+        let results = query_builder
+            .build_query_as::<EnergyStats>()
+            .fetch_all(&self.pg_pool)
+            .await?;
+
+        Ok(results)
+        // Ok(vec![])
     }
 }
