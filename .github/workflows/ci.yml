@@ -45,12 +45,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
       
-      - name: Build backend
-        working-directory: backend
-        env:
-          SQLX_OFFLINE: true
-        run: cargo build --verbose
-      
       - name: Run migrations
         working-directory: backend
         env:
@@ -58,6 +52,12 @@ jobs:
         run: |
           cargo install sqlx-cli --no-default-features --features postgres || true
           sqlx migrate run
+      
+      - name: Build backend
+        working-directory: backend
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/petall_test
+        run: cargo build --verbose
       
       - name: Run tests
         working-directory: backend
