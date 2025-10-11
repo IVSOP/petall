@@ -1,5 +1,37 @@
-<script lang="ts" module>
-	export const columns: ColumnDef<Schema>[] = [
+<script lang="ts">
+	import {
+		getCoreRowModel,
+		getFacetedRowModel,
+		getFacetedUniqueValues,
+		getPaginationRowModel,
+		type ColumnDef,
+		type PaginationState,
+		type Row,
+		type VisibilityState
+	} from '@tanstack/table-core';
+	import type { Schema } from './schemas.js';
+	import { RestrictToVerticalAxis } from '@dnd-kit/abstract/modifiers';
+	import { createSvelteTable } from '$lib/components/ui/data-table/data-table.svelte.js';
+	import * as Tabs from '$lib/components/ui/tabs/index.js';
+	import * as Table from '$lib/components/ui/table/index.js';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import * as Select from '$lib/components/ui/select/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
+	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { FlexRender, renderSnippet } from '$lib/components/ui/data-table/index.js';
+	import LayoutColumnsIcon from '@tabler/icons-svelte/icons/layout-columns';
+	import ChevronDownIcon from '@tabler/icons-svelte/icons/chevron-down';
+	import ChevronsLeftIcon from '@tabler/icons-svelte/icons/chevrons-left';
+	import DotsVerticalIcon from '@tabler/icons-svelte/icons/dots-vertical';
+	import ChevronLeftIcon from '@tabler/icons-svelte/icons/chevron-left';
+	import ChevronRightIcon from '@tabler/icons-svelte/icons/chevron-right';
+	import ChevronsRightIcon from '@tabler/icons-svelte/icons/chevrons-right';
+	import { DragDropProvider } from '@dnd-kit-svelte/svelte';
+	import { move } from '@dnd-kit/helpers';
+	import type { PaginatedEnergyRecords } from '$lib/api/community.js';
+
+	const columns: ColumnDef<Schema>[] = [
 		{
 			accessorKey: 'time',
 			header: 'Time',
@@ -48,58 +80,25 @@
 			enableHiding: false
 		}
 	];
-</script>
-
-<script lang="ts">
-	import {
-		getCoreRowModel,
-		getFacetedRowModel,
-		getFacetedUniqueValues,
-		getPaginationRowModel,
-		type ColumnDef,
-		type PaginationState,
-		type Row,
-		type VisibilityState
-	} from '@tanstack/table-core';
-	import type { Schema } from './schemas.js';
-	import { RestrictToVerticalAxis } from '@dnd-kit/abstract/modifiers';
-	import { createSvelteTable } from '$lib/components/ui/data-table/data-table.svelte.js';
-	import * as Tabs from '$lib/components/ui/tabs/index.js';
-	import * as Table from '$lib/components/ui/table/index.js';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
-	import { Button } from '$lib/components/ui/button/index.js';
-	import * as Select from '$lib/components/ui/select/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
-	import { Badge } from '$lib/components/ui/badge/index.js';
-	import { FlexRender, renderSnippet } from '$lib/components/ui/data-table/index.js';
-	import LayoutColumnsIcon from '@tabler/icons-svelte/icons/layout-columns';
-	import ChevronDownIcon from '@tabler/icons-svelte/icons/chevron-down';
-	import ChevronsLeftIcon from '@tabler/icons-svelte/icons/chevrons-left';
-	import DotsVerticalIcon from '@tabler/icons-svelte/icons/dots-vertical';
-	import ChevronLeftIcon from '@tabler/icons-svelte/icons/chevron-left';
-	import ChevronRightIcon from '@tabler/icons-svelte/icons/chevron-right';
-	import ChevronsRightIcon from '@tabler/icons-svelte/icons/chevrons-right';
-	import { DragDropProvider } from '@dnd-kit-svelte/svelte';
-	import { move } from '@dnd-kit/helpers';
 
 	let {
 		data,
 		pageIndex = $bindable(),
 		pageSize = $bindable(),
-		pageLimit = $bindable(),
 		...props
 	}: {
-		data: Schema[];
+		data: PaginatedEnergyRecords;
 		pageIndex: number;
 		pageSize: number;
-		pageLimit: number;
 	} = $props();
+
+	const totalPages = $derived(Math.ceil(data.totalCount / pageSize));
 
 	let columnVisibility = $state<VisibilityState>({});
 
 	const table = createSvelteTable({
 		get data() {
-			return data;
+			return data.records;
 		},
 		columns,
 		state: {
@@ -188,7 +187,7 @@
 					// @ts-expect-error @dnd-kit/abstract types are botched atm
 					RestrictToVerticalAxis
 				]}
-				onDragEnd={(e) => (data = move(data, e))}
+				onDragEnd={(e) => (data.records = move(data.records, e))}
 			>
 				<Table.Root>
 					<Table.Header class="sticky top-0 z-10 bg-muted">
@@ -245,7 +244,7 @@
 				</div>
 				<div class="flex w-fit items-center justify-center text-sm font-medium">
 					Page {pageIndex} of
-					{pageLimit}
+					{totalPages}
 				</div>
 				<div class="ml-auto flex items-center gap-2 lg:ml-0">
 					<Button
@@ -272,7 +271,7 @@
 						class="size-8"
 						size="icon"
 						onclick={() => pageIndex++}
-						disabled={pageIndex >= pageLimit}
+						disabled={pageIndex >= totalPages}
 					>
 						<span class="sr-only">Go to next page</span>
 						<ChevronRightIcon />
@@ -281,8 +280,8 @@
 						variant="outline"
 						class="hidden size-8 lg:flex"
 						size="icon"
-						onclick={() => (pageIndex = pageLimit)}
-						disabled={pageIndex >= pageLimit}
+						onclick={() => (pageIndex = totalPages)}
+						disabled={pageIndex >= totalPages}
 					>
 						<span class="sr-only">Go to last page</span>
 						<ChevronsRightIcon />

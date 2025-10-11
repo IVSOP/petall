@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { Participant } from '$lib';
-	import SearchBar from './SearchBar.svelte';
 	import SquarePlus from '@lucide/svelte/icons/square-plus';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import ParticipantSearchDialog from './ParticipantSearchDialog.svelte';
-	import ParticipantScrollList from './ParticipantScrollList.svelte';
+	import SearchBar from '$lib/components/SearchBar.svelte';
+	import ParticipantScrollList from '$lib/components/ParticipantScrollList.svelte';
+	import ParticipantSearchDialog from '$lib/components/ParticipantSearchDialog.svelte';
 
 	let { participants }: { participants: Participant[] } = $props();
 
@@ -28,7 +28,7 @@
 
 	<div class="flex flex-col gap-2 md:flex-row md:items-center">
 		<div class="order-2 w-full md:order-none">
-			<SearchBar bind:value={filterParticipantName} placeholder="Find participant..." />
+			<SearchBar bind:filter={filterParticipantName} placeholder="Find participant..." />
 		</div>
 		<div class="order-1 md:order-none">
 			<Button

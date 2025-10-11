@@ -1,6 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import type { EnergyRecord } from '$lib';
+import type { PaginatedEnergyRecords } from '$lib/api/community';
 
 export const load: PageServerLoad = async ({ fetch, params, cookies }) => {
 	const sessionId = cookies.get('sessionId');
@@ -31,7 +32,7 @@ export const load: PageServerLoad = async ({ fetch, params, cookies }) => {
 		throw new Error('Failed to fetch community');
 	}
 
-	const energyRecords: EnergyRecord[] = await response.json();
+	const energyRecords: PaginatedEnergyRecords = await response.json();
 
 	return {
 		sessionId,

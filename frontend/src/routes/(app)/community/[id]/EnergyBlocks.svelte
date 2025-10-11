@@ -1,16 +1,12 @@
 <script lang="ts">
-	import TrendingDownIcon from '@tabler/icons-svelte/icons/trending-down';
-	import TrendingUpIcon from '@tabler/icons-svelte/icons/trending-up';
+	import type { EnergyRecord } from '$lib';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
-	import type { EnergyStats } from '$lib';
+	import TrendingDown from '@lucide/svelte/icons/trending-down';
+	import TrendingUp from '@lucide/svelte/icons/trending-up';
+    import type { EnergyStats } from '$lib';
 
-    interface $$Props {
-        statsAll: EnergyStats; // Optional prop
-        // Add other props here
-    }
-
-    let { statsAll = {} } = $props();
+	// let { energyRecords: energyTransfers = [] }: { energyRecords?: EnergyRecord[] } = $props();
 
 	// let prices = $derived(
 	// 	energyTransfers.map((transfer) => {
@@ -20,9 +16,12 @@
 	// 	})
 	// );
 
-	// let total_price = $derived.by(() => {
-	// 	return prices.reduce((total, price) => total + (isNaN(price) ? 0 : price), 0);
-	// });
+    interface $$Props {
+        statsAll: EnergyStats; // Optional prop
+        // Add other props here
+    }
+
+    let { statsAll = {} } = $props();
 
     let total_price = $derived.by(() => {
         return statsAll.generatedSum;
@@ -50,14 +49,14 @@
 			</Card.Title>
 			<Card.Action>
 				<Badge variant="outline">
-					<TrendingUpIcon />
+					<TrendingUp />
 					+12.5%
 				</Badge>
 			</Card.Action>
 		</Card.Header>
 		<Card.Footer class="flex-col items-start gap-1.5 text-sm">
 			<div class="line-clamp-1 flex gap-2 font-medium">
-				Trending up this month <TrendingUpIcon class="size-4" />
+				Trending up this month <TrendingUp class="size-4" />
 			</div>
 			<div class="text-muted-foreground">Visitors for the last 6 months</div>
 		</Card.Footer>
@@ -70,14 +69,14 @@
 			</Card.Title>
 			<Card.Action>
 				<Badge variant="outline">
-					<TrendingDownIcon />
+					<TrendingDown />
 					-20%
 				</Badge>
 			</Card.Action>
 		</Card.Header>
 		<Card.Footer class="flex-col items-start gap-1.5 text-sm">
 			<div class="line-clamp-1 flex gap-2 font-medium">
-				Down 20% this period <TrendingDownIcon class="size-4" />
+				Down 20% this period <TrendingDown class="size-4" />
 			</div>
 			<div class="text-muted-foreground">Acquisition needs attention</div>
 		</Card.Footer>
@@ -90,14 +89,14 @@
 			</Card.Title>
 			<Card.Action>
 				<Badge variant="outline">
-					<TrendingUpIcon />
+					<TrendingUp />
 					+12.5%
 				</Badge>
 			</Card.Action>
 		</Card.Header>
 		<Card.Footer class="flex-col items-start gap-1.5 text-sm">
 			<div class="line-clamp-1 flex gap-2 font-medium">
-				Strong user retention <TrendingUpIcon class="size-4" />
+				Strong user retention <TrendingUp class="size-4" />
 			</div>
 			<div class="text-muted-foreground">Engagement exceed targets</div>
 		</Card.Footer>
@@ -110,14 +109,14 @@
 			</Card.Title>
 			<Card.Action>
 				<Badge variant="outline">
-					<TrendingUpIcon />
+					<TrendingUp />
 					+4.5%
 				</Badge>
 			</Card.Action>
 		</Card.Header>
 		<Card.Footer class="flex-col items-start gap-1.5 text-sm">
 			<div class="line-clamp-1 flex gap-2 font-medium">
-				Steady performance increase <TrendingUpIcon class="size-4" />
+				Steady performance increase <TrendingUp class="size-4" />
 			</div>
 			<div class="text-muted-foreground">Meets growth projections</div>
 		</Card.Footer>

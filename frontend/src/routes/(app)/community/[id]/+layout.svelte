@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type { LayoutProps } from './$types';
+	import type { LayoutProps } from './$types';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
-    import * as ButtonGroup from "$lib/components/ui/button-group/index.js";
 	import CheckIcon from '@lucide/svelte/icons/check';
+	import Plus from '@lucide/svelte/icons/plus';
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
 	import { tick } from 'svelte';
 	import * as Command from '$lib/components/ui/command/index.js';
@@ -35,7 +35,7 @@
 	}
 </script>
 
-<div class="pb-4 flex gap-2.5">
+<div class="flex gap-2.5 pb-4">
 	<Breadcrumb.Root>
 		<Breadcrumb.List>
 			<Breadcrumb.Item>
@@ -81,21 +81,15 @@
 					</Popover.Root>
 				</Breadcrumb.Page>
 			</Breadcrumb.Item>
-			<Breadcrumb.Separator />
 		</Breadcrumb.List>
 	</Breadcrumb.Root>
-    <ButtonGroup.Root>
-		<Button
-			href="/community/{data.communityId}/settings"
-			variant="secondary">
-				<Settings />
-		</Button>
-		<Button
-			variant="secondary"
-			href="/community/new">
-				New Community
-		</Button>		
-    </ButtonGroup.Root>
+	<Button href="/community/{data.communityId}/settings">
+		<Settings />
+	</Button>
+	<Button href="/community/new" class="ml-auto">
+		<Plus />
+		New Community
+	</Button>
 </div>
 
 {@render children()}
