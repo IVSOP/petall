@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT c.id, c.name, c.description, c.image, uc.role as \"role: UserRole\" FROM community c\n            JOIN user_community uc ON c.id = uc.community_id\n            WHERE c.id = $1 AND uc.user_id = $2\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "image",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "role: UserRole",
+        "type_info": {
+          "Custom": {
+            "name": "user_role",
+            "kind": {
+              "Enum": [
+                "participant",
+                "manager",
+                "usermanager"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "568c4f184ec82be3c15c0c885b95c0d2c4698cce17dd059360e09e16fa894f34"
+}
