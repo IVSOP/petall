@@ -1,0 +1,35 @@
+meta {
+  name: register
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{host}}/auth/register
+  body: json
+  auth: inherit
+}
+
+params:query {
+  : 
+}
+
+body:json {
+  {
+    "name": "diogo",
+    "email": "diogo@mail.com",
+    "password": "password"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    let data = res.getBody();
+    bru.setEnvVar("sessionId", data.sessionId);
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+}

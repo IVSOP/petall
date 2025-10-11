@@ -1,0 +1,27 @@
+meta {
+  name: create community
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{host}}/community
+  body: json
+  auth: inherit
+}
+
+headers {
+  Authorization: {{sessionId}}
+}
+
+body:json {
+  {
+    "name": "community_foos",
+    "description": "fancy description",
+    "image": "https://pt.wikipedia.org/wiki/EDP#/media/Ficheiro:EDP_2022.svg"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

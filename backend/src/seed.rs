@@ -141,7 +141,7 @@ pub async fn seed_community(pool: &PgPool, count: &usize) -> anyhow::Result<Vec<
         communities.push(
             sqlx::query_scalar!(
                 r#"
-                INSERT INTO "community" ("name" , "description")
+                INSERT INTO "community" ("name", "description")
                 VALUES ($1, $2)
                 RETURNING id
                 "#,

@@ -20,6 +20,11 @@ export type EnergyRecord = {
 	start: string;
 };
 
+export type EnergyStats = {
+    periodStart: Date,
+    generatedSum: number,
+}
+
 export type ProcessedEnergy = {
 	id: string;
 	participant: string;
@@ -36,6 +41,7 @@ export type Community = {
 	id: string;
 	name: string;
 	supplier: string;
+	description: string;
 };
 
-export type UserRole = 'manager' | 'supplier' | 'user';
+export type UserRole = 'Manager' | 'User';

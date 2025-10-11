@@ -8,7 +8,7 @@
 
 <DropdownMenu.Root>
 	<DropdownMenu.Trigger class="focus:outline-none">
-		<Avatar.Root class="cursor-pointer transition hover:scale-105 hover:ring-2 hover:ring-gray-300">
+		<Avatar.Root class="cursor-pointer transition hover:scale-102 hover:ring-2 hover:ring-gray-300">
 			<Avatar.Fallback>{name.charAt(0).toUpperCase()}</Avatar.Fallback>
 		</Avatar.Root>
 	</DropdownMenu.Trigger>

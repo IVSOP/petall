@@ -1,9 +1,19 @@
 use crate::AppState;
 use crate::models::{Community, EnergyRecord, UserCommunity, UserRole};
-use crate::router::community::OrderDirection;
-use chrono::NaiveDateTime;
-use sqlx::QueryBuilder;
+use crate::router::{EnergyStats, OrderDirection, StatsFilter, StatsGranularity};
+use bigdecimal::{BigDecimal, FromPrimitive};
+use chrono::{Duration, NaiveDateTime, Utc};
+use serde::{Deserialize, Serialize};
+use sqlx::{Row, QueryBuilder};
+use tracing::info;
 use uuid::Uuid;
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PaginatedEnergyRecords {
+    pub records: Vec<EnergyRecord>,
+    pub total_count: i64,
+}
 
 impl AppState {
     pub async fn get_communities_from_user(
@@ -76,6 +86,37 @@ impl AppState {
 
         tx.commit().await?;
 
+        ///////////////////////////////////////////////////////////////
+        let energy_min = BigDecimal::from_f64(0.1).unwrap();
+        let energy_max = BigDecimal::from(5000);
+        let energy_range = energy_min..energy_max;
+
+        let price_min = BigDecimal::from_f64(0.1).unwrap();
+        let price_max = BigDecimal::from(20);
+        let price_range = price_min..price_max;
+
+        // enery records are 3.5 months into the past
+        let end = Utc::now().naive_utc();
+        let days: f32 = 30.0 * 3.5;
+        let start = end - Duration::days(days.floor() as i64);
+        let date_range = start..end;
+
+        let random_records = EnergyRecord::random_vec(
+            &creator_user_id,
+            &community.id,
+            date_range,
+            energy_range,
+            price_range,
+        );
+
+        info!(
+            "Generated {} new random energy records",
+            random_records.len()
+        );
+
+        self.add_energy_records(&random_records).await?;
+        ///////////////////////////////////////////////////////////////
+
         Ok(community)
     }
 
@@ -109,6 +150,7 @@ impl AppState {
         }))
     }
 
+    // FIX: ISTO NUNCA É USADO
     pub async fn register_user_community(
         &self,
         community: &Uuid,
@@ -130,6 +172,30 @@ impl AppState {
         )
         .fetch_one(&self.pg_pool)
         .await
+    }
+
+    pub async fn add_energy_records(&self, records: &Vec<EnergyRecord>) -> sqlx::Result<()> {
+        const CHUNK_SIZE: usize = 1000; // estava a chegar a limite de argumentos para a query
+
+        for chunk in records.chunks(CHUNK_SIZE) {
+            let mut query_builder = QueryBuilder::new(
+                "INSERT INTO energy_record (user_id, community_id, generated, consumed, consumer_price, seller_price, start) ",
+            );
+
+            query_builder.push_values(chunk, |mut b, record| {
+                b.push_bind(record.user_id)
+                    .push_bind(record.community_id)
+                    .push_bind(record.generated.clone())
+                    .push_bind(record.consumed.clone())
+                    .push_bind(record.consumer_price.clone())
+                    .push_bind(record.seller_price.clone())
+                    .push_bind(record.start);
+            });
+
+            query_builder.build().execute(&self.pg_pool).await?;
+        }
+
+        Ok(())
     }
 
     pub async fn remove_user_community(
@@ -161,7 +227,30 @@ impl AppState {
         order_dir: OrderDirection,
         start: Option<NaiveDateTime>,
         end: Option<NaiveDateTime>,
-    ) -> sqlx::Result<Vec<EnergyRecord>> {
+    ) -> sqlx::Result<PaginatedEnergyRecords> {
+        let mut count_builder = QueryBuilder::new(
+            r#"
+            SELECT COUNT(*)
+            FROM energy_record
+            WHERE user_id = "#,
+        );
+
+        count_builder.push_bind(user_id);
+        count_builder.push(" AND community_id = ");
+        count_builder.push_bind(community_id);
+
+        if let Some(start_time) = start {
+            count_builder.push(" AND start >= ");
+            count_builder.push_bind(start_time);
+        }
+
+        if let Some(end_time) = end {
+            count_builder.push(" AND start <= ");
+            count_builder.push_bind(end_time);
+        }
+
+        let total_count: i64 = count_builder.build().fetch_one(&self.pg_pool).await?.get(0);
+
         let mut query_builder = QueryBuilder::new(
             r#"
             SELECT id, user_id, community_id, generated, consumed, consumer_price, seller_price, start
@@ -173,14 +262,14 @@ impl AppState {
         query_builder.push(" AND community_id = ");
         query_builder.push_bind(community_id);
 
-        if let Some(start) = start {
+        if let Some(start_time) = start {
             query_builder.push(" AND start >= ");
-            query_builder.push_bind(start);
+            query_builder.push_bind(start_time);
         }
 
-        if let Some(end) = end {
+        if let Some(end_time) = end {
             query_builder.push(" AND start <= ");
-            query_builder.push_bind(end);
+            query_builder.push_bind(end_time);
         }
 
         let order_dir = match order_dir {
@@ -189,11 +278,84 @@ impl AppState {
         };
 
         query_builder.push(format!(" ORDER BY start {}", order_dir));
-        query_builder.push(format!(" LIMIT {} OFFSET {}", size, page * size));
+        query_builder.push(format!(" LIMIT {} OFFSET {}", size, (page - 1) * size));
 
-        query_builder
+        let records = query_builder
             .build_query_as::<EnergyRecord>()
             .fetch_all(&self.pg_pool)
-            .await
+            .await?;
+
+        Ok(PaginatedEnergyRecords {
+            records,
+            total_count,
+        })
+    }
+
+    // FIX: isto nao esta a retornar absolutamente nada, wtf???
+    // acho que se puser os logs em debug ele me mostra a string da query
+    /*
+    SELECT DATE_TRUNC(week, start) AS period_start, SUM(generated) AS generated_sum 
+    FROM energy_record
+    WHERE user_id = a4567ef9-0a28-4692-a3dc-59a201d54ee0 AND community_id = 53d11c36-bd41-4eeb-9088-6efffd16a96f AND start >= 2025-10-10 19:59:44 AND start <= 2025-07-10 19:59:44
+    GROUP BY period_start
+    ORDER BY period_start ASC
+    */
+    pub async fn get_energy_records_stats(
+        &self,
+        user_id: Uuid,
+        community_id: Uuid,
+        filter: &StatsFilter,
+    ) -> sqlx::Result<Vec<EnergyStats>> {
+        // Choose date_trunc precision based on granularity
+        let date_trunc_unit = match filter.granularity {
+            StatsGranularity::All => None,
+            StatsGranularity::Daily => Some("day"),
+            StatsGranularity::Weekly => Some("week"),
+            StatsGranularity::Monthly => Some("month"),
+            StatsGranularity::Yearly => Some("year"),
+        };
+
+        let mut query_builder = QueryBuilder::new("SELECT ");
+
+        if let Some(unit) = date_trunc_unit {
+            query_builder.push("DATE_TRUNC(");
+            query_builder.push_bind(unit);
+            // info!("$1 is {}", unit);
+            query_builder.push(", start) AS period_start, ");
+        } else {
+            query_builder.push("MIN(start) AS period_start, ");
+        }
+
+        query_builder.push("SUM(generated) AS generated_sum ");
+        query_builder.push("FROM energy_record WHERE user_id = ");
+        query_builder.push_bind(user_id);
+        // info!("$2 is {}", user_id);
+        query_builder.push(" AND community_id = ");
+        query_builder.push_bind(community_id);
+        // info!("$3 is {}", community_id);
+        query_builder.push(" AND start >= ");
+        query_builder.push_bind(filter.start);
+        // info!("$4 is {}", filter.start);
+        query_builder.push(" AND start <= ");
+        query_builder.push_bind(filter.end);
+        // info!("$5 is {}", filter.end);
+
+        if date_trunc_unit.is_some() {
+            query_builder.push(" GROUP BY period_start ORDER BY period_start ASC");
+        }
+
+        // let sql = query_builder
+        //     .build_query_as::<EnergyStats>()
+        //     .sql();
+
+        // info!("Executing query: {}", sql);
+
+        let results = query_builder
+            .build_query_as::<EnergyStats>()
+            .fetch_all(&self.pg_pool)
+            .await?;
+
+        Ok(results)
+        // Ok(vec![])
     }
 }

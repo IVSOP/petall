@@ -91,3 +91,5 @@ CREATE TABLE IF NOT EXISTS "energy_record" (
         REFERENCES "community"("id")
         ON DELETE CASCADE
 );
+CREATE INDEX IF NOT EXISTS idx_energy_user_community_start
+ON energy_record (user_id, community_id, start);

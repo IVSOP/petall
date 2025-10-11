@@ -1,4 +1,3 @@
-import type { Community, UserRole } from '$lib';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import type { GetCommunitiesResponse as CommunityResponse } from '$lib/api/community';

@@ -1934,6 +1934,7 @@ dependencies = [
  "clap",
  "dotenv",
  "fake",
+ "fastrand",
  "itertools",
  "names",
  "oauth2",

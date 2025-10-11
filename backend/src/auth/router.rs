@@ -23,30 +23,30 @@ pub fn router() -> Router<AppState> {
 
 #[derive(serde::Deserialize, serde::Serialize, Validate)]
 #[serde(rename_all = "camelCase")]
-struct RegisterRequest {
+pub struct RegisterRequest {
     #[validate(length(
         min = 3,
         max = 50,
         message = "Name must be between 3 and 50 characters"
     ))]
-    name: String,
+    pub name: String,
     #[validate(email(message = "Invalid email address"))]
-    email: String,
+    pub email: String,
     #[validate(length(
         min = 8,
         max = 50,
         message = "Password must be between 8 and 50 characters"
     ))]
-    password: String,
+    pub password: String,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct RegisterResponse {
-    uuid: Uuid,
-    name: String,
-    email: String,
-    session_id: Uuid,
+pub struct RegisterResponse {
+    pub uuid: Uuid,
+    pub name: String,
+    pub email: String,
+    pub session_id: Uuid,
 }
 
 #[debug_handler]

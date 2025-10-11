@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "petall",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

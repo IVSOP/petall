@@ -1,6 +1,6 @@
 <script>
 	import Trash2 from '@lucide/svelte/icons/trash-2';
-	import SmartSelect from './SmartSelect.svelte';
+	// import SmartSelect from './SmartSelect.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
@@ -26,7 +26,7 @@
 						<div>{participant.name}</div>
 					</div>
 					<div class="flex items-center gap-2">
-						<SmartSelect type="multiple" label="Role" items={roleItems} />
+						<!-- <SmartSelect type="multiple" label="Role" items={roleItems} /> -->
 						<Button variant="destructive">
 							<Trash2 />
 							Remove
