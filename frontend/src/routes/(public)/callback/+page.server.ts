@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 	});
 
 	if (isNewUser) {
-		throw redirect(303, '/?welcome=true');
+		throw redirect(303, '/');
 	} else {
 		throw redirect(303, '/');
 	}

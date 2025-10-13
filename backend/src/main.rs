@@ -50,12 +50,15 @@ pub struct Config {
     pub google_client_secret: String,
     #[arg(long, env)]
     pub google_redirect_url: String,
+    #[arg(long, env, default_value = "http://localhost:5173")]
+    pub frontend_url: String,
 }
 
 #[derive(Clone)]
 pub struct AppState {
     pg_pool: PgPool,
     google_oauth: auth::oauth::GoogleOAuthClient,
+    frontend_url: String,
 }
 
 #[tokio::main]
@@ -97,6 +100,7 @@ async fn main() -> Result<()> {
             let state = AppState {
                 pg_pool,
                 google_oauth,
+                frontend_url: config.frontend_url,
             };
 
             info!("Starting server on {}", listener.local_addr().unwrap());

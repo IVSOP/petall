@@ -65,6 +65,25 @@ impl AppState {
         Ok(user)
     }
 
+    pub async fn register_oauth_user(&self, email: &str, name: &str, provider: AuthProvider, key_id: &str) -> AppResult<User> {
+        let user = sqlx::query_as!(
+            User,
+            r#"
+            INSERT INTO "user" (email, name)
+            VALUES ($1, $2)
+            RETURNING *
+            "#,
+            email,
+            name
+        )
+        .fetch_one(&self.pg_pool)
+        .await?;
+
+        self.create_key(provider, key_id, user.id, None).await?;
+
+        Ok(user)
+    }
+
     // when user changes password
     pub async fn update_user_password(
         &self,
