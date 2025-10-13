@@ -94,6 +94,12 @@
 
 	const totalPages = $derived(Math.ceil(data.totalCount / pageSize));
 
+	$effect(() => {
+		if (pageIndex > totalPages) {
+			pageIndex = totalPages
+		}
+	});
+
 	let columnVisibility = $state<VisibilityState>({});
 
 	const table = createSvelteTable({

@@ -1,17 +1,16 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import type { EnergyRecord } from '$lib';
+import type { Community } from '$lib';
 import type { PaginatedEnergyRecords } from '$lib/api/community';
 
 export const load: PageServerLoad = async ({ fetch, params, cookies }) => {
 	const sessionId = cookies.get('sessionId');
-	const communityId = params.id;
 
 	if (!sessionId) {
 		redirect(302, '/login');
 	}
 
-	const response = await fetch(`/api/community/${params.id}/energy`, {
+	const energyResponse = await fetch(`/api/community/${params.id}/energy`, {
 		method: 'POST',
 		headers: {
 			Authorization: sessionId,
@@ -24,19 +23,28 @@ export const load: PageServerLoad = async ({ fetch, params, cookies }) => {
 		})
 	});
 
-	if (response.status == 401) {
+	const communityResponse = await fetch(`/api/community/${params.id}`, {
+		method: 'GET',
+		headers: {
+			Authorization: sessionId,
+			'Content-Type': 'application/json'
+		},
+	})
+
+	if (energyResponse.status == 401 || communityResponse.status == 401) {
 		redirect(302, '/login');
 	}
 
-	if (!response.ok) {
+	if (!energyResponse.ok || !communityResponse.ok) {
 		throw new Error('Failed to fetch community');
 	}
 
-	const energyRecords: PaginatedEnergyRecords = await response.json();
+	const energyRecords: PaginatedEnergyRecords = await energyResponse.json();
+	const community: Community = await communityResponse.json();
 
 	return {
 		sessionId,
-		communityId,
+		community,
 		energyRecords
 	};
 };

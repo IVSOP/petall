@@ -4,7 +4,6 @@
 	import EnergyBlocks from './EnergyBlocks.svelte';
     import { format } from 'date-fns';
 	import type { EnergyStats } from '$lib';
-	import { onMount } from 'svelte';
 
 	const { data } = $props();
 
@@ -69,7 +68,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.communityId}</title>
+	<title>{data.community.name}</title>
 </svelte:head>
 
 <div class="container">
@@ -77,7 +76,7 @@
 		<div class="@container/main flex flex-1 flex-col gap-2">
 			<div class="flex flex-col gap-6">
 				<!-- <EnergyBlocks energyRecords={paginatedEnergyRecords.records} /> -->
-                 <EnergyBlocks statsAll={stats_all} />
+                <EnergyBlocks statsAll={stats_all} />
 				<ChartAreaInteractive />
 				<DataTable data={paginatedEnergyRecords} bind:pageIndex bind:pageSize />
 			</div>
