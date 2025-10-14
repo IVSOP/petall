@@ -156,24 +156,23 @@ async fn google_callback_handler(
             .get_user_by_id(key.user_id)
             .await?
             .ok_or(AppError::InvalidSession)?
+    } else if let Some(existing_user) = state.get_user_by_email(&google_user.email).await? {
+        //email user already exists -> used to link email account to oauth account
+        state.create_key(AuthProvider::Google, &key_id, existing_user.id, None).await?;
+        existing_user
     } else {
-        if let Some(existing_user) = state.get_user_by_email(&google_user.email).await? {
-            //email user already exists -> used to link email account to oauth account
-            state.create_key(AuthProvider::Google, &key_id, existing_user.id, None).await?;
-            existing_user
-        } else {
-            //no email account and no google account 
-            is_new_user = true;
-            let name = google_user
-                .name
-                .as_deref()
-                .unwrap_or(&google_user.email);
-            
-            state
-                .register_oauth_user(&google_user.email, name, AuthProvider::Google, &key_id)
-                .await?
-        }
+        //no email account and no google account 
+        is_new_user = true;
+        let name = google_user
+            .name
+            .as_deref()
+            .unwrap_or(&google_user.email);
+        
+        state
+            .register_oauth_user(&google_user.email, name, AuthProvider::Google, &key_id)
+            .await?
     };
+
 
     let session = Session::new_random_from(user.id);
     state.store_session(&session).await?;
