@@ -44,11 +44,18 @@ pub struct Config {
     pub postgres_password: String,
     #[arg(long, env)]
     pub postgres_db: String,
+    #[arg(long, env)]
+    pub google_client_id: String,
+    #[arg(long, env)]
+    pub google_client_secret: String,
+    #[arg(long, env)]
+    pub google_redirect_url: String,
 }
 
 #[derive(Clone)]
 pub struct AppState {
     pg_pool: PgPool,
+    google_oauth: auth::oauth::GoogleOAuthClient,
 }
 
 #[tokio::main]
@@ -74,13 +81,23 @@ async fn main() -> Result<()> {
         .await
         .context("Failed to run migrations")?;
 
+    let google_oauth = auth::oauth::GoogleOAuthClient::new(
+        config.google_client_id,
+        config.google_client_secret,
+        config.google_redirect_url,
+    )
+    .context("Failed to initialize Google OAuth client")?;
+
     match cli.command {
         Command::Run { bind_ip, bind_port } => {
             let listener = tokio::net::TcpListener::bind((bind_ip, bind_port))
                 .await
                 .context("Failed to bind to port")?;
 
-            let state = AppState { pg_pool };
+            let state = AppState {
+                pg_pool,
+                google_oauth,
+            };
 
             info!("Starting server on {}", listener.local_addr().unwrap());
 

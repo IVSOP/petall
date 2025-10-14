@@ -58,6 +58,10 @@ pub enum AppError {
     InvalidCredentials,
     #[error(transparent)]
     AxumJsonRejection(#[from] JsonRejection),
+    #[error("OAuth error: {0}")]
+    OAuthError(String),
+    #[error("email not verified by provider")]
+    EmailNotVerified,
 }
 
 impl IntoResponse for AppError {
@@ -73,6 +77,10 @@ impl IntoResponse for AppError {
         );
 
         let (status, error) = match &self {
+            AppError::OAuthError(msg) => (
+                axum::http::StatusCode::BAD_REQUEST,
+                format!("OAuth error: {}", msg),
+            ),
             AppError::CommunityNotFound(id) => (
                 StatusCode::NOT_FOUND,
                 format!("Community not found: {}", id),
@@ -125,6 +133,10 @@ impl IntoResponse for AppError {
                 (StatusCode::UNAUTHORIZED, "Invalid credentials".to_string())
             }
             AppError::AxumJsonRejection(err) => (StatusCode::BAD_REQUEST, err.to_string()),
+            AppError::EmailNotVerified => (
+                StatusCode::FORBIDDEN,
+                "Email not verified by provider".to_string(),
+            ),
         };
 
         let body = ErrorBody { error };

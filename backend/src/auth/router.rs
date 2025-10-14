@@ -1,9 +1,12 @@
+use crate::auth::oauth;
 use crate::{
     AppState,
     auth::{Session, extractor::ExtractSession, password},
     error::{AppError, AppResult},
+    models::AuthProvider,
 };
 use axum::{Json, Router, debug_handler, extract::State, response::IntoResponse, routing::post};
+use oauth2::TokenResponse;
 use uuid::Uuid;
 use validator::Validate;
 
@@ -14,6 +17,8 @@ pub fn router() -> Router<AppState> {
         .route("/revoke", post(revoke_handler))
         .route("/changepassword", post(change_password_handler))
         .route("/me", post(me_handler))
+        .route("/oauth/google", axum::routing::get(google_oauth_handler))
+        .route("/callback", axum::routing::get(google_callback_handler))
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Validate)]
@@ -51,8 +56,8 @@ async fn register_handler(
 ) -> AppResult<impl IntoResponse> {
     request.validate()?;
 
+    // email already exists
     if state.get_user_by_email(&request.email).await?.is_some() {
-        // email already exists
         return Err(AppError::EmailAlreadyInUse(request.email));
     }
 
@@ -87,6 +92,100 @@ struct LoginResponse {
     session_id: Uuid,
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct OAuthUrlResponse {
+    authorization_url: String,
+}
+
+#[debug_handler]
+async fn google_oauth_handler(State(state): State<AppState>) -> AppResult<impl IntoResponse> {
+    let (auth_url, _csrf_token) = state.google_oauth.get_authorization_url();
+
+    //TODO: save CRSF TOKEN in user session and verify it in callbacks
+
+    Ok(Json(OAuthUrlResponse {
+        authorization_url: auth_url.to_string(),
+    }))
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct OAuthCallbackQuery {
+    code: String,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct OAuthCallbackResponse {
+    session_id: Uuid,
+    is_new_user: bool,
+    user_id: Uuid,
+    email: String,
+    name: String,
+}
+
+#[debug_handler]
+async fn google_callback_handler(
+    State(state): State<AppState>,
+    axum::extract::Query(query): axum::extract::Query<OAuthCallbackQuery>,
+) -> AppResult<impl IntoResponse> {
+    // TODO: verify CRSF here
+    let token_response = state
+        .google_oauth
+        .exchange_code(query.code)
+        .await
+        .map_err(|e| AppError::OAuthError(e))?;
+
+    let access_token = token_response.access_token().secret();
+
+    let google_user = oauth::get_google_user_info(access_token)
+        .await
+        .map_err(|e| AppError::OAuthError(e))?;
+
+    if !google_user.email_verified {
+        return Err(AppError::EmailNotVerified);
+    }
+
+    let key_id = google_user.sub;
+
+    let mut is_new_user = false;
+    let user = if let Some(key) = state.get_key(AuthProvider::Google, &key_id).await? {
+        // oauth user already exists
+        state
+            .get_user_by_id(key.user_id)
+            .await?
+            .ok_or(AppError::InvalidSession)?
+    } else if let Some(existing_user) = state.get_user_by_email(&google_user.email).await? {
+        //email user already exists -> used to link email account to oauth account
+        state.create_key(AuthProvider::Google, &key_id, existing_user.id, None).await?;
+        existing_user
+    } else {
+        //no email account and no google account 
+        is_new_user = true;
+        let name = google_user
+            .name
+            .as_deref()
+            .unwrap_or(&google_user.email);
+        
+        state
+            .register_oauth_user(&google_user.email, name, AuthProvider::Google, &key_id)
+            .await?
+    };
+
+
+    let session = Session::new_random_from(user.id);
+    state.store_session(&session).await?;
+
+    Ok(Json(OAuthCallbackResponse {
+        session_id: session.id,
+        is_new_user,
+        user_id: user.id,
+        email: user.email,
+        name: user.name,
+    }))
+}
+
 #[debug_handler]
 async fn login_handler(
     State(state): State<AppState>,
@@ -97,7 +196,16 @@ async fn login_handler(
         .await?
         .ok_or(AppError::InvalidCredentials)?;
 
-    if !password::verify_password(&request.password, &user.password)? {
+    // search key
+    let key = state
+        .get_key(AuthProvider::Email, &request.email)
+        .await?
+        .ok_or(AppError::InvalidCredentials)?;
+
+    // does key have password?
+    let hashed_password = key.hashed_password.ok_or(AppError::InvalidCredentials)?;
+
+    if !password::verify_password(&request.password, &hashed_password)? {
         return Err(AppError::InvalidCredentials);
     }
 
@@ -157,17 +265,25 @@ async fn change_password_handler(
         .await?
         .ok_or(AppError::InvalidSession)?;
 
-    if !password::verify_password(&request.old_password, &user.password)? {
+    let key = state
+        .get_key(AuthProvider::Email, &user.email)
+        .await?
+        .ok_or(AppError::InvalidCredentials)?;
+
+    let hashed_password = key.hashed_password.ok_or(AppError::InvalidCredentials)?;
+
+    if !password::verify_password(&request.old_password, &hashed_password)? {
         return Err(AppError::InvalidCredentials);
     }
 
+    let new_hashed_password = password::hash_password(&request.new_password)?;
     state
-        .update_user_password(&user.id, &request.new_password)
+        .update_key_password(AuthProvider::Email, &user.email, new_hashed_password)
         .await?;
 
-    let session = Session::new_random_from(user.id);
     state.delete_all_sessions(user.id).await?;
 
+    let session = Session::new_random_from(user.id);
     state.store_session(&session).await?;
 
     Ok(Json(ChangePasswordResponse {
@@ -212,9 +328,18 @@ mod tests {
     use crate::auth::router::{
         ChangePasswordRequest, LoginRequest, MeResponse, RegisterRequest, RegisterResponse,
     };
-
     fn server(pg_pool: PgPool) -> TestServer {
-        let state = crate::AppState { pg_pool };
+        let google_oauth = crate::auth::oauth::GoogleOAuthClient::new(
+            "test-client-id".to_string(),
+            "test-client-secret".to_string(),
+            "http://localhost:8080/auth/callback".to_string(),
+        )
+        .unwrap();
+
+        let state = crate::AppState {
+            pg_pool,
+            google_oauth,
+        };
         let router = crate::auth::router::router()
             .with_state(state)
             .layer(TraceLayer::new_for_http());

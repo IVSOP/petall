@@ -3,13 +3,19 @@ import type { Actions, PageServerLoad } from './$types';
 import type { LoginRequest, LoginResponse } from '$lib/api/auth';
 import type { ErrorResponse } from '$lib/api';
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	const { user } = locals;
 
 	if (user) {
 		// Already logged in, redirect to home page
 		throw redirect(302, '/');
 	}
+
+	const error = url.searchParams.get('error');
+
+	return {
+		error
+	};
 };
 
 export const actions = {

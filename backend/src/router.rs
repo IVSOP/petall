@@ -227,7 +227,17 @@ mod tests {
     };
 
     fn server(pg_pool: PgPool) -> TestServer {
-        let state = crate::AppState { pg_pool };
+        let google_oauth = crate::auth::oauth::GoogleOAuthClient::new(
+            "test-client-id".to_string(),
+            "test-client-secret".to_string(),
+            "http://localhost:8080/auth/callback".to_string(),
+        )
+        .unwrap();
+
+        let state = crate::AppState { 
+            pg_pool,
+            google_oauth,
+        };
         let router = router(state);
 
         TestServer::new(router).unwrap()
