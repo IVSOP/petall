@@ -20,10 +20,15 @@ export type ChangePasswordResponse = { message: string; sessionId: string };
 export type RevokeResponse = { message: string };
 export type MeResponse = { id: string; email: string; name: string };
 
+// OAuth types
+export type OAuthUrlResponse = {
+	authorizationUrl: string;
+};
+
 export type OAuthCallbackResponse = {
-	uuid: string;
-	name: string;
-	email: string;
 	sessionId: string;
 	isNewUser: boolean;
+	userId: string;
+	email: string;
+	name: string;
 };

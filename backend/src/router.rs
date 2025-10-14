@@ -234,12 +234,9 @@ mod tests {
         )
         .unwrap();
 
-        let frontend_url = "http://localhost:5173".to_string();
-
         let state = crate::AppState { 
             pg_pool,
             google_oauth,
-            frontend_url,
         };
         let router = router(state);
 

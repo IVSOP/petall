@@ -28,15 +28,16 @@
                     <form method="POST">
                         <div class="grid gap-6">
                             <div class="grid gap-2">
-                                <Button
-                                    variant="outline"
-                                    class="w-full"
-                                    type="button"
-                                    onclick={() => window.location.href = 'http://localhost:8080/auth/oauth/google'}
-                                >
-                                    <GoogleIcon />
-                                    Continue with Google
-                                </Button>
+                                <a href="/oauth/google">
+                                    <Button
+                                        variant="outline"
+                                        class="w-full"
+                                        type="button"
+                                    >
+                                        <GoogleIcon />
+                                        Continue with Google
+                                    </Button>
+                                </a>
                             </div>
                             <div class="relative">
                                 <div class="absolute inset-0 flex items-center">

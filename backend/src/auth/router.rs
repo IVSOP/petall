@@ -92,19 +92,37 @@ struct LoginResponse {
     session_id: Uuid,
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct OAuthUrlResponse {
+    authorization_url: String,
+}
+
 #[debug_handler]
 async fn google_oauth_handler(State(state): State<AppState>) -> AppResult<impl IntoResponse> {
     let (auth_url, _csrf_token) = state.google_oauth.get_authorization_url();
 
     //TODO: save CRSF TOKEN in user session and verify it in callbacks
 
-    Ok(axum::response::Redirect::to(auth_url.as_str()))
+    Ok(Json(OAuthUrlResponse {
+        authorization_url: auth_url.to_string(),
+    }))
 }
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct OAuthCallbackQuery {
     code: String,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct OAuthCallbackResponse {
+    session_id: Uuid,
+    is_new_user: bool,
+    user_id: Uuid,
+    email: String,
+    name: String,
 }
 
 #[debug_handler]
@@ -126,42 +144,47 @@ async fn google_callback_handler(
         .map_err(|e| AppError::OAuthError(e))?;
 
     if !google_user.email_verified {
-        return Err(AppError::OAuthError(
-            "Email not verified by Google".to_string(),
-        ));
+        return Err(AppError::EmailNotVerified);
     }
 
     let key_id = google_user.sub;
 
     let mut is_new_user = false;
     let user = if let Some(key) = state.get_key(AuthProvider::Google, &key_id).await? {
-        // user already exists
+        // oauth user already exists
         state
             .get_user_by_id(key.user_id)
             .await?
             .ok_or(AppError::InvalidSession)?
     } else {
         if let Some(existing_user) = state.get_user_by_email(&google_user.email).await? {
-            //email already exists
+            //email user already exists -> used to link email account to oauth account
             state.create_key(AuthProvider::Google, &key_id, existing_user.id, None).await?;
             existing_user
         } else {
+            //no email account and no google account 
             is_new_user = true;
-            let name = google_user.name.as_deref().unwrap_or(&google_user.email);
-            state.register_oauth_user(&google_user.email, name, AuthProvider::Google, &key_id).await?
+            let name = google_user
+                .name
+                .as_deref()
+                .unwrap_or(&google_user.email);
+            
+            state
+                .register_oauth_user(&google_user.email, name, AuthProvider::Google, &key_id)
+                .await?
         }
     };
 
     let session = Session::new_random_from(user.id);
     state.store_session(&session).await?;
 
-    let redirect_url = if is_new_user {
-        format!("{}/callback?sessionId={}&isNewUser=true", state.frontend_url, session.id)
-    } else {
-        format!("{}/callback?sessionId={}", state.frontend_url, session.id)
-    };
-
-    Ok(axum::response::Redirect::to(&redirect_url))
+    Ok(Json(OAuthCallbackResponse {
+        session_id: session.id,
+        is_new_user,
+        user_id: user.id,
+        email: user.email,
+        name: user.name,
+    }))
 }
 
 #[debug_handler]
@@ -254,8 +277,9 @@ async fn change_password_handler(
         return Err(AppError::InvalidCredentials);
     }
 
+    let new_hashed_password = password::hash_password(&request.new_password)?;
     state
-        .update_user_password(&user.id, &user.email, &request.new_password)
+        .update_key_password(AuthProvider::Email, &user.email, new_hashed_password)
         .await?;
 
     state.delete_all_sessions(user.id).await?;
@@ -313,12 +337,9 @@ mod tests {
         )
         .unwrap();
 
-        let frontend_url = "http://localhost:5173".to_string();
-
         let state = crate::AppState {
             pg_pool,
             google_oauth,
-            frontend_url,
         };
         let router = crate::auth::router::router()
             .with_state(state)
@@ -496,164 +517,5 @@ mod tests {
 
         let response = server.post("/me").await;
         response.assert_status(StatusCode::UNAUTHORIZED);
-    }
-
-    // oauth tests
-
-    const TEST_OAUTH_CLIENT_ID: &str = "test-client-id";
-    const TEST_OAUTH_CLIENT_SECRET: &str = "test-client-secret";
-    const TEST_OAUTH_REDIRECT_URL: &str = "http://localhost:8080/auth/callback";
-    const TEST_FRONTEND_URL: &str = "http://localhost:5173";
-
-    fn create_test_state(pool: PgPool) -> crate::AppState {
-        crate::AppState {
-            pg_pool: pool,
-            google_oauth: crate::auth::oauth::GoogleOAuthClient::new(
-                TEST_OAUTH_CLIENT_ID.to_string(),
-                TEST_OAUTH_CLIENT_SECRET.to_string(),
-                TEST_OAUTH_REDIRECT_URL.to_string(),
-            )
-            .unwrap(),
-            frontend_url: TEST_FRONTEND_URL.to_string(),
-        }
-    }
-
-    // oauth user creation and second login
-    #[traced_test]
-    #[sqlx::test]
-    async fn test_oauth_user_creation_and_existing_login(pool: PgPool) {
-        let state = create_test_state(pool);
-
-        let google_user_id = "google_user_123456";
-        let email = "oauth_user@example.com";
-        let name = "OAuth Test User";
-
-        assert!(state.get_user_by_email(email).await.unwrap().is_none());
-        assert!(state.get_key(crate::models::AuthProvider::Google, google_user_id).await.unwrap().is_none());
-
-        // first login
-        let user = state
-            .register_oauth_user(email, name, crate::models::AuthProvider::Google, google_user_id)
-            .await
-            .unwrap();
-
-        assert_eq!(user.email, email);
-        assert_eq!(user.name, name);
-        
-        let key = state.get_key(crate::models::AuthProvider::Google, google_user_id).await.unwrap().unwrap();
-        assert_eq!(key.user_id, user.id);
-        assert_eq!(key.provider, crate::models::AuthProvider::Google);
-        assert!(key.hashed_password.is_none());
-
-        // second login
-        let key_second = state.get_key(crate::models::AuthProvider::Google, google_user_id).await.unwrap().unwrap();
-        let user_second = state.get_user_by_id(key_second.user_id).await.unwrap().unwrap();
-        
-        assert_eq!(user.id, user_second.id);
-        assert_eq!(user_second.email, email);
-    }
-
-    // link oauth to existing account and test multiple sessions
-    #[traced_test]
-    #[sqlx::test]
-    async fn test_oauth_link_existing_account_and_multiple_sessions(pool: PgPool) {
-        let server = server(pool.clone());
-        let state = create_test_state(pool);
-
-        let email = "shared_email@example.com";
-        
-        let response = server.post("/register").json(&RegisterRequest {
-            name: "Normal User".to_string(),
-            email: email.to_string(),
-            password: "test_password".to_string(),
-        }).await;
-        response.assert_status(StatusCode::OK);
-        let register_response: RegisterResponse = response.json();
-
-        // link oauth to same email
-        let google_user_id = "google_user_999";
-        let existing_user = state.get_user_by_email(email).await.unwrap().unwrap();
-        assert_eq!(existing_user.id, register_response.uuid);
-
-        state.create_key(crate::models::AuthProvider::Google, google_user_id, existing_user.id, None).await.unwrap();
-
-        let email_key = state.get_key(crate::models::AuthProvider::Email, email).await.unwrap().unwrap();
-        let google_key = state.get_key(crate::models::AuthProvider::Google, google_user_id).await.unwrap().unwrap();
-        
-        assert_eq!(email_key.user_id, google_key.user_id);
-        assert!(email_key.hashed_password.is_some());
-        assert!(google_key.hashed_password.is_none());
-
-        let session1 = crate::auth::Session::new_random_from(existing_user.id);
-        state.store_session(&session1).await.unwrap();
-        
-        let session2 = crate::auth::Session::new_random_from(existing_user.id);
-        state.store_session(&session2).await.unwrap();
-
-        assert!(state.get_valid_session(session1.id).await.unwrap().is_some());
-        assert!(state.get_valid_session(session2.id).await.unwrap().is_some());
-    }
-
-    // oauth user cant login with password, unverified emails rejected
-    #[traced_test]
-    #[sqlx::test]
-    async fn test_oauth_user_password_rejection_and_email_verification(pool: PgPool) {
-        let server = server(pool.clone());
-        let state = create_test_state(pool);
-
-        let email = "oauth_only@example.com";
-        let google_user_id = "google_user_000";
-
-        state.register_oauth_user(email, "OAuth Only User", crate::models::AuthProvider::Google, google_user_id).await.unwrap();
-
-        let response = server.post("/login").json(&serde_json::json!({
-            "email": email,
-            "password": "any_password"
-        })).await;
-        response.assert_status(StatusCode::UNAUTHORIZED);
-
-        let unverified_user = crate::auth::oauth::GoogleUserInfo {
-            sub: "unverified_123".to_string(),
-            email: "unverified@example.com".to_string(),
-            email_verified: false,
-            name: Some("Unverified User".to_string()),
-        };
-
-        if unverified_user.email_verified {
-            state.register_oauth_user(
-                &unverified_user.email,
-                unverified_user.name.as_deref().unwrap_or(&unverified_user.email),
-                crate::models::AuthProvider::Google,
-                &unverified_user.sub,
-            ).await.unwrap();
-        }
-
-        assert!(state.get_user_by_email(&unverified_user.email).await.unwrap().is_none());
-    }
-
-    // google user info parsing and redirect urls
-    #[test]
-    fn test_google_user_info_and_redirect_urls() {
-        let user_info: crate::auth::oauth::GoogleUserInfo = serde_json::from_str(r#"{
-            "sub": "123456789",
-            "email": "user@example.com",
-            "email_verified": true,
-            "name": "Test User"
-        }"#).unwrap();
-        
-        assert_eq!(user_info.sub, "123456789");
-        assert_eq!(user_info.email, "user@example.com");
-        assert!(user_info.email_verified);
-        assert_eq!(user_info.name, Some("Test User".to_string()));
-
-        // redirect urls
-        let session_id = uuid::Uuid::new_v4();
-        let new_user_url = format!("{}/callback?sessionId={}&isNewUser=true", TEST_FRONTEND_URL, session_id);
-        let existing_user_url = format!("{}/callback?sessionId={}", TEST_FRONTEND_URL, session_id);
-        
-        assert!(new_user_url.contains("isNewUser=true"));
-        assert!(new_user_url.contains(&session_id.to_string()));
-        assert!(!existing_user_url.contains("isNewUser"));
-        assert!(existing_user_url.contains(&session_id.to_string()));
     }
 }

@@ -84,18 +84,6 @@ impl AppState {
         Ok(user)
     }
 
-    // when user changes password
-    pub async fn update_user_password(
-        &self,
-        _user_id: &Uuid,
-        email: &str,
-        new_password: &str,
-    ) -> AppResult<()> {
-        let hashed_password = auth::password::hash_password(new_password)?;
-
-        self.update_key_password(AuthProvider::Email, email, hashed_password).await
-    }
-
     pub async fn get_user_communities(&self, user: &Uuid) -> sqlx::Result<Vec<UserCommunity>> {
         sqlx::query_as!(
             UserCommunity,
