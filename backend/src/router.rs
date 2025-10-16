@@ -175,8 +175,16 @@ pub struct StatsFilter {
 #[serde(rename_all = "camelCase")]
 pub struct EnergyStats {
     pub period_start: NaiveDateTime,
+
     #[serde(with = "bigdecimal::serde::json_num")]
     pub generated_sum: BigDecimal,
+    #[serde(with = "bigdecimal::serde::json_num")]
+    pub consumed_sum: BigDecimal,
+
+    #[serde(with = "bigdecimal::serde::json_num")]
+    pub generated_price: BigDecimal,
+    #[serde(with = "bigdecimal::serde::json_num")]
+    pub consumed_price: BigDecimal,
 }
 
 #[debug_handler]

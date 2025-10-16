@@ -291,8 +291,6 @@ impl AppState {
         })
     }
 
-    // FIX: isto nao esta a retornar absolutamente nada, wtf???
-    // acho que se puser os logs em debug ele me mostra a string da query
     /*
     SELECT DATE_TRUNC(week, start) AS period_start, SUM(generated) AS generated_sum 
     FROM energy_record
@@ -320,35 +318,29 @@ impl AppState {
         if let Some(unit) = date_trunc_unit {
             query_builder.push("DATE_TRUNC(");
             query_builder.push_bind(unit);
-            // info!("$1 is {}", unit);
             query_builder.push(", start) AS period_start, ");
         } else {
             query_builder.push("MIN(start) AS period_start, ");
         }
 
-        query_builder.push("SUM(generated) AS generated_sum ");
+        query_builder.push(
+            "SUM(generated) AS generated_sum, \
+            SUM(consumed) AS consumed_sum, \
+            SUM(generated * seller_price) AS generated_price, \
+            SUM(consumed * consumer_price) AS consumed_price "
+        );
         query_builder.push("FROM energy_record WHERE user_id = ");
         query_builder.push_bind(user_id);
-        // info!("$2 is {}", user_id);
         query_builder.push(" AND community_id = ");
         query_builder.push_bind(community_id);
-        // info!("$3 is {}", community_id);
         query_builder.push(" AND start >= ");
         query_builder.push_bind(filter.start);
-        // info!("$4 is {}", filter.start);
         query_builder.push(" AND start <= ");
         query_builder.push_bind(filter.end);
-        // info!("$5 is {}", filter.end);
 
         if date_trunc_unit.is_some() {
             query_builder.push(" GROUP BY period_start ORDER BY period_start ASC");
         }
-
-        // let sql = query_builder
-        //     .build_query_as::<EnergyStats>()
-        //     .sql();
-
-        // info!("Executing query: {}", sql);
 
         let results = query_builder
             .build_query_as::<EnergyStats>()
@@ -356,6 +348,5 @@ impl AppState {
             .await?;
 
         Ok(results)
-        // Ok(vec![])
     }
 }

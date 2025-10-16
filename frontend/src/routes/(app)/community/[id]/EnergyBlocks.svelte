@@ -24,11 +24,12 @@
     let { statsAll = {} } = $props();
 
     let total_price = $derived.by(() => {
-        return statsAll.generatedSum;
+        return statsAll.generatedPrice - statsAll.consumedPrice;
     })
 
     $effect(() => {
         console.log(`total_price ${total_price} and has type ${typeof total_price}`);
+        console.log(`statsAll is ${JSON.stringify(statsAll)}`);
     })
 
 	//   $effect(() => {
@@ -44,8 +45,7 @@
 		<Card.Header>
 			<Card.Description>Total Balance</Card.Description>
 			<Card.Title class="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-				<!-- €{total_price.toFixed(2)} -->
-				€{total_price}
+				€{total_price.toFixed(2)}
 			</Card.Title>
 			<Card.Action>
 				<Badge variant="outline">
