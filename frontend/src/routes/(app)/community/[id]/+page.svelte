@@ -9,6 +9,7 @@
 
 	let paginatedEnergyRecords = $state(data.energyRecords);
     let stats_all = $state<EnergyStats | undefined>(undefined);
+    let stats_last_60 = $state<EnergyStats[] | undefined>(undefined);
 	let pageIndex = $state(1);
 	let pageSize = $state(10);
 
@@ -51,7 +52,7 @@
 
         if (response.ok) {
             const response_json = await response.json();
-            console.log(response_json);
+            // console.log(response_json);
             return response_json;
         }
     }
@@ -61,9 +62,16 @@
 	});
 
     $effect(() => {
-		getStats(new Date(0), new Date(), "all").then((result) => {
+        const today = new Date();
+		getStats(new Date(0), today, "all").then((result) => {
 			stats_all = result[0];
 		});
+        let date_60_days_ago = new Date();
+        date_60_days_ago.setDate(today.getDate() - 60);
+        getStats(date_60_days_ago, today, "daily").then((result) => {
+			stats_last_60 = result;
+		});
+
 	});
 </script>
 
@@ -76,7 +84,7 @@
 		<div class="@container/main flex flex-1 flex-col gap-2">
 			<div class="flex flex-col gap-6">
 				<!-- <EnergyBlocks energyRecords={paginatedEnergyRecords.records} /> -->
-                <EnergyBlocks statsAll={stats_all} />
+                <EnergyBlocks statsLast60={stats_last_60} />
 				<ChartAreaInteractive />
 				<DataTable data={paginatedEnergyRecords} bind:pageIndex bind:pageSize />
 			</div>

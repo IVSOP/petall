@@ -91,8 +91,8 @@ impl AppState {
         let energy_max = BigDecimal::from(5000);
         let energy_range = energy_min..energy_max;
 
-        let price_min = BigDecimal::from_f64(0.1).unwrap();
-        let price_max = BigDecimal::from(20);
+        let price_min = BigDecimal::from_f64(0.0001).unwrap();
+        let price_max = BigDecimal::from_f64(0.0002).unwrap();
         let price_range = price_min..price_max;
 
         // enery records are 3.5 months into the past
@@ -291,12 +291,15 @@ impl AppState {
         })
     }
 
+
+    // NOTE: if you ask for monthly between the second to last day of september and the second of october,
+    // there will be 2 entries, one for each month, but the summed values will only be those of registries contained between the provided start and end
     /*
     SELECT DATE_TRUNC(week, start) AS period_start, SUM(generated) AS generated_sum 
     FROM energy_record
     WHERE user_id = a4567ef9-0a28-4692-a3dc-59a201d54ee0 AND community_id = 53d11c36-bd41-4eeb-9088-6efffd16a96f AND start >= 2025-10-10 19:59:44 AND start <= 2025-07-10 19:59:44
     GROUP BY period_start
-    ORDER BY period_start ASC
+    ORDER BY period_start DESC
     */
     pub async fn get_energy_records_stats(
         &self,
@@ -339,7 +342,7 @@ impl AppState {
         query_builder.push_bind(filter.end);
 
         if date_trunc_unit.is_some() {
-            query_builder.push(" GROUP BY period_start ORDER BY period_start ASC");
+            query_builder.push(" GROUP BY period_start ORDER BY period_start DESC");
         }
 
         let results = query_builder
