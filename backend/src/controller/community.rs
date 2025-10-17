@@ -87,10 +87,15 @@ impl AppState {
         tx.commit().await?;
 
         ///////////////////////////////////////////////////////////////
-        let energy_min = BigDecimal::from_f64(0.1).unwrap();
-        let energy_max = BigDecimal::from(5000);
+        // 7.5kWh por dia
+        // 96 intervalos de 15 mins num dia
+        // ou seja 7.5 / 96 = 0.078125kWh a cada 15 mins
+        // * 1000 = 78.125Wh a cada 15 mins
+        let energy_min = BigDecimal::from(50);
+        let energy_max = BigDecimal::from(100);
         let energy_range = energy_min..energy_max;
 
+        // 0.24 eur por kWh = 0.00024 eur por Wh
         let price_min = BigDecimal::from_f64(0.0001).unwrap();
         let price_max = BigDecimal::from_f64(0.0002).unwrap();
         let price_range = price_min..price_max;

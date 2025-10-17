@@ -6,22 +6,15 @@
 	import TrendingUp from '@lucide/svelte/icons/trending-up';
     import type { EnergyStats } from '$lib';
 
-	// let { energyRecords: energyTransfers = [] }: { energyRecords?: EnergyRecord[] } = $props();
-
-	// let prices = $derived(
-	// 	energyTransfers.map((transfer) => {
-	// 		let price_consumed = (transfer.consumed || 0) * (transfer.consumerPrice || 0);
-	// 		let price_generated = (transfer.generated || 0) * (transfer.sellerPrice || 0);
-	// 		return price_generated - price_consumed;
-	// 	})
-	// );
-
     interface $$Props {
         statsLast60: EnergyStats[];
         // Add other props here
     }
 
     let { statsLast60 = {} } = $props();
+
+
+    //////////////////////// eu sei que isto está cagado, foi só para ser rápido até saber o que ia ficar melhor. depois arranjos
 
     // [0] is the most recent date, so [i] is i days ago. get [0] to [30]
     let price_last_30 = $derived.by(() => {
@@ -61,6 +54,42 @@
     })
     let delta_last_60_to_last_30_percent = $derived.by(() => {
         return ((delta_last_30 - delta_last_60_to_last_30) / Math.abs(delta_last_60_to_last_30)) * 100
+    })
+
+    let generated_last_30 = $derived.by(() => {
+        let total = 0;
+        for (let i = 0; i < statsLast60.length && i < 30; i++) {
+            total += statsLast60[i].generatedSum;
+        }
+        return total;
+    })
+    let generated_last_60_to_last_30 = $derived.by(() => {
+        let total = 0;
+        for (let i = 30; i < statsLast60.length && i < 60; i++) {
+            total += statsLast60[i].generatedSum;
+        }
+        return total;
+    })
+    let generated_last_60_to_last_30_percent = $derived.by(() => {
+        return ((generated_last_30 - generated_last_60_to_last_30) / Math.abs(generated_last_60_to_last_30)) * 100
+    })
+
+    let consumed_last_30 = $derived.by(() => {
+        let total = 0;
+        for (let i = 0; i < statsLast60.length && i < 30; i++) {
+            total += statsLast60[i].consumedSum;
+        }
+        return total;
+    })
+    let consumed_last_60_to_last_30 = $derived.by(() => {
+        let total = 0;
+        for (let i = 30; i < statsLast60.length && i < 60; i++) {
+            total += statsLast60[i].consumedSum;
+        }
+        return total;
+    })
+    let consumed_last_60_to_last_30_percent = $derived.by(() => {
+        return ((consumed_last_30 - consumed_last_60_to_last_30) / Math.abs(consumed_last_60_to_last_30)) * 100
     })
 
     $effect(() => {
@@ -124,7 +153,7 @@
 		<Card.Header>
 			<Card.Description>Last 30 days energy balance</Card.Description>
 			<Card.Title class="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-				{delta_last_30.toFixed(2)}kWh
+				{(delta_last_30 / 1000).toFixed(2)}kWh
 			</Card.Title>
 
 			<Card.Action>
@@ -162,44 +191,78 @@
 	</Card.Root>
 
     <Card.Root class="@container/card">
-		<Card.Header>
-			<Card.Description>Active Accounts</Card.Description>
-			<Card.Title class="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-				45,678
-			</Card.Title>
-			<Card.Action>
-				<Badge variant="outline">
-					<TrendingUp />
-					+12.5%
-				</Badge>
-			</Card.Action>
-		</Card.Header>
-		<Card.Footer class="flex-col items-start gap-1.5 text-sm">
-			<div class="line-clamp-1 flex gap-2 font-medium">
-				Strong user retention <TrendingUp class="size-4" />
-			</div>
-			<div class="text-muted-foreground">Engagement exceed targets</div>
-		</Card.Footer>
-	</Card.Root>
+        <Card.Header>
+            <Card.Description>Last 30 days energy generated</Card.Description>
+            <Card.Title class="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                {(generated_last_30 / 1000).toFixed(2)}kWh
+            </Card.Title>
 
-	<Card.Root class="@container/card">
-		<Card.Header>
-			<Card.Description>Growth Rate</Card.Description>
-			<Card.Title class="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-				4.5%
-			</Card.Title>
-			<Card.Action>
-				<Badge variant="outline">
-					<TrendingUp />
-					+4.5%
-				</Badge>
-			</Card.Action>
-		</Card.Header>
-		<Card.Footer class="flex-col items-start gap-1.5 text-sm">
-			<div class="line-clamp-1 flex gap-2 font-medium">
-				Steady performance increase <TrendingUp class="size-4" />
-			</div>
-			<div class="text-muted-foreground">Meets growth projections</div>
-		</Card.Footer>
-	</Card.Root>
+            <Card.Action>
+                <Badge
+                    variant='outline'
+                    class="flex items-center gap-1"
+                >
+                    {#if generated_last_60_to_last_30_percent >= 0}
+                        <TrendingUp class="size-4 text-green-500" />
+                        +{generated_last_60_to_last_30_percent.toFixed(1)}%
+                    {:else}
+                        <TrendingDown class="size-4 text-red-500" />
+                        {generated_last_60_to_last_30_percent.toFixed(1)}%
+                    {/if}
+                </Badge>
+            </Card.Action>
+        </Card.Header>
+
+        <Card.Footer class="flex-col items-start gap-1.5 text-sm">
+            {#if generated_last_60_to_last_30_percent >= 0}
+                <div class="line-clamp-1 flex gap-2 font-medium">
+                    Trending up this month <TrendingUp class="size-4 text-green-500" />
+                </div>
+                <div class="text-muted-foreground">Performance improved</div>
+            {:else}
+                <div class="line-clamp-1 flex gap-2 font-medium">
+                    Trending down this month <TrendingDown class="size-4 text-red-500" />
+                </div>
+                <div class="text-muted-foreground">Performance decreased</div>
+            {/if}
+        </Card.Footer>
+    </Card.Root>
+
+    <Card.Root class="@container/card">
+        <Card.Header>
+            <Card.Description>Last 30 days energy consumed</Card.Description>
+            <Card.Title class="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                {(consumed_last_30 / 1000).toFixed(2)}kWh
+            </Card.Title>
+
+            <Card.Action>
+                <Badge
+                    variant='outline'
+                    class="flex items-center gap-1"
+                >
+                    {#if consumed_last_60_to_last_30_percent >= 0}
+                        <TrendingUp class="size-4 text-red-500" />
+                        +{consumed_last_60_to_last_30_percent.toFixed(1)}%
+                    {:else}
+                        <TrendingDown class="size-4 text-green-500" />
+                        {consumed_last_60_to_last_30_percent.toFixed(1)}%
+                    {/if}
+                </Badge>
+            </Card.Action>
+        </Card.Header>
+
+        <Card.Footer class="flex-col items-start gap-1.5 text-sm">
+            {#if consumed_last_60_to_last_30_percent >= 0}
+                <div class="line-clamp-1 flex gap-2 font-medium">
+                    Trending up this month <TrendingUp class="size-4 text-red-500" />
+                </div>
+                <div class="text-muted-foreground">Performance decreased</div>
+            {:else}
+                <div class="line-clamp-1 flex gap-2 font-medium">
+                    Trending down this month <TrendingDown class="size-4 text-green-500" />
+                </div>
+                <div class="text-muted-foreground">Performance improved</div>
+            {/if}
+        </Card.Footer>
+    </Card.Root>
 </div>
