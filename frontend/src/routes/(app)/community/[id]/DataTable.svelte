@@ -91,7 +91,7 @@
 
 	$effect(() => {
 		if (pageIndex > totalPages) {
-			pageIndex = totalPages
+			pageIndex = totalPages;
 		}
 	});
 
@@ -157,7 +157,7 @@
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger>
 					{#snippet child({ props })}
-						<Button variant="outline" size="sm" class="cursor-pointer" {...props} >
+						<Button variant="outline" size="sm" class="cursor-pointer" {...props}>
 							<LayoutColumnsIcon />
 							<span class="hidden lg:inline">Customize Columns</span>
 							<span class="lg:hidden">Columns</span>
@@ -170,7 +170,7 @@
 						.getAllColumns()
 						.filter((col) => typeof col.accessorFn !== 'undefined' && col.getCanHide()) as column (column.id)}
 						<DropdownMenu.CheckboxItem
-							class="capitalize cursor-pointer"
+							class="cursor-pointer capitalize"
 							checked={column.getIsVisible()}
 							onCheckedChange={(value) => column.toggleVisibility(!!value)}
 						>
@@ -207,9 +207,7 @@
 						{/each}
 					{:else}
 						<Table.Row>
-							<Table.Cell colspan={columns.length} class="h-24 text-center">
-								No results.
-							</Table.Cell>
+							<Table.Cell colspan={columns.length} class="h-24 text-center">No results.</Table.Cell>
 						</Table.Row>
 					{/if}
 				</Table.Body>
@@ -242,7 +240,7 @@
 				<div class="ml-auto flex items-center gap-2 lg:ml-0">
 					<Button
 						variant="outline"
-						class="hidden h-8 w-8 p-0 lg:flex cursor-pointer"
+						class="hidden h-8 w-8 cursor-pointer p-0 lg:flex"
 						onclick={() => (pageIndex = 1)}
 						disabled={pageIndex === 1}
 					>
@@ -271,7 +269,7 @@
 					</Button>
 					<Button
 						variant="outline"
-						class="hidden size-8 lg:flex cursor-pointer"
+						class="hidden size-8 cursor-pointer lg:flex"
 						size="icon"
 						onclick={() => (pageIndex = totalPages)}
 						disabled={pageIndex >= totalPages}
@@ -359,10 +357,12 @@
 
 {#snippet DataTableActions()}
 	<DropdownMenu.Root>
-		<DropdownMenu.Trigger class="flex size-8 text-muted-foreground data-[state=open]:bg-muted cursor-pointer">
+		<DropdownMenu.Trigger
+			class="flex size-8 cursor-pointer text-muted-foreground data-[state=open]:bg-muted"
+		>
 			{#snippet child({ props })}
 				<Button variant="ghost" size="icon" {...props}>
-					<DotsVerticalIcon/>
+					<DotsVerticalIcon />
 					<span class="sr-only">Open menu</span>
 				</Button>
 			{/snippet}

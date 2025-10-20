@@ -15,23 +15,23 @@ export const load: PageServerLoad = async ({ url, cookies, fetch }) => {
 		throw redirect(303, '/login?error=missing_code');
 	}
 
-    const response = await fetch(`/api/auth/callback?code=${encodeURIComponent(code)}`);
-    
-    if (!response.ok) {
-        const errorData: ErrorResponse = await response.json();
-        throw redirect(303, `/login?error=${encodeURIComponent(errorData.error)}`);
-    }
-    
-    const data: OAuthCallbackResponse = await response.json();
-    
-    cookies.set('sessionId', data.sessionId, {
-        path: '/',
-        httpOnly: true,
-    });
+	const response = await fetch(`/api/auth/callback?code=${encodeURIComponent(code)}`);
 
-    if (data.isNewUser) {
-        throw redirect(303, '/'); // TODO: add welcome page?
-    } else {
-        throw redirect(303, '/');
-    }
+	if (!response.ok) {
+		const errorData: ErrorResponse = await response.json();
+		throw redirect(303, `/login?error=${encodeURIComponent(errorData.error)}`);
+	}
+
+	const data: OAuthCallbackResponse = await response.json();
+
+	cookies.set('sessionId', data.sessionId, {
+		path: '/',
+		httpOnly: true
+	});
+
+	if (data.isNewUser) {
+		throw redirect(303, '/'); // TODO: add welcome page?
+	} else {
+		throw redirect(303, '/');
+	}
 };

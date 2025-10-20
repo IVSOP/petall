@@ -28,8 +28,8 @@ export const load: PageServerLoad = async ({ fetch, params, cookies }) => {
 		headers: {
 			Authorization: sessionId,
 			'Content-Type': 'application/json'
-		},
-	})
+		}
+	});
 
 	if (energyResponse.status == 401 || communityResponse.status == 401) {
 		redirect(302, '/login');

@@ -2,19 +2,19 @@
 	import ChartAreaInteractive from './ChartAreaInteractive.svelte';
 	import DataTable from './DataTable.svelte';
 	import EnergyBlocks from './EnergyBlocks.svelte';
-    import { format } from 'date-fns';
+	import { format } from 'date-fns';
 	import type { EnergyStats } from '$lib';
 
 	const { data } = $props();
 
 	let paginatedEnergyRecords = $state(data.energyRecords);
-    let stats_all = $state<EnergyStats | undefined>(undefined);
-    let stats_last_60 = $state<EnergyStats[] | undefined>(undefined);
+	let stats_all = $state<EnergyStats | undefined>(undefined);
+	let stats_last_60 = $state<EnergyStats[] | undefined>(undefined);
 	let pageIndex = $state(1);
 	let pageSize = $state(10);
 
 	async function loadEnergyRecords(page: number, size: number) {
-		const response = await fetch(`/api/community/${data.communityId}/energy`, {
+		const response = await fetch(`/api/community/${data.community.id}/energy`, {
 			method: 'POST',
 			headers: {
 				Authorization: data.sessionId,
@@ -36,42 +36,41 @@
 		}
 	}
 
-    async function getStats(start: Date, end: Date, granularity: String) {
-        const response = await fetch(`/api/community/${data.communityId}/stats`, {
-            method: 'POST',
-            headers: {
+	async function getStats(start: Date, end: Date, granularity: String) {
+		const response = await fetch(`/api/community/${data.community.id}/stats`, {
+			method: 'POST',
+			headers: {
 				Authorization: data.sessionId,
 				'Content-Type': 'application/json'
 			},
-            body: JSON.stringify({
-                start: format(start, "yyyy-MM-dd'T'HH:mm:ss"),
-                end: format(end, "yyyy-MM-dd'T'HH:mm:ss"),
+			body: JSON.stringify({
+				start: format(start, "yyyy-MM-dd'T'HH:mm:ss"),
+				end: format(end, "yyyy-MM-dd'T'HH:mm:ss"),
 				granularity
 			})
-        });
+		});
 
-        if (response.ok) {
-            const response_json = await response.json();
-            // console.log(response_json);
-            return response_json;
-        }
-    }
+		if (response.ok) {
+			const response_json = await response.json();
+			// console.log(response_json);
+			return response_json;
+		}
+	}
 
 	$effect(() => {
 		loadEnergyRecords(pageIndex, pageSize);
 	});
 
-    $effect(() => {
-        const today = new Date();
-		getStats(new Date(0), today, "all").then((result) => {
+	$effect(() => {
+		const today = new Date();
+		getStats(new Date(0), today, 'all').then((result) => {
 			stats_all = result[0];
 		});
-        let date_60_days_ago = new Date();
-        date_60_days_ago.setDate(today.getDate() - 60);
-        getStats(date_60_days_ago, today, "daily").then((result) => {
+		let date_60_days_ago = new Date();
+		date_60_days_ago.setDate(today.getDate() - 60);
+		getStats(date_60_days_ago, today, 'daily').then((result) => {
 			stats_last_60 = result;
 		});
-
 	});
 </script>
 
@@ -84,7 +83,7 @@
 		<div class="@container/main flex flex-1 flex-col gap-2">
 			<div class="flex flex-col gap-6">
 				<!-- <EnergyBlocks energyRecords={paginatedEnergyRecords.records} /> -->
-                <EnergyBlocks statsLast60={stats_last_60} />
+				<EnergyBlocks statsLast60={stats_last_60} />
 				<ChartAreaInteractive />
 				<DataTable data={paginatedEnergyRecords} bind:pageIndex bind:pageSize />
 			</div>
