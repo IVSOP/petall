@@ -1,5 +1,4 @@
 <script lang="ts">
-	import ProfileDialog from './ProfileDialog.svelte';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 
@@ -16,7 +15,6 @@
 		<DropdownMenu.Group>
 			<DropdownMenu.Label>{name}</DropdownMenu.Label>
 			<DropdownMenu.Separator />
-			<ProfileDialog />
 			<DropdownMenu.Item>
 				<a href="/logout" class="w-full">Logout</a>
 			</DropdownMenu.Item>

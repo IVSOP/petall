@@ -3,14 +3,11 @@
 		getCoreRowModel,
 		getFacetedRowModel,
 		getFacetedUniqueValues,
-		getPaginationRowModel,
 		type ColumnDef,
-		type PaginationState,
 		type Row,
 		type VisibilityState
 	} from '@tanstack/table-core';
 	import type { Schema } from './schemas.js';
-	import { RestrictToVerticalAxis } from '@dnd-kit/abstract/modifiers';
 	import { createSvelteTable } from '$lib/components/ui/data-table/data-table.svelte.js';
 	import * as Tabs from '$lib/components/ui/tabs/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
@@ -27,8 +24,6 @@
 	import ChevronLeftIcon from '@tabler/icons-svelte/icons/chevron-left';
 	import ChevronRightIcon from '@tabler/icons-svelte/icons/chevron-right';
 	import ChevronsRightIcon from '@tabler/icons-svelte/icons/chevrons-right';
-	import { DragDropProvider } from '@dnd-kit-svelte/svelte';
-	import { move } from '@dnd-kit/helpers';
 	import type { PaginatedEnergyRecords } from '$lib/api/community.js';
 
 	const columns: ColumnDef<Schema>[] = [
@@ -162,7 +157,7 @@
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger>
 					{#snippet child({ props })}
-						<Button variant="outline" size="sm" {...props}>
+						<Button variant="outline" size="sm" class="cursor-pointer" {...props} >
 							<LayoutColumnsIcon />
 							<span class="hidden lg:inline">Customize Columns</span>
 							<span class="lg:hidden">Columns</span>
@@ -175,7 +170,7 @@
 						.getAllColumns()
 						.filter((col) => typeof col.accessorFn !== 'undefined' && col.getCanHide()) as column (column.id)}
 						<DropdownMenu.CheckboxItem
-							class="capitalize"
+							class="capitalize cursor-pointer"
 							checked={column.getIsVisible()}
 							onCheckedChange={(value) => column.toggleVisibility(!!value)}
 						>
@@ -188,45 +183,37 @@
 	</div>
 	<Tabs.Content value="detailed information" class="relative flex flex-col gap-4 overflow-auto">
 		<div class="overflow-hidden rounded-lg border">
-			<DragDropProvider
-				modifiers={[
-					// @ts-expect-error @dnd-kit/abstract types are botched atm
-					RestrictToVerticalAxis
-				]}
-				onDragEnd={(e) => (data.records = move(data.records, e))}
-			>
-				<Table.Root>
-					<Table.Header class="sticky top-0 z-10 bg-muted">
-						{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
-							<Table.Row>
-								{#each headerGroup.headers as header (header.id)}
-									<Table.Head colspan={header.colSpan}>
-										{#if !header.isPlaceholder}
-											<FlexRender
-												content={header.column.columnDef.header}
-												context={header.getContext()}
-											/>
-										{/if}
-									</Table.Head>
-								{/each}
-							</Table.Row>
-						{/each}
-					</Table.Header>
-					<Table.Body class="**:data-[slot=table-cell]:first:w-8">
-						{#if table.getRowModel().rows?.length}
-							{#each table.getRowModel().rows as row (row.id)}
-								{@render TableRow({ row })}
+			<Table.Root>
+				<Table.Header class="sticky top-0 z-10 bg-muted">
+					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
+						<Table.Row>
+							{#each headerGroup.headers as header (header.id)}
+								<Table.Head colspan={header.colSpan}>
+									{#if !header.isPlaceholder}
+										<FlexRender
+											content={header.column.columnDef.header}
+											context={header.getContext()}
+										/>
+									{/if}
+								</Table.Head>
 							{/each}
-						{:else}
-							<Table.Row>
-								<Table.Cell colspan={columns.length} class="h-24 text-center">
-									No results.
-								</Table.Cell>
-							</Table.Row>
-						{/if}
-					</Table.Body>
-				</Table.Root>
-			</DragDropProvider>
+						</Table.Row>
+					{/each}
+				</Table.Header>
+				<Table.Body class="**:data-[slot=table-cell]:first:w-8">
+					{#if table.getRowModel().rows?.length}
+						{#each table.getRowModel().rows as row (row.id)}
+							{@render TableRow({ row })}
+						{/each}
+					{:else}
+						<Table.Row>
+							<Table.Cell colspan={columns.length} class="h-24 text-center">
+								No results.
+							</Table.Cell>
+						</Table.Row>
+					{/if}
+				</Table.Body>
+			</Table.Root>
 		</div>
 		<div class="flex items-center justify-end">
 			<div class="flex w-full items-center gap-8 lg:w-fit">
@@ -236,12 +223,12 @@
 						type="single"
 						bind:value={() => `${pageSize}`, (v) => (pageSize = Number(v))}
 					>
-						<Select.Trigger size="sm" class="w-20" id="rows-per-page">
+						<Select.Trigger size="sm" class="w-20 cursor-pointer" id="rows-per-page">
 							{pageSize}
 						</Select.Trigger>
 						<Select.Content side="top">
 							{#each [10, 20, 30, 40, 50] as pageSize (pageSize)}
-								<Select.Item value={pageSize.toString()}>
+								<Select.Item value={pageSize.toString()} class="cursor-pointer">
 									{pageSize}
 								</Select.Item>
 							{/each}
@@ -255,7 +242,7 @@
 				<div class="ml-auto flex items-center gap-2 lg:ml-0">
 					<Button
 						variant="outline"
-						class="hidden h-8 w-8 p-0 lg:flex"
+						class="hidden h-8 w-8 p-0 lg:flex cursor-pointer"
 						onclick={() => (pageIndex = 1)}
 						disabled={pageIndex === 1}
 					>
@@ -264,7 +251,7 @@
 					</Button>
 					<Button
 						variant="outline"
-						class="size-8"
+						class="size-8 cursor-pointer"
 						size="icon"
 						onclick={() => pageIndex--}
 						disabled={pageIndex === 1}
@@ -274,7 +261,7 @@
 					</Button>
 					<Button
 						variant="outline"
-						class="size-8"
+						class="size-8 cursor-pointer"
 						size="icon"
 						onclick={() => pageIndex++}
 						disabled={pageIndex >= totalPages}
@@ -284,7 +271,7 @@
 					</Button>
 					<Button
 						variant="outline"
-						class="hidden size-8 lg:flex"
+						class="hidden size-8 lg:flex cursor-pointer"
 						size="icon"
 						onclick={() => (pageIndex = totalPages)}
 						disabled={pageIndex >= totalPages}
@@ -341,7 +328,7 @@
 			? 'bg-red-200 text-red-800'
 			: 'bg-green-200 text-green-800 '}"
 	>
-		{(row.original.generated - row.original.consumed).toFixed(2)}
+		{(row.original.generated - row.original.consumed).toFixed(4)}
 	</div>
 {/snippet}
 
@@ -356,7 +343,7 @@
 		{(
 			row.original.generated * row.original.sellerPrice -
 			row.original.consumed * row.original.consumerPrice
-		).toFixed(2)}
+		).toFixed(4)}
 	</div>
 {/snippet}
 
@@ -372,16 +359,16 @@
 
 {#snippet DataTableActions()}
 	<DropdownMenu.Root>
-		<DropdownMenu.Trigger class="flex size-8 text-muted-foreground data-[state=open]:bg-muted">
+		<DropdownMenu.Trigger class="flex size-8 text-muted-foreground data-[state=open]:bg-muted cursor-pointer">
 			{#snippet child({ props })}
 				<Button variant="ghost" size="icon" {...props}>
-					<DotsVerticalIcon />
+					<DotsVerticalIcon/>
 					<span class="sr-only">Open menu</span>
 				</Button>
 			{/snippet}
 		</DropdownMenu.Trigger>
 		<DropdownMenu.Content align="end" class="w-32">
-			<DropdownMenu.Item>Validate</DropdownMenu.Item>
+			<DropdownMenu.Item class="cursor-pointer">Validate</DropdownMenu.Item>
 		</DropdownMenu.Content>
 	</DropdownMenu.Root>
 {/snippet}
