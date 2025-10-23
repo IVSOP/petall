@@ -1,7 +1,8 @@
 use std::ops::Range;
 
 use bigdecimal::{BigDecimal, FromPrimitive};
-use chrono::{Duration, NaiveDateTime};
+use chrono::{Duration, NaiveDateTime, Timelike};
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -31,50 +32,58 @@ pub struct EnergyRecord {
     pub start: NaiveDateTime,
 }
 
-// FIX: meter isto noutro sitio
-pub fn rand_big_decimal_range(range: &Range<BigDecimal>) -> BigDecimal {
-    let start = &range.start;
-    let end = &range.end;
-
-    let t = fastrand::f64();
-    let t_big =
-        BigDecimal::from_f64(t).expect("Could not convert random normalized f64 to big int");
-    let interval_size = end - start.clone();
-
-    start + (t_big * interval_size)
+pub fn rng_big_decimal_range(range: &Range<BigDecimal>) -> BigDecimal {
+    let mut rng = rand::thread_rng();
+    let diff = &range.end - &range.start;
+    let factor: f64 = rng.gen_range(0.0..1.0);
+    let factor_bd = BigDecimal::from_f64(factor).expect("NaN return in factor");
+    &range.start + factor_bd * diff
 }
 
 impl EnergyRecord {
-    // TODO: use RangeBounds instead
+    pub fn random(user_id: Uuid, community_id: Uuid, start: NaiveDateTime) -> Self {
+        let energy_range = BigDecimal::from(50)..BigDecimal::from(100);
+
+        let price_min = BigDecimal::from(1) / BigDecimal::from(10000);
+        let price_max = BigDecimal::from(2) / BigDecimal::from(10000);
+        let price_range = price_min..price_max;
+
+        let generated = rng_big_decimal_range(&energy_range);
+        let consumed = rng_big_decimal_range(&energy_range);
+        let consumer_price = rng_big_decimal_range(&price_range);
+        let seller_price = rng_big_decimal_range(&price_range);
+
+        EnergyRecord {
+            id: Uuid::new_v4(),
+            user_id,
+            community_id,
+            generated,
+            consumed,
+            consumer_price,
+            seller_price,
+            start,
+        }
+    }
+
     pub fn random_vec(
-        user_id: &Uuid,
-        community_id: &Uuid,
-        date_range: Range<NaiveDateTime>,
-        energy_range: Range<BigDecimal>,
-        price_range: Range<BigDecimal>,
+        user_id: Uuid,
+        community_id: Uuid,
+        start: NaiveDateTime,
+        end: NaiveDateTime,
     ) -> Vec<EnergyRecord> {
         let mut records = Vec::new();
 
-        let user_id = *user_id;
-        let community_id = *community_id;
+        // Round start time to the next 15-minute interval (:00, :15, :30, :45)
+        let mut time = start
+            .with_minute(0)
+            .expect("0 <= minutes < 60")
+            .with_second(0)
+            .expect("0 <= seconds < 60")
+            .with_nanosecond(0)
+            .expect("nanoseconds < 200.000.000");
 
-        let mut time = date_range.start;
-        while time < date_range.end {
-            let generated = rand_big_decimal_range(&energy_range);
-            let consumed = rand_big_decimal_range(&energy_range);
-            let consumer_price = rand_big_decimal_range(&price_range);
-            let seller_price = rand_big_decimal_range(&price_range);
-
-            let record = EnergyRecord {
-                id: Uuid::new_v4(),
-                user_id,
-                community_id,
-                generated,
-                consumed,
-                consumer_price,
-                seller_price,
-                start: time,
-            };
+        while time < end {
+            let record = Self::random(user_id, community_id, time);
 
             records.push(record);
             time += Duration::minutes(15);
@@ -116,8 +125,8 @@ pub enum AuthProvider {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Key {
-    pub id: String, 
+    pub id: String,
     pub provider: AuthProvider,
     pub user_id: Uuid,
-    pub hashed_password: Option<String>, 
+    pub hashed_password: Option<String>,
 }

@@ -23,7 +23,7 @@ uuid = { version = "1.18.0", features = ["serde", "v4"] }
 validator = { version = "0.20.0", features = ["derive"] }
 rand = "0.8"
 chrono = {version = "0.4.41", features = ["serde"] }
-bigdecimal = {version = "0.4.8", features = ["serde", "serde_json"] }
+bigdecimal = { version = "0.4.8", features = ["serde", "serde_json"] }
 fake = "4.4.0"
 rust_decimal = "1.37.2"
 argon2 = "0.5.3"
@@ -33,4 +33,4 @@ itertools = "0.14.0"
 oauth2 = "4.4"
 reqwest = { version = "0.12", features = ["json"] }
 url = "2.5"
-fastrand = "2.3.0"
+num-bigint = { version = "0.4", features = ["rand"] }

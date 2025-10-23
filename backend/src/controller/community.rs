@@ -1,10 +1,9 @@
 use crate::AppState;
 use crate::models::{Community, EnergyRecord, UserCommunity, UserRole};
 use crate::router::{EnergyStats, OrderDirection, StatsFilter, StatsGranularity};
-use bigdecimal::{BigDecimal, FromPrimitive};
 use chrono::{Duration, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{Row, QueryBuilder};
+use sqlx::{QueryBuilder, Row};
 use tracing::info;
 use uuid::Uuid;
 
@@ -86,33 +85,10 @@ impl AppState {
 
         tx.commit().await?;
 
-        ///////////////////////////////////////////////////////////////
-        // 7.5kWh por dia
-        // 96 intervalos de 15 mins num dia
-        // ou seja 7.5 / 96 = 0.078125kWh a cada 15 mins
-        // * 1000 = 78.125Wh a cada 15 mins
-        let energy_min = BigDecimal::from(50);
-        let energy_max = BigDecimal::from(100);
-        let energy_range = energy_min..energy_max;
+        let now = Utc::now().naive_utc();
+        let start = now - Duration::days(30);
 
-        // 0.24 eur por kWh = 0.00024 eur por Wh
-        let price_min = BigDecimal::from_f64(0.0001).unwrap();
-        let price_max = BigDecimal::from_f64(0.0002).unwrap();
-        let price_range = price_min..price_max;
-
-        // enery records are 3.5 months into the past
-        let end = Utc::now().naive_utc();
-        let days: f32 = 30.0 * 3.5;
-        let start = end - Duration::days(days.floor() as i64);
-        let date_range = start..end;
-
-        let random_records = EnergyRecord::random_vec(
-            &creator_user_id,
-            &community.id,
-            date_range,
-            energy_range,
-            price_range,
-        );
+        let random_records = EnergyRecord::random_vec(creator_user_id, community.id, start, now);
 
         info!(
             "Generated {} new random energy records",
@@ -120,7 +96,6 @@ impl AppState {
         );
 
         self.add_energy_records(&random_records).await?;
-        ///////////////////////////////////////////////////////////////
 
         Ok(community)
     }
@@ -296,11 +271,10 @@ impl AppState {
         })
     }
 
-
     // NOTE: if you ask for monthly between the second to last day of september and the second of october,
     // there will be 2 entries, one for each month, but the summed values will only be those of registries contained between the provided start and end
     /*
-    SELECT DATE_TRUNC(week, start) AS period_start, SUM(generated) AS generated_sum 
+    SELECT DATE_TRUNC(week, start) AS period_start, SUM(generated) AS generated_sum
     FROM energy_record
     WHERE user_id = a4567ef9-0a28-4692-a3dc-59a201d54ee0 AND community_id = 53d11c36-bd41-4eeb-9088-6efffd16a96f AND start >= 2025-10-10 19:59:44 AND start <= 2025-07-10 19:59:44
     GROUP BY period_start
@@ -335,7 +309,7 @@ impl AppState {
             "SUM(generated) AS generated_sum, \
             SUM(consumed) AS consumed_sum, \
             SUM(generated * seller_price) AS generated_price, \
-            SUM(consumed * consumer_price) AS consumed_price "
+            SUM(consumed * consumer_price) AS consumed_price ",
         );
         query_builder.push("FROM energy_record WHERE user_id = ");
         query_builder.push_bind(user_id);
