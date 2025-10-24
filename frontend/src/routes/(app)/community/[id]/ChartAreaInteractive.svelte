@@ -65,10 +65,30 @@
     })
 
 	const chartConfig = {
-		consumed: { label: 'Desktop', color: 'blue' },
-		generated: { label: 'Mobile', color: 'red' }
+		generated: { label: 'Generated kWh', color: '#3b82f6' }, // blue-500
+		consumed: { label: 'Consumed kWh', color: '#ef4444' } // red-500
 	} satisfies Chart.ChartConfig;
 </script>
+
+<style>
+	.custom-legend {
+		display: flex;
+		gap: 1rem;
+		align-items: center;
+		margin-top: 0.5rem;
+		font-size: 0.875rem;
+	}
+	.custom-legend-item {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+	.legend-dot {
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+	}
+</style>
 
 <Card.Root class="@container/card">
 	<Card.Header>
@@ -108,8 +128,8 @@
 	</Card.Header>
 	<Card.Content class="px-2 pt-4 sm:px-6 sm:pt-6">
 		<Chart.Container config={chartConfig} class="aspect-auto h-[250px] w-full">
+            <!-- legend removed from here, manually implemented below -->
 			<AreaChart
-				legend
 				data={filteredData}
 				x="periodStart"
 				xScale={scaleUtc()}
@@ -149,18 +169,24 @@
 				{#snippet marks({ series, getAreaProps })}
 					<defs>
 						<linearGradient id="fillGenerated" x1="0" y1="0" x2="0" y2="1">
-							<stop offset="5%" stop-color="var(--color-generated)" stop-opacity={1.0} />
-							<stop offset="95%" stop-color="var(--color-generated)" stop-opacity={0.1} />
+							<stop offset="5%" stop-color={chartConfig.generated.color} stop-opacity="0.9" />
+							<stop offset="95%" stop-color={chartConfig.generated.color} stop-opacity="0.1" />
 						</linearGradient>
 						<linearGradient id="fillConsumed" x1="0" y1="0" x2="0" y2="1">
-							<stop offset="5%" stop-color="var(--color-consumed)" stop-opacity={0.8} />
-							<stop offset="95%" stop-color="var(--color-consumed)" stop-opacity={0.1} />
+							<stop offset="5%" stop-color={chartConfig.consumed.color} stop-opacity="0.9" />
+							<stop offset="95%" stop-color={chartConfig.consumed.color} stop-opacity="0.1" />
 						</linearGradient>
 					</defs>
+
 					{#each series as s, i (s.key)}
 						<Area
 							{...getAreaProps(s, i)}
-							fill={s.key === 'generated' ? 'url(#fillGenerated)' : 'url(#fillConsumed)'}
+							fill={s.key === 'generatedSum'
+								? 'url(#fillGenerated)'
+								: 'url(#fillConsumed)'}
+							stroke={s.key === 'generatedSum'
+								? chartConfig.generated.color
+								: chartConfig.consumed.color}
 						/>
 					{/each}
 				{/snippet}
@@ -177,5 +203,17 @@
 				{/snippet}
 			</AreaChart>
 		</Chart.Container>
+
+        <!-- Manual Legend -->
+		<div class="custom-legend">
+			<div class="custom-legend-item">
+				<span class="legend-dot" style="background:{chartConfig.generated.color}"></span>
+				{chartConfig.generated.label}
+			</div>
+			<div class="custom-legend-item">
+				<span class="legend-dot" style="background:{chartConfig.consumed.color}"></span>
+				{chartConfig.consumed.label}
+			</div>
+		</div>
 	</Card.Content>
 </Card.Root>
