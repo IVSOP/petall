@@ -65,7 +65,7 @@
 		</div>
 
 		<div class="pt-4">
-			<Button type="submit" class="w-full">Create Community</Button>
+			<Button type="submit" class="w-full cursor-pointer">Create Community</Button>
 			<p class="mt-2 text-center text-xs text-muted-foreground">
 				You will be assigned Manager of this community after creating it
 			</p>

@@ -50,11 +50,17 @@
 			})
 		});
 
-		if (response.ok) {
-			const response_json = await response.json();
-			// console.log(response_json);
-			return response_json;
-		}
+        if (!response.ok) {
+            throw new Error(`Failed to fetch stats: ${response.statusText}`);
+        }
+
+        const response_json = await response.json();
+
+        // string to date
+        return response_json.map((s: any) => ({
+            ...s,
+            periodStart: new Date(s.periodStart)
+        }));
 	}
 
 	$effect(() => {
@@ -82,9 +88,8 @@
 	<div class="flex flex-1 flex-col">
 		<div class="@container/main flex flex-1 flex-col gap-2">
 			<div class="flex flex-col gap-6">
-				<!-- <EnergyBlocks energyRecords={paginatedEnergyRecords.records} /> -->
 				<EnergyBlocks statsLast60={stats_last_60} />
-				<ChartAreaInteractive />
+				<ChartAreaInteractive statsLast60={stats_last_60}/>
 				<DataTable data={paginatedEnergyRecords} bind:pageIndex bind:pageSize />
 			</div>
 		</div>

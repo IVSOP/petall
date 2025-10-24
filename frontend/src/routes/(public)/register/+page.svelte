@@ -57,7 +57,7 @@
 									<Label for="password">Password</Label>
 									<Input id="password" name="password" type="password" required />
 								</div>
-								<Button type="submit" class="w-full">Sign up</Button>
+								<Button type="submit" class="w-full cursor-pointer">Sign up</Button>
 							</div>
 							<div class="text-center text-sm">
 								Already have an account?
