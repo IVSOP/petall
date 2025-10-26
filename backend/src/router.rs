@@ -160,7 +160,7 @@ pub enum StatsGranularity {
     Daily,
     Weekly,
     Monthly,
-    Yearly
+    Yearly,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -195,11 +195,7 @@ pub async fn get_stats(
     Json(query): Json<StatsFilter>,
 ) -> AppResult<impl IntoResponse> {
     let stats = state
-        .get_energy_records_stats(
-            session.user_id,
-            id,
-            &query
-        )
+        .get_energy_records_stats(session.user_id, id, &query)
         .await?;
 
     // debug porque o NaiveDateTime é uma merda
@@ -242,7 +238,7 @@ mod tests {
         )
         .unwrap();
 
-        let state = crate::AppState { 
+        let state = crate::AppState {
             pg_pool,
             google_oauth,
         };
