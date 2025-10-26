@@ -45,7 +45,7 @@
 </script>
 
 <div class="flex flex-col gap-4 pb-4 md:flex-row md:justify-between">
-	<div class="flex flex-col flex-row items-center gap-2">
+	<div class="flex flex-row items-center gap-2">
 		<Breadcrumb.Root>
 			<Breadcrumb.List>
 				<Breadcrumb.Item>
@@ -95,40 +95,13 @@
 		</Breadcrumb.Root>
 
 		<div class="flex gap-2">
-			<Button href="/community/{data.community.id}/settings">
-				<Settings />
-			</Button>
-			<Button href="/community/{data.community.id}/leave">
-				<Logout />
+			<Button variant="destructive" href="/community/{data.community.id}/settings">
+				<Settings /> Admin Settings
 			</Button>
 		</div>
 	</div>
 
 	<div class="flex flex-col gap-2 md:flex-row">
-		<Popover.Root>
-			<Popover.Trigger class={buttonVariants()}>
-				<Login />
-				Join Community
-			</Popover.Trigger>
-			<Popover.Content class="w-[190px] p-0">
-				<Command.Root>
-					<Command.Input placeholder="Find community..." />
-					<Command.List>
-						<Command.Empty>No community found.</Command.Empty>
-						<Command.Group value="communities">
-							<ScrollArea class="max-h-[10rem]">
-								{#each data.communities as community}
-									<Command.Item value={community.name} onSelect={() => joinCommunity(community)}>
-										{community.name}
-									</Command.Item>
-								{/each}
-							</ScrollArea>
-						</Command.Group>
-					</Command.List>
-				</Command.Root>
-			</Popover.Content>
-		</Popover.Root>
-
 		<Button href="/community/new">
 			<Plus />
 			New Community

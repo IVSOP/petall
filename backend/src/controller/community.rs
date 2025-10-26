@@ -1,4 +1,5 @@
 use crate::AppState;
+use crate::error::{AppError, AppResult};
 use crate::models::{Community, EnergyRecord, UserCommunity, UserRole};
 use crate::router::{EnergyStats, OrderDirection, StatsFilter, StatsGranularity};
 use chrono::{Duration, NaiveDateTime, Utc};
@@ -52,7 +53,7 @@ impl AppState {
         name: &str,
         description: &str,
         image: Option<&str>,
-    ) -> sqlx::Result<Community> {
+    ) -> AppResult<Community> {
         let mut tx = self.pg_pool.begin().await?;
 
         let community = sqlx::query_as!(
@@ -68,7 +69,13 @@ impl AppState {
             image
         )
         .fetch_one(&mut *tx)
-        .await?;
+        .await
+        .map_err(|e| match e {
+            sqlx::Error::Database(db_err) if db_err.is_unique_violation() => {
+                AppError::CommunityNameAlreadyInUse(name.to_string())
+            }
+            other => other.into(),
+        })?;
 
         sqlx::query!(
             r#"
