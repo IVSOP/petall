@@ -5,6 +5,8 @@
 	import HousePlug from '@lucide/svelte/icons/house-plug';
 	import Settings from '@lucide/svelte/icons/settings';
 	import Zap from '@lucide/svelte/icons/zap';
+	import Users from '@lucide/svelte/icons/users';
+	import Badge from '$lib/components/ui/badge/badge.svelte';
 
 	const { data } = $props();
 </script>
@@ -25,24 +27,34 @@
 			<div class="space-y-3">
 				{#each data.communities as community}
 					<div
-						class="flex items-center justify-between gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-accent/50"
+						class="group relative overflow-hidden rounded-xl border bg-card p-4 transition-colors hover:bg-accent/50"
 					>
-						<div class="flex items-center gap-3">
-							<Avatar.Root class="h-10 w-10">
-								<Avatar.Fallback class="bg-primary/10 text-sm font-medium">
-									<Zap />
-								</Avatar.Fallback>
-							</Avatar.Root>
-							<span class="font-medium">{community.name}</span>
-						</div>
+						<div class="relative flex items-center justify-between gap-4">
+							<div class="flex min-w-0 flex-1 items-center gap-4">
+								<Avatar.Root class="h-10 w-10">
+									<Avatar.Fallback class="bg-primary/10 text-sm font-medium">
+										<Zap />
+									</Avatar.Fallback>
+								</Avatar.Root>
 
-						<Button
-							href="/community/{community.id}/settings"
-							class="cursor-pointer text-sm font-medium"
-						>
-							<Settings />
-							Settings
-						</Button>
+								<div class="flex min-w-0 flex-1 flex-col gap-1">
+									<h3 class="truncate text-base font-semibold">
+										{community.name}
+									</h3>
+									<Badge variant="secondary" class="w-fit gap-1.5 px-2 py-0.5">
+										<Users />
+										<span class="text-xs font-medium">
+											{Number(community.userCount).toLocaleString()}
+											{Number(community.userCount) === 1 ? 'user' : 'users'}
+										</span>
+									</Badge>
+								</div>
+							</div>
+
+							<Button href="/community/{community.id}/settings">
+								<Settings /> Settings
+							</Button>
+						</div>
 					</div>
 				{/each}
 			</div>
