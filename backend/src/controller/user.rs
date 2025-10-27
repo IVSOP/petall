@@ -42,16 +42,23 @@ impl AppState {
         .map_err(Into::into)
     }
 
-    pub async fn register_user(&self, email: &str, name: &str, password: &str) -> AppResult<User> {
+    pub async fn register_user(
+        &self,
+        email: &str,
+        name: &str,
+        password: &str,
+        is_admin: bool,
+    ) -> AppResult<User> {
         let user = sqlx::query_as!(
             User,
             r#"
-            INSERT INTO "user" (email, name)
-            VALUES ($1, $2)
+            INSERT INTO "user" (email, name, is_admin)
+            VALUES ($1, $2, $3)
             RETURNING *
             "#,
             email,
-            name
+            name,
+            is_admin
         )
         .fetch_one(&self.pg_pool)
         .await?;

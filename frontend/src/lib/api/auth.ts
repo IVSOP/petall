@@ -1,4 +1,4 @@
-export type RegisterRequest = { name: string; email: string; password: string };
+export type RegisterRequest = { name: string; email: string; password: string; isAdmin: boolean };
 export type RegisterResponse = {
 	uuid: string;
 	name: string;

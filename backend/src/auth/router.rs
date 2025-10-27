@@ -38,6 +38,7 @@ pub struct RegisterRequest {
         message = "Password must be between 8 and 50 characters"
     ))]
     pub password: String,
+    pub is_admin: bool,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -62,7 +63,12 @@ async fn register_handler(
     }
 
     let user = state
-        .register_user(&request.email, &request.name, &request.password)
+        .register_user(
+            &request.email,
+            &request.name,
+            &request.password,
+            request.is_admin,
+        )
         .await?;
 
     let session = Session::new_random_from(user.id);
@@ -158,21 +164,19 @@ async fn google_callback_handler(
             .ok_or(AppError::InvalidSession)?
     } else if let Some(existing_user) = state.get_user_by_email(&google_user.email).await? {
         //email user already exists -> used to link email account to oauth account
-        state.create_key(AuthProvider::Google, &key_id, existing_user.id, None).await?;
+        state
+            .create_key(AuthProvider::Google, &key_id, existing_user.id, None)
+            .await?;
         existing_user
     } else {
-        //no email account and no google account 
+        //no email account and no google account
         is_new_user = true;
-        let name = google_user
-            .name
-            .as_deref()
-            .unwrap_or(&google_user.email);
-        
+        let name = google_user.name.as_deref().unwrap_or(&google_user.email);
+
         state
             .register_oauth_user(&google_user.email, name, AuthProvider::Google, &key_id)
             .await?
     };
-
 
     let session = Session::new_random_from(user.id);
     state.store_session(&session).await?;
@@ -298,6 +302,8 @@ struct MeResponse {
     id: Uuid,
     email: String,
     name: String,
+    is_admin: bool,
+    can_access_admin_view: bool,
 }
 
 #[debug_handler]
@@ -310,10 +316,14 @@ async fn me_handler(
         .await?
         .ok_or(AppError::InvalidSession)?;
 
+    let can_access_admin_view = state.can_access_admin_view(&user).await?;
+
     Ok(Json(MeResponse {
         id: user.id,
         email: user.email,
         name: user.name,
+        is_admin: user.is_admin,
+        can_access_admin_view,
     }))
 }
 
@@ -356,6 +366,7 @@ mod tests {
             name: "Test User".to_string(),
             email: "test@example.com".to_string(),
             password: "test_password".to_string(),
+            is_admin: false,
         };
 
         let response = server.post("/register").json(&request_body).await;
@@ -374,6 +385,7 @@ mod tests {
             name: "Test User".to_string(),
             email: "test@example.com".to_string(),
             password: "test_password".to_string(),
+            is_admin: false,
         };
 
         let response = server.post("/register").json(&register_request).await;
@@ -413,6 +425,7 @@ mod tests {
             name: "Test User".to_string(),
             email: "test@example.com".to_string(),
             password: "test_password".to_string(),
+            is_admin: false,
         };
 
         let response = server.post("/register").json(&register_request).await;
@@ -446,6 +459,7 @@ mod tests {
             name: "Test User".to_string(),
             email: "test@example.com".to_string(),
             password: "old_password".to_string(),
+            is_admin: false,
         };
 
         let response = server.post("/register").json(&register_request).await;
@@ -494,6 +508,7 @@ mod tests {
             name: "Test User".to_string(),
             email: "test@example.com".to_string(),
             password: "test_password".to_string(),
+            is_admin: false,
         };
 
         let response = server.post("/register").json(&register_request).await;

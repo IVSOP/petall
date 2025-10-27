@@ -1,6 +1,7 @@
 use crate::AppState;
 use crate::auth;
 use crate::auth::extractor::ExtractSession;
+use crate::controller::admin::AdminListCommunityView;
 use crate::error::{AppError, AppResult, ValidatedJson};
 use crate::models::Community;
 use axum::Router;
@@ -21,6 +22,7 @@ use validator::Validate;
 
 pub fn router(state: AppState) -> Router {
     Router::new()
+        .route("/admin/community", get(get_admin_manageable_communities))
         .route("/community", get(get_communities_from_user))
         .route("/community", post(create_community))
         .route("/community/{id}", get(get_community_by_id))
@@ -215,6 +217,23 @@ pub async fn get_stats(
     Ok(Json(stats))
 }
 
+#[debug_handler]
+pub async fn get_admin_manageable_communities(
+    ExtractSession(session): ExtractSession,
+    State(state): State<AppState>,
+) -> AppResult<Json<Vec<AdminListCommunityView>>> {
+    let user = state
+        .get_user_by_id(session.user_id)
+        .await?
+        .ok_or_else(|| AppError::UserNotFoundId(session.user_id))?;
+
+    let communities = state
+        .list_admin_community_view(user.id, user.is_admin)
+        .await?;
+
+    Ok(Json(communities))
+}
+
 #[cfg(test)]
 mod tests {
     use axum::http::StatusCode;
@@ -255,6 +274,7 @@ mod tests {
             name: "test_user".to_string(),
             email: "test@example.com".to_string(),
             password: "password".to_string(),
+            is_admin: false,
         };
 
         let register_response = server.post("/auth/register").json(&request_body).await;

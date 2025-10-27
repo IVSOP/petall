@@ -7,6 +7,7 @@
 	import '../../../app.css';
 	import ErrorDialog from '$lib/components/ErrorDialog.svelte';
 	import GoogleIcon from '$lib/components/GoogleIcon.svelte';
+	import { Checkbox } from '$lib/components/ui/checkbox';
 
 	let { data, form }: PageProps = $props();
 </script>
@@ -57,6 +58,23 @@
 									<Label for="password">Password</Label>
 									<Input id="password" name="password" type="password" required />
 								</div>
+								<Label
+									class="flex items-start gap-3 rounded-lg border p-3 hover:bg-accent/50 has-[[aria-checked=true]]:border-destructive has-[[aria-checked=true]]:bg-destructive/10"
+								>
+									<Checkbox
+										id="is_admin"
+										name="is_admin"
+										class="data-[state=checked]:border-destructive data-[state=checked]:bg-destructive data-[state=checked]:text-white"
+									/>
+									<div class="grid gap-1.5 font-normal">
+										<p class="text-sm leading-none font-medium text-destructive">
+											Administrator Account
+										</p>
+										<p class="text-sm text-muted-foreground">
+											Only available for demonstration purposes.
+										</p>
+									</div>
+								</Label>
 								<Button type="submit" class="w-full cursor-pointer">Sign up</Button>
 							</div>
 							<div class="text-center text-sm">

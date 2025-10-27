@@ -7,4 +7,6 @@ export type User = {
 	id: string;
 	email: string;
 	name: string;
+	isAdmin: boolean;
+	canAccessAdminView: boolean;
 };

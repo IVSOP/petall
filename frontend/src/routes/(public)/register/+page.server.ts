@@ -24,6 +24,7 @@ export const actions = {
 		const name = data.get('name')?.toString().trim();
 		const email = data.get('email')?.toString().trim();
 		const password = data.get('password')?.toString();
+		const isAdmin = data.get('is_admin')?.toString() === 'on';
 
 		if (!name || !email || !password) {
 			return fail(400, { name, email, error: 'Missing name, email or password' });
@@ -32,7 +33,8 @@ export const actions = {
 		const registerRequest: RegisterRequest = {
 			name,
 			email,
-			password
+			password,
+			isAdmin
 		};
 
 		const response = await fetch('/api/auth/register', {
