@@ -24,7 +24,7 @@
 	<Command.List>
 		<ScrollArea class="h-70">
 			<Command.Empty class="text-center text-sm text-muted-foreground">
-				No results found
+				No results found.
 			</Command.Empty>
 			<Command.Group>
 				{#each members as member}

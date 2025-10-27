@@ -133,9 +133,7 @@
 					<Button class="cursor-pointer" onclick={saveChanges}>
 						<Save /> Save
 					</Button>
-					<Button class="cursor-pointer" onclick={() => (editing = false)}>
-						Cancel
-					</Button>
+					<Button class="cursor-pointer" onclick={() => (editing = false)}>Cancel</Button>
 				{:else}
 					<Button class="cursor-pointer" onclick={() => (editing = true)}>
 						<Pencil /> Edit

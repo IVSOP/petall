@@ -19,7 +19,7 @@
 			<div class="flex items-center gap-6">
 				<a href="/" class="flex items-center gap-2 font-semibold text-foreground">
 					<img src={favicon} alt="PeTall" class="h-6 w-6" />
-					<span class="text-2xl hover:opacity-70">PeTall</span>
+					<span class="text-2xl">PeTall</span>
 				</a>
 
 				<nav aria-label="Main">
