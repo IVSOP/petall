@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
 	import { v4 as uuidv4 } from 'uuid';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
@@ -9,10 +10,19 @@
 	import Trash_2 from '@lucide/svelte/icons/trash-2';
 	import UserPlus from '@tabler/icons-svelte/icons/user-plus';
 	import AddMemberDialog from './AddMemberDialog.svelte';
+	import type { Community } from '$lib';
+	import Pencil from '@lucide/svelte/icons/pencil';
+	import Save from '@lucide/svelte/icons/save';
 
 	const { data }: PageProps = $props();
+
+	let editing: boolean = $state(false);
+	let community: Community = $state(data.community);
+
 	let addUserDialogOpen: boolean = $state(false);
 	let addManagerDialogOpen: boolean = $state(false);
+
+	$inspect(community);
 
 	const communityData = {
 		name: 'Creative Community',
@@ -37,7 +47,7 @@
 			{ id: uuidv4(), name: 'Juliana Ramos', email: 'juliana.ramos@example.com' },
 			{ id: uuidv4(), name: 'Gustavo Mendes', email: 'gustavo.mendes@example.com' },
 			{ id: uuidv4(), name: 'Letícia Correia', email: 'leticia.correia@example.com' },
-			{ id: uuidv4(), name: 'Rodrigo Batista', email: 'rodrigo.batista@example.com' },
+			{ id: uuidv4(), name: 'Rodrigo Batista', email: 'rodrigo.batista@example.com' }
 		]
 	};
 
@@ -48,38 +58,89 @@
 	function removeManager(manager_id: String) {
 		console.log(manager_id);
 	}
+
+	const saveChanges = () => {
+		editing = false;
+	};
 </script>
 
 <div class="container">
 	<div class="w-full space-y-6">
-		<Card.Root class="w-full overflow-hidden p-0">
+		<Card.Root class="relative w-full overflow-hidden p-0">
 			<div
 				class="grid w-full md:grid-cols-[minmax(300px,1fr)_2fr] md:gap-4 lg:grid-cols-[minmax(400px,1fr)_3fr]"
 			>
 				<div class="relative aspect-[4/3] w-full md:aspect-auto">
 					<img
 						src={communityData.image}
-						alt={`Image of ${data.community.name}`}
+						alt={`Image of ${community.name}`}
 						class="h-full w-full object-cover"
 					/>
 				</div>
 
 				<div class="flex w-full flex-col justify-center gap-6 p-6">
 					<div>
-						<h2 class="mb-1 text-sm font-medium text-muted-foreground">Community Name</h2>
-						<p class="text-2xl font-bold">{data.community.name}</p>
+						<h2 class="mb-1 text-sm font-medium text-muted-foreground">Name</h2>
+						{#if editing}
+							<Input
+								type="text"
+								placeholder="name"
+								class="w-full rounded border border-gray-300 p-2 text-lg focus:ring-2 focus:ring-primary focus:outline-none"
+								bind:value={community.name}
+							/>
+						{:else}
+							<p class="text-2xl font-bold">{community.name}</p>
+						{/if}
 					</div>
 
 					<div>
-						<h2 class="mb-1 text-sm font-medium text-muted-foreground">Community Description</h2>
-						<p class="text-lg">{data.community.description}</p>
+						<h2 class="mb-1 text-sm font-medium text-muted-foreground">Description</h2>
+						{#if editing}
+							<Input
+								type="text"
+								placeholder="description"
+								class="w-full rounded border border-gray-300 p-2 text-lg focus:ring-2 focus:ring-primary focus:outline-none"
+								bind:value={community.description}
+							/>
+						{:else}
+							<p class="text-lg">{community.description}</p>
+						{/if}
 					</div>
 
 					<div>
-						<h2 class="mb-1 text-sm font-medium text-muted-foreground">Community Rule</h2>
+						<h2 class="mb-1 text-sm font-medium text-muted-foreground">Image</h2>
+						{#if editing}
+							<Input
+								type="text"
+								placeholder="image"
+								class="w-full rounded border border-gray-300 p-2 text-lg focus:ring-2 focus:ring-primary focus:outline-none"
+								bind:value={community.name}
+							/>
+						{:else}
+							<p class="text-lg">{community.name}</p>
+						{/if}
+					</div>
+
+					<div>
+						<h2 class="mb-1 text-sm font-medium text-muted-foreground">Rule</h2>
 						<p class="text-lg">{communityData.rule}</p>
 					</div>
 				</div>
+			</div>
+
+			<div class="absolute right-6 bottom-6 flex gap-2">
+				{#if editing}
+					<Button class="cursor-pointer" onclick={saveChanges}>
+						<Save /> Save
+					</Button>
+					<Button class="cursor-pointer" onclick={() => (editing = false)}>
+						Cancel
+					</Button>
+				{:else}
+					<Button class="cursor-pointer" onclick={() => (editing = true)}>
+						<Pencil /> Edit
+					</Button>
+				{/if}
 			</div>
 		</Card.Root>
 
@@ -93,10 +154,7 @@
 							{communityData.users.length} members
 						</span>
 					</div>
-					<Button
-						class="cursor-pointer"
-						onclick={() => (addUserDialogOpen = true)}
-					>
+					<Button class="cursor-pointer" onclick={() => (addUserDialogOpen = true)}>
 						<UserPlus />
 						Add User
 					</Button>
@@ -142,10 +200,7 @@
 							{communityData.users.length} members
 						</span>
 					</div>
-					<Button
-						class="cursor-pointer"
-						onclick={() => (addManagerDialogOpen = true)}
-					>
+					<Button class="cursor-pointer" onclick={() => (addManagerDialogOpen = true)}>
 						<UserPlus />
 						Add Manager
 					</Button>
@@ -187,9 +242,9 @@
 
 <AddMemberDialog
 	bind:open={addUserDialogOpen}
-		members={communityData.users}
-		type="user"
-		title="Find user..."
+	members={communityData.users}
+	type="user"
+	title="Find user..."
 />
 
 <AddMemberDialog

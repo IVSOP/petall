@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { buttonVariants } from '$lib/components/ui/button/index.js';
-	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
 	import type { LayoutProps } from './$types';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
 	import CheckIcon from '@lucide/svelte/icons/check';
@@ -14,8 +12,6 @@
 	import { cn } from '$lib/utils.js';
 	import { goto } from '$app/navigation';
 	import type { Community } from '$lib';
-	import Logout from '@tabler/icons-svelte/icons/logout';
-	import Login from '@tabler/icons-svelte/icons/login';
 
 	let { data, children }: LayoutProps = $props();
 

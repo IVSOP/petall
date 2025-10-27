@@ -15,6 +15,7 @@
 		} else {
 			throw new Error('Invalid type');
 		}
+		open = false;
 	}
 </script>
 
@@ -31,16 +32,13 @@
 						<div class="flex items-center space-x-2">
 							<Avatar.Root>
 								<Avatar.Fallback class="bg-primary/10 text-sm font-medium">
-									{member.name.slice(0,2).toUpperCase()}
+									{member.name.slice(0, 2).toUpperCase()}
 								</Avatar.Fallback>
 							</Avatar.Root>
 							<div>{member.name}</div>
 						</div>
 
-						<Button
-							class="cursor-pointer"
-							onclick={() => addMember(member.id)}
-						>
+						<Button class="cursor-pointer" onclick={() => addMember(member.id)}>
 							<UserPlus class="text-white" />
 							Add {type}
 						</Button>
@@ -50,4 +48,3 @@
 		</ScrollArea>
 	</Command.List>
 </Command.Dialog>
-
