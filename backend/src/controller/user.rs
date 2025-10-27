@@ -1,5 +1,5 @@
 use crate::error::AppResult;
-use crate::models::{AuthProvider, User, UserCommunity, UserRole};
+use crate::models::{AuthProvider, User, UserCommunity};
 use crate::{AppState, auth};
 use uuid::Uuid;
 
@@ -65,7 +65,13 @@ impl AppState {
         Ok(user)
     }
 
-    pub async fn register_oauth_user(&self, email: &str, name: &str, provider: AuthProvider, key_id: &str) -> AppResult<User> {
+    pub async fn register_oauth_user(
+        &self,
+        email: &str,
+        name: &str,
+        provider: AuthProvider,
+        key_id: &str,
+    ) -> AppResult<User> {
         let user = sqlx::query_as!(
             User,
             r#"
@@ -88,7 +94,7 @@ impl AppState {
         sqlx::query_as!(
             UserCommunity,
             r#"
-            SELECT user_id, community_id, role as "role: UserRole" FROM "user_community"
+            SELECT user_id, community_id FROM "community_user"
             WHERE user_id = $1
             "#,
             user

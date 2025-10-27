@@ -3,7 +3,6 @@ use crate::auth;
 use crate::auth::extractor::ExtractSession;
 use crate::error::{AppError, AppResult, ValidatedJson};
 use crate::models::Community;
-use crate::models::UserRole;
 use axum::Router;
 use axum::extract::Path;
 use axum::http::StatusCode;
@@ -36,7 +35,6 @@ pub fn router(state: AppState) -> Router {
 pub struct UserCommunityResponse {
     #[serde(flatten)]
     community: Community,
-    role: UserRole,
 }
 
 #[debug_handler]
@@ -48,7 +46,7 @@ pub async fn get_communities_from_user(
         .get_communities_from_user(session.user_id)
         .await?
         .into_iter()
-        .map(|(community, role)| UserCommunityResponse { community, role })
+        .map(|community| UserCommunityResponse { community })
         .collect::<Vec<_>>();
 
     Ok(Json(communities))
@@ -106,9 +104,9 @@ pub async fn get_community_by_id(
         return Err(AppError::CommunityNotFound(id));
     };
 
-    let (community, role) = response;
-
-    Ok(Json(UserCommunityResponse { community, role }))
+    Ok(Json(UserCommunityResponse {
+        community: response,
+    }))
 }
 
 #[derive(Debug, Deserialize, Default)]
@@ -226,7 +224,7 @@ mod tests {
 
     use crate::{
         auth::router::{RegisterRequest, RegisterResponse},
-        models::{Community, UserRole},
+        models::Community,
         router::{CommunityCreateRequest, UserCommunityResponse, router},
     };
 
@@ -304,7 +302,6 @@ mod tests {
 
         let community_id = community.id;
 
-        assert_eq!(get_community.role, UserRole::Manager);
         assert_eq!(get_community.community.id, community_id);
         assert_eq!(get_community.community.name, name);
         assert_eq!(get_community.community.description, description);

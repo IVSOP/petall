@@ -46,5 +46,3 @@ export type Community = {
 	supplier: string;
 	description: string;
 };
-
-export type UserRole = 'Manager' | 'User';

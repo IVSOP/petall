@@ -1,4 +1,4 @@
-import type { Community, EnergyRecord, UserRole } from '$lib';
+import type { Community, EnergyRecord } from '$lib';
 
 export type CommunityCreateRequest = {
 	name: string;
@@ -8,8 +8,7 @@ export type CommunityCreateRequest = {
 
 export type CommunityCreateResponse = Community;
 
-export type CommunityGetCommunitiesResponse = Community & { role: UserRole };
-export type GetCommunitiesResponse = CommunityGetCommunitiesResponse[];
+export type GetCommunitiesResponse = Community[];
 
 export type PaginatedEnergyRecords = {
 	records: EnergyRecord[];

@@ -1,4 +1,4 @@
-use crate::models::{AuthProvider, UserRole};
+use crate::models::AuthProvider;
 use bigdecimal::BigDecimal;
 use chrono::{Duration, Utc};
 use fake::{Fake, faker::internet::pt_pt::FreeEmail};
@@ -164,11 +164,6 @@ pub async fn seed_user_community(
 ) -> anyhow::Result<HashMap<Uuid, Vec<Uuid>>> {
     let mut rng = rand::thread_rng();
     let mut user_community_map: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
-    let roles = [
-        UserRole::Participant,
-        UserRole::Manager,
-        UserRole::UserManager,
-    ];
 
     for &user in users {
         for community in communities
@@ -177,12 +172,11 @@ pub async fn seed_user_community(
         {
             sqlx::query!(
                 r#"
-                INSERT INTO "user_community" ("user_id", "community_id", "role")
-                VALUES ($1, $2, $3)
+                INSERT INTO "community_user" ("user_id", "community_id")
+                VALUES ($1, $2)
                 "#,
                 user,
                 community,
-                roles.iter().choose(&mut rng).unwrap() as &UserRole
             )
             .execute(pool)
             .await?;

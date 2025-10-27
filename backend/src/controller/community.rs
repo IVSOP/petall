@@ -1,6 +1,6 @@
 use crate::AppState;
 use crate::error::{AppError, AppResult};
-use crate::models::{Community, EnergyRecord, UserCommunity, UserRole};
+use crate::models::{Community, EnergyRecord, UserCommunity};
 use crate::router::{EnergyStats, OrderDirection, StatsFilter, StatsGranularity};
 use chrono::{Duration, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -16,14 +16,11 @@ pub struct PaginatedEnergyRecords {
 }
 
 impl AppState {
-    pub async fn get_communities_from_user(
-        &self,
-        user_id: Uuid,
-    ) -> sqlx::Result<Vec<(Community, UserRole)>> {
+    pub async fn get_communities_from_user(&self, user_id: Uuid) -> sqlx::Result<Vec<Community>> {
         let rows = sqlx::query!(
             r#"
-            SELECT c.id, c.name, c.description, c.image, uc.role as "role: UserRole" FROM community c
-            JOIN user_community uc ON c.id = uc.community_id
+            SELECT c.id, c.name, c.description, c.image FROM community c
+            JOIN community_user uc ON c.id = uc.community_id
             WHERE uc.user_id = $1
             "#,
             user_id
@@ -33,16 +30,11 @@ impl AppState {
 
         Ok(rows
             .into_iter()
-            .map(|row| {
-                (
-                    Community {
-                        id: row.id,
-                        name: row.name,
-                        description: row.description,
-                        image: row.image,
-                    },
-                    row.role,
-                )
+            .map(|row| Community {
+                id: row.id,
+                name: row.name,
+                description: row.description,
+                image: row.image,
             })
             .collect())
     }
@@ -79,13 +71,12 @@ impl AppState {
 
         sqlx::query!(
             r#"
-            INSERT INTO user_community
-            (user_id, community_id, role)
-            VALUES ($1, $2, $3)
+            INSERT INTO community_user
+            (user_id, community_id)
+            VALUES ($1, $2)
             "#,
             creator_user_id,
             community.id,
-            &UserRole::Manager as &UserRole
         )
         .execute(&mut *tx)
         .await?;
@@ -111,11 +102,11 @@ impl AppState {
         &self,
         user_id: Uuid,
         id: Uuid,
-    ) -> sqlx::Result<Option<(Community, UserRole)>> {
+    ) -> sqlx::Result<Option<Community>> {
         let rows = sqlx::query!(
             r#"
-            SELECT c.id, c.name, c.description, c.image, uc.role as "role: UserRole" FROM community c
-            JOIN user_community uc ON c.id = uc.community_id
+            SELECT c.id, c.name, c.description, c.image FROM community c
+            JOIN community_user uc ON c.id = uc.community_id
             WHERE c.id = $1 AND uc.user_id = $2
             "#,
             id,
@@ -124,16 +115,11 @@ impl AppState {
         .fetch_optional(&self.pg_pool)
         .await?;
 
-        Ok(rows.map(|row| {
-            (
-                Community {
-                    id: row.id,
-                    name: row.name,
-                    description: row.description,
-                    image: row.image,
-                },
-                row.role,
-            )
+        Ok(rows.map(|row| Community {
+            id: row.id,
+            name: row.name,
+            description: row.description,
+            image: row.image,
         }))
     }
 
@@ -142,20 +128,18 @@ impl AppState {
         &self,
         community: &Uuid,
         user: Uuid,
-        role: UserRole,
     ) -> sqlx::Result<UserCommunity> {
         sqlx::query_as!(
             UserCommunity,
             r#"
-            INSERT INTO user_community
-            (community_id, user_id, role)
-            VALUES ($1, $2, $3)
+            INSERT INTO community_user
+            (community_id, user_id)
+            VALUES ($1, $2)
             RETURNING
-            community_id, user_id, role as "role: UserRole"
+            community_id, user_id
             "#,
             community,
             user,
-            &role as &UserRole
         )
         .fetch_one(&self.pg_pool)
         .await
@@ -193,10 +177,10 @@ impl AppState {
         sqlx::query_as!(
             UserCommunity,
             r#"
-            DELETE FROM user_community
+            DELETE FROM community_user
             WHERE community_id = $1 AND user_id = $2
             RETURNING
-            community_id, user_id, role as "role: UserRole"
+            community_id, user_id
             "#,
             community,
             user

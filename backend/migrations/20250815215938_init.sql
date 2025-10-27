@@ -1,11 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TYPE user_role AS ENUM (
-    'participant',
-    'manager',
-    'usermanager'
-);
-
 CREATE TYPE auth_provider AS ENUM (
     'email',
     'github',
@@ -16,6 +10,7 @@ CREATE TABLE IF NOT EXISTS "user" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "name" VARCHAR(255) NOT NULL,
     "email" VARCHAR(255) NOT NULL UNIQUE,
+    "is_admin" BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY ("id")
 );
 
@@ -57,16 +52,29 @@ CREATE TABLE IF NOT EXISTS "community" (
 
 CREATE INDEX IF NOT EXISTS "community_name_idx" ON "community" ("name");
 
-CREATE TABLE IF NOT EXISTS "user_community" (
+CREATE TABLE IF NOT EXISTS "community_user" (
     "user_id" UUID NOT NULL,
     "community_id" UUID NOT NULL,
-    "role" user_role NOT NULL,
     PRIMARY KEY ("user_id", "community_id"),
-    CONSTRAINT fk_user_community
+    CONSTRAINT fk_community_user_user
         FOREIGN KEY ("user_id")
         REFERENCES "user"("id")
         ON DELETE CASCADE,
-    CONSTRAINT fk_community_user
+    CONSTRAINT fk_community_user_community
+        FOREIGN KEY ("community_id")
+        REFERENCES "community"("id")
+        ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "community_manager" (
+    "user_id" UUID NOT NULL,
+    "community_id" UUID NOT NULL,
+    PRIMARY KEY ("user_id", "community_id"),
+    CONSTRAINT fk_community_manager_user
+        FOREIGN KEY ("user_id")
+        REFERENCES "user"("id")
+        ON DELETE CASCADE,
+    CONSTRAINT fk_community_manager_community
         FOREIGN KEY ("community_id")
         REFERENCES "community"("id")
         ON DELETE CASCADE
