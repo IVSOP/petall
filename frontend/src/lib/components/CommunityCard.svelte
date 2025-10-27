@@ -70,7 +70,7 @@
 						<div class="rounded-lg bg-blue-500/10 p-1.5">
 							<Users class="h-4 w-4 text-blue-600 dark:text-blue-400" />
 						</div>
-						<span class="text-xs font-medium">Participants</span>
+						<span class="text-xs font-medium">Userss</span>
 					</div>
 					<p class="text-4xl font-bold tabular-nums">{15}</p>
 					<p class="text-xs text-muted-foreground">{10} active</p>

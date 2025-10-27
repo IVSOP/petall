@@ -6,9 +6,9 @@
 	import { scaleUtc } from 'd3-scale';
 	import { Area, AreaChart } from 'layerchart';
 	import { curveNatural } from 'd3-shape';
-    import type { EnergyStats } from '$lib';
+	import type { EnergyStats } from '$lib';
 
-    interface $$Props {
+	interface $$Props {
 		statsLast60: EnergyStats[];
 		// Add other props here
 	}
@@ -16,22 +16,22 @@
 	let { statsLast60 = {} } = $props();
 
 	// [0] is the most recent date, so [i] is i days ago. get [0] to [30]
-    let statsLast30: EnergyStats[] = $derived.by(() => {
-        const res = [];
-        let len = Math.min(statsLast60.length, 30);
-        for (let i = 0; i < len; i++) {
-            res.push(statsLast60[i]);
-        }
-        return res;
-    });
-    let statsLast7: EnergyStats[] = $derived.by(() => {
-        const res = [];
-        let len = Math.min(statsLast60.length, 7);
-        for (let i = 0; i < len; i++) {
-            res.push(statsLast60[i]);
-        }
-        return res;
-    });
+	let statsLast30: EnergyStats[] = $derived.by(() => {
+		const res = [];
+		let len = Math.min(statsLast60.length, 30);
+		for (let i = 0; i < len; i++) {
+			res.push(statsLast60[i]);
+		}
+		return res;
+	});
+	let statsLast7: EnergyStats[] = $derived.by(() => {
+		const res = [];
+		let len = Math.min(statsLast60.length, 7);
+		for (let i = 0; i < len; i++) {
+			res.push(statsLast60[i]);
+		}
+		return res;
+	});
 
 	let timeRange = $state('60d');
 	const selectedLabel = $derived.by(() => {
@@ -48,7 +48,7 @@
 	});
 
 	const filteredData = $derived.by(() => {
-        switch (timeRange) {
+		switch (timeRange) {
 			case '60d':
 				return statsLast60;
 			case '30d':
@@ -58,11 +58,11 @@
 			default:
 				return statsLast60;
 		}
-    });
+	});
 
-    $effect(() => {
-        console.log(JSON.stringify(filteredData))
-    })
+	$effect(() => {
+		console.log(JSON.stringify(filteredData));
+	});
 
 	const chartConfig = {
 		generated: { label: 'Generated kWh', color: '#3b82f6' }, // blue-500
@@ -70,32 +70,14 @@
 	} satisfies Chart.ChartConfig;
 </script>
 
-<style>
-	.custom-legend {
-		display: flex;
-		gap: 1rem;
-		align-items: center;
-		margin-top: 0.5rem;
-		font-size: 0.875rem;
-	}
-	.custom-legend-item {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
-	}
-	.legend-dot {
-		width: 12px;
-		height: 12px;
-		border-radius: 50%;
-	}
-</style>
-
 <Card.Root class="@container/card">
 	<Card.Header>
-		<Card.Title>Total Visitors</Card.Title>
+		<Card.Title>Energy Consumption and Production</Card.Title>
 		<Card.Description>
-			<span class="hidden @[540px]/card:block"> Total for the last 60 days </span>
-			<span class="@[540px]/card:hidden">Last 60 days</span>
+			<span class="hidden @[540px]/card:block">
+				Total for the {selectedLabel.toLocaleLowerCase()}
+			</span>
+			<span class="@[540px]/card:hidden">{selectedLabel}</span>
 		</Card.Description>
 		<Card.Action>
 			<ToggleGroup.Root
@@ -128,7 +110,7 @@
 	</Card.Header>
 	<Card.Content class="px-2 pt-4 sm:px-6 sm:pt-6">
 		<Chart.Container config={chartConfig} class="aspect-auto h-[250px] w-full">
-            <!-- legend removed from here, manually implemented below -->
+			<!-- legend removed from here, manually implemented below -->
 			<AreaChart
 				data={filteredData}
 				x="periodStart"
@@ -154,7 +136,7 @@
 						motion: 'tween'
 					},
 					xAxis: {
-                        // WARN: when in 7d mode, force it to use 7 ticks
+						// WARN: when in 7d mode, force it to use 7 ticks
 						ticks: timeRange === '7d' ? 7 : undefined,
 						format: (v) => {
 							return v.toLocaleDateString('en-US', {
@@ -181,9 +163,7 @@
 					{#each series as s, i (s.key)}
 						<Area
 							{...getAreaProps(s, i)}
-							fill={s.key === 'generatedSum'
-								? 'url(#fillGenerated)'
-								: 'url(#fillConsumed)'}
+							fill={s.key === 'generatedSum' ? 'url(#fillGenerated)' : 'url(#fillConsumed)'}
 							stroke={s.key === 'generatedSum'
 								? chartConfig.generated.color
 								: chartConfig.consumed.color}
@@ -204,7 +184,7 @@
 			</AreaChart>
 		</Chart.Container>
 
-        <!-- Manual Legend -->
+		<!-- Manual Legend -->
 		<div class="custom-legend">
 			<div class="custom-legend-item">
 				<span class="legend-dot" style="background:{chartConfig.generated.color}"></span>
@@ -217,3 +197,23 @@
 		</div>
 	</Card.Content>
 </Card.Root>
+
+<style>
+	.custom-legend {
+		display: flex;
+		gap: 1rem;
+		align-items: center;
+		margin-top: 0.5rem;
+		font-size: 0.875rem;
+	}
+	.custom-legend-item {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+	.legend-dot {
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+	}
+</style>

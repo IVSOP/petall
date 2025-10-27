@@ -1,11 +1,11 @@
-export type Participant = {
+export type User = {
 	id: string;
 	name: string;
 	email: string;
 };
 
-export type ParticipantCommunity = {
-	participant_id: string;
+export type UserCommunity = {
+	user_id: string;
 	community_id: string;
 };
 
@@ -30,7 +30,7 @@ export type EnergyStats = {
 
 export type ProcessedEnergy = {
 	id: string;
-	participant: string;
+	user: string;
 	community: string;
 	generated: number;
 	consumed: number;
