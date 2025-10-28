@@ -4,15 +4,12 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
-	import * as Avatar from '$lib/components/ui/avatar/index.js';
-	import Users from '@lucide/svelte/icons/users';
-	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
-	import Trash_2 from '@lucide/svelte/icons/trash-2';
-	import UserPlus from '@tabler/icons-svelte/icons/user-plus';
 	import AddMemberDialog from './AddMemberDialog.svelte';
 	import type { Community } from '$lib';
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import Save from '@lucide/svelte/icons/save';
+	import X from '@lucide/svelte/icons/x';
+	import ManageMembers from './ManageMembers.svelte';
 
 	const { data }: PageProps = $props();
 
@@ -50,14 +47,6 @@
 			{ id: uuidv4(), name: 'Rodrigo Batista', email: 'rodrigo.batista@example.com' }
 		]
 	};
-
-	function removeUser(user_id: String) {
-		console.log(user_id);
-	}
-
-	function removeManager(manager_id: String) {
-		console.log(manager_id);
-	}
 
 	const saveChanges = () => {
 		editing = false;
@@ -133,7 +122,9 @@
 					<Button class="cursor-pointer" onclick={saveChanges}>
 						<Save /> Save
 					</Button>
-					<Button class="cursor-pointer" onclick={() => (editing = false)}>Cancel</Button>
+					<Button class="cursor-pointer" onclick={() => (editing = false)}>
+						<X /> Cancel
+					</Button>
 				{:else}
 					<Button class="cursor-pointer" onclick={() => (editing = true)}>
 						<Pencil /> Edit
@@ -143,97 +134,18 @@
 		</Card.Root>
 
 		<div class="flex flex-col gap-6 lg:flex-row lg:items-start">
-			<Card.Root class="w-full gap-4 lg:w-1/2">
-				<Card.Header class="flex items-center justify-between border-b">
-					<div class="flex items-center gap-2">
-						<Users />
-						<h2 class="text-lg font-semibold">Users</h2>
-						<span class="text-sm text-muted-foreground">
-							{communityData.users.length} members
-						</span>
-					</div>
-					<Button class="cursor-pointer" onclick={() => (addUserDialogOpen = true)}>
-						<UserPlus />
-						Add User
-					</Button>
-				</Card.Header>
-
-				<Card.Content>
-					<ScrollArea class="max-h-97 w-full overflow-auto">
-						<div class="space-y-3">
-							{#each communityData.users as user}
-								<div
-									class="flex items-center justify-between gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-accent/50"
-								>
-									<div class="flex items-center gap-3">
-										<Avatar.Root class="h-10 w-10">
-											<Avatar.Fallback class="bg-primary/10 text-sm font-medium">
-												{user.name.slice(0, 2).toUpperCase()}
-											</Avatar.Fallback>
-										</Avatar.Root>
-										<span class="font-medium">{user.name}</span>
-									</div>
-
-									<Button
-										variant="destructive"
-										class="cursor-pointer text-sm font-medium"
-										onclick={() => removeUser(user.id)}
-									>
-										<Trash_2 />
-										Remove
-									</Button>
-								</div>
-							{/each}
-						</div>
-					</ScrollArea>
-				</Card.Content>
-			</Card.Root>
-
-			<Card.Root class="w-full gap-4 lg:w-1/2">
-				<Card.Header class="flex items-center justify-between border-b">
-					<div class="flex items-center gap-2">
-						<Users />
-						<h2 class="text-lg font-semibold">Managers</h2>
-						<span class="text-sm text-muted-foreground">
-							{communityData.users.length} members
-						</span>
-					</div>
-					<Button class="cursor-pointer" onclick={() => (addManagerDialogOpen = true)}>
-						<UserPlus />
-						Add Manager
-					</Button>
-				</Card.Header>
-
-				<Card.Content>
-					<ScrollArea class="max-h-97 w-full overflow-auto">
-						<div class="space-y-3">
-							{#each communityData.users as manager}
-								<div
-									class="flex items-center justify-between gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-accent/50"
-								>
-									<div class="flex items-center gap-3">
-										<Avatar.Root class="h-10 w-10">
-											<Avatar.Fallback class="bg-primary/10 text-sm font-medium">
-												{manager.name.slice(0, 2).toUpperCase()}
-											</Avatar.Fallback>
-										</Avatar.Root>
-										<span class="font-medium">{manager.name}</span>
-									</div>
-
-									<Button
-										variant="destructive"
-										class="cursor-pointer text-sm font-medium"
-										onclick={() => removeManager(manager.id)}
-									>
-										<Trash_2 />
-										Remove
-									</Button>
-								</div>
-							{/each}
-						</div>
-					</ScrollArea>
-				</Card.Content>
-			</Card.Root>
+			<ManageMembers 
+				bind:open={addUserDialogOpen}
+				members={communityData.users}
+				type="user"
+				title="Users"
+			/>
+			<ManageMembers 
+				bind:open={addManagerDialogOpen}
+				members={communityData.users}
+				type="manager"
+				title="Managers"
+			/>
 		</div>
 	</div>
 </div>

@@ -142,12 +142,12 @@
 				<div class="line-clamp-1 flex gap-2 font-medium">
 					Trending up this month <TrendingUp class="size-4 text-green-500" />
 				</div>
-				<div class="text-muted-foreground">Performance improved</div>
+				<div class="text-muted-foreground">Positive momentum</div>
 			{:else}
 				<div class="line-clamp-1 flex gap-2 font-medium">
 					Trending down this month <TrendingDown class="size-4 text-red-500" />
 				</div>
-				<div class="text-muted-foreground">Performance decreased</div>
+				<div class="text-muted-foreground">Negative momentum</div>
 			{/if}
 		</Card.Footer>
 	</Card.Root>
@@ -183,16 +183,16 @@
 				</div>
 			{/if}
 			{#if price_last_30 >= 0}
-				<div class="text-muted-foreground">Balance &gt; 0: More energy provided than consumed</div>
+				<div class="text-muted-foreground">More energy provided than consumed</div>
 			{:else}
-				<div class="text-muted-foreground">Balance &lt; 0: More energy consumed than provided</div>
+				<div class="text-muted-foreground">Less energy provided than consumed</div>
 			{/if}
 		</Card.Footer>
 	</Card.Root>
 
 	<Card.Root class="@container/card">
 		<Card.Header>
-			<Card.Description>Last 30 days energy generated</Card.Description>
+			<Card.Description>Last 30 days production</Card.Description>
 			<Card.Title class="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
 				{(generated_last_30 / 1000).toFixed(2)}kWh
 			</Card.Title>
@@ -215,19 +215,19 @@
 				<div class="line-clamp-1 flex gap-2 font-medium">
 					Trending up this month <TrendingUp class="size-4 text-green-500" />
 				</div>
-				<div class="text-muted-foreground">Performance improved</div>
+				<div class="text-muted-foreground">Producing more energy than last month</div>
 			{:else}
 				<div class="line-clamp-1 flex gap-2 font-medium">
 					Trending down this month <TrendingDown class="size-4 text-red-500" />
 				</div>
-				<div class="text-muted-foreground">Performance decreased</div>
+				<div class="text-muted-foreground">Producing less energy than last month</div>
 			{/if}
 		</Card.Footer>
 	</Card.Root>
 
 	<Card.Root class="@container/card">
 		<Card.Header>
-			<Card.Description>Last 30 days energy consumed</Card.Description>
+			<Card.Description>Last 30 days consumption</Card.Description>
 			<Card.Title class="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
 				{(consumed_last_30 / 1000).toFixed(2)}kWh
 			</Card.Title>
@@ -250,12 +250,12 @@
 				<div class="line-clamp-1 flex gap-2 font-medium">
 					Trending up this month <TrendingUp class="size-4 text-red-500" />
 				</div>
-				<div class="text-muted-foreground">Performance decreased</div>
+				<div class="text-muted-foreground">Consuming more energy than last month</div>
 			{:else}
 				<div class="line-clamp-1 flex gap-2 font-medium">
 					Trending down this month <TrendingDown class="size-4 text-green-500" />
 				</div>
-				<div class="text-muted-foreground">Performance improved</div>
+				<div class="text-muted-foreground">Consuming less energy than last month</div>
 			{/if}
 		</Card.Footer>
 	</Card.Root>
