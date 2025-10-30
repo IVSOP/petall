@@ -16,7 +16,7 @@ pub fn router(state: AppState) -> Router {
         )
         .route(
             "/admin/community/{id}",
-            get(admin::get_admin_community_information).patch(admin::edit_community_information),
+            get(admin::get_admin_community_information),
         )
         .route(
             "/admin/community/{id}/manager",

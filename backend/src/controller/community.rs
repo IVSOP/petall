@@ -66,45 +66,6 @@ impl AppState {
         Ok(community)
     }
 
-    pub async fn update_community(
-        &self,
-        id: Uuid,
-        name: Option<String>,
-        description: Option<String>,
-        image: Option<String>,
-    ) -> sqlx::Result<()> {
-        let mut query_builder = QueryBuilder::new("UPDATE community SET ");
-        let mut has_updates = false;
-
-        let mut add_field = |field_name: &str, value: Option<String>| {
-            if let Some(value) = value {
-                if has_updates {
-                    query_builder.push(", ");
-                }
-                query_builder.push(field_name);
-                query_builder.push(" = ");
-                query_builder.push_bind(value.clone());
-                has_updates = true;
-            }
-        };
-
-        add_field("name", name);
-        add_field("description", description);
-        add_field("image", image);
-
-        if !has_updates {
-            // If no updates, just return
-            return Ok(());
-        }
-
-        query_builder.push(" WHERE id = ");
-        query_builder.push_bind(id);
-
-        query_builder.build().execute(&self.pg_pool).await?;
-
-        Ok(())
-    }
-
     pub async fn get_community_by_id(&self, id: Uuid) -> sqlx::Result<Option<Community>> {
         sqlx::query_as!(
             Community,
