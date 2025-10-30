@@ -1,13 +1,14 @@
 use crate::AppState;
 use crate::auth::extractor::ExtractSession;
 use crate::controller::admin::AdminListCommunityView;
-use crate::error::{AppError, AppResult};
+use crate::error::{AppError, AppResult, ValidatedJson};
 use crate::models::{Community, User};
 use axum::extract::Path;
 use axum::http::StatusCode;
-use axum::{Json, debug_handler, extract::State};
+use axum::{Json, debug_handler, extract::State, response::IntoResponse};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use validator::Validate;
 
 #[derive(Serialize)]
 pub struct AdminCommunityInfoResponseUser {
@@ -44,6 +45,29 @@ pub struct EditCommunityRequest {
 #[derive(Debug, Deserialize)]
 pub struct ChangeMembersCommunityRequest {
     pub user_email: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Validate)]
+pub struct CommunityCreateRequest {
+    #[validate(length(
+        min = 2,
+        max = 100,
+        message = "Name must be at least 2 characters and at most 100 characters"
+    ))]
+    pub name: String,
+    #[validate(length(min = 2, message = "Description must be at least 2 characters"))]
+    pub description: String,
+    #[validate(url(message = "Image URL must be valid"))]
+    #[serde(deserialize_with = "empty_string_as_none")]
+    pub image: Option<String>,
+}
+
+fn empty_string_as_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let opt = Option::<String>::deserialize(deserializer)?;
+    Ok(opt.filter(|s| !s.is_empty()))
 }
 
 async fn require_manage_permission_and_find_user(
@@ -84,6 +108,32 @@ pub async fn get_admin_manageable_communities(
         .await?;
 
     Ok(Json(communities))
+}
+
+#[debug_handler]
+pub async fn create_community(
+    ExtractSession(session): ExtractSession,
+    State(state): State<AppState>,
+    ValidatedJson(request): ValidatedJson<CommunityCreateRequest>,
+) -> AppResult<impl IntoResponse> {
+    let user = state
+        .get_user_by_id(session.user_id)
+        .await?
+        .ok_or(AppError::UserNotFoundId(session.user_id))?;
+
+    if !user.is_admin {
+        return Err(AppError::Unauthorized);
+    }
+
+    let community = state
+        .create_community(
+            &request.name,
+            &request.description,
+            request.image.as_deref(),
+        )
+        .await?;
+
+    Ok((StatusCode::CREATED, Json(community)))
 }
 
 #[debug_handler]

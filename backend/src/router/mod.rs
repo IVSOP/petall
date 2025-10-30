@@ -14,7 +14,7 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .route(
             "/admin/community",
-            get(admin::get_admin_manageable_communities),
+            get(admin::get_admin_manageable_communities).post(admin::create_community),
         )
         .route(
             "/admin/community/{id}",
@@ -41,7 +41,6 @@ pub fn router(state: AppState) -> Router {
             delete(admin::remove_user_from_community),
         )
         .route("/community", get(community::get_communities_from_user))
-        .route("/community", post(community::create_community))
         .route("/community/{id}", get(community::get_community_by_id))
         .route(
             "/community/{id}/energy",

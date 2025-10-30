@@ -2,10 +2,9 @@ use crate::AppState;
 use crate::error::{AppError, AppResult};
 use crate::models::{Community, EnergyRecord, User, UserCommunity};
 use crate::router::community::{EnergyStats, OrderDirection, StatsFilter, StatsGranularity};
-use chrono::{Duration, NaiveDateTime, Utc};
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::{QueryBuilder, Row};
-use tracing::info;
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize)]
@@ -42,13 +41,10 @@ impl AppState {
 
     pub async fn create_community(
         &self,
-        creator_user_id: Uuid,
         name: &str,
         description: &str,
         image: Option<&str>,
     ) -> AppResult<Community> {
-        let mut tx = self.pg_pool.begin().await?;
-
         let community = sqlx::query_as!(
             Community,
             r#"
@@ -61,7 +57,7 @@ impl AppState {
             description,
             image
         )
-        .fetch_one(&mut *tx)
+        .fetch_one(&self.pg_pool)
         .await
         .map_err(|e| match e {
             sqlx::Error::Database(db_err) if db_err.is_unique_violation() => {
@@ -69,32 +65,6 @@ impl AppState {
             }
             other => other.into(),
         })?;
-
-        sqlx::query!(
-            r#"
-            INSERT INTO community_user
-            (user_id, community_id)
-            VALUES ($1, $2)
-            "#,
-            creator_user_id,
-            community.id,
-        )
-        .execute(&mut *tx)
-        .await?;
-
-        tx.commit().await?;
-
-        let now = Utc::now().naive_utc();
-        let start = now - Duration::days(30);
-
-        let random_records = EnergyRecord::random_vec(creator_user_id, community.id, start, now);
-
-        info!(
-            "Generated {} new random energy records",
-            random_records.len()
-        );
-
-        self.add_energy_records(&random_records).await?;
 
         Ok(community)
     }
