@@ -18,27 +18,15 @@ pub fn router(state: AppState) -> Router {
         )
         .route(
             "/admin/community/{id}",
-            get(admin::get_admin_community_information),
-        )
-        .route(
-            "/admin/community/{id}/edit",
-            patch(admin::edit_community_information),
+            get(admin::get_admin_community_information).patch(admin::edit_community_information),
         )
         .route(
             "/admin/community/{id}/manager",
-            put(admin::add_manager_to_community),
-        )
-        .route(
-            "/admin/community/{id}/manager",
-            delete(admin::remove_manager_from_community),
+            put(admin::add_manager_to_community).delete(admin::remove_manager_from_community),
         )
         .route(
             "/admin/community/{id}/user",
-            put(admin::add_user_to_community),
-        )
-        .route(
-            "/admin/community/{id}/user",
-            delete(admin::remove_user_from_community),
+            put(admin::add_user_to_community).delete(admin::remove_user_from_community),
         )
         .route("/community", get(community::get_communities_from_user))
         .route("/community/{id}", get(community::get_community_by_id))
