@@ -44,10 +44,10 @@ pub enum AppError {
     ValidationError(#[from] validator::ValidationErrors),
     #[error("user not found using ID: {0}")]
     UserNotFoundId(Uuid),
-    #[error("user-community already in use: user {0}, community {1}")]
-    UserCommunityAlreadyInUse(Uuid, Uuid),
-    #[error("not found user {0} in community {1}")]
-    UserCommunityNotFound(Uuid, Uuid),
+    #[error("user not found using email: {0}")]
+    UserNotFoundEmail(String),
+    #[error("unauthorized")]
+    Unauthorized,
     #[error("invalid session")]
     InvalidSession,
     #[error("email already in use: {0}")]
@@ -62,6 +62,14 @@ pub enum AppError {
     OAuthError(String),
     #[error("email not verified by provider")]
     EmailNotVerified,
+    #[error("user already added to community: {0}")]
+    UserAlreadyAddedToCommunity(Uuid),
+    #[error("manager already added to community: {0}")]
+    ManagerAlreadyAddedToCommunity(Uuid),
+    #[error("user not in community: {0}")]
+    UserNotInCommunity(Uuid),
+    #[error("manager not in community: {0}")]
+    ManagerNotInCommunity(Uuid),
 }
 
 impl IntoResponse for AppError {
@@ -107,18 +115,11 @@ impl IntoResponse for AppError {
             ),
             AppError::UserNotFoundId(id) => (
                 StatusCode::NOT_FOUND,
-                format!("user not found with id: {}", id),
+                format!("user not found with id: {id}"),
             ),
-            AppError::UserCommunityAlreadyInUse(user, community) => (
-                StatusCode::CONFLICT,
-                format!(
-                    "user-community already in use: user {}, community {}",
-                    user, community
-                ),
-            ),
-            AppError::UserCommunityNotFound(user, community) => (
+            AppError::UserNotFoundEmail(email) => (
                 StatusCode::NOT_FOUND,
-                format!("not found user {} in community {}", user, community),
+                format!("user not found with email: {email}"),
             ),
             AppError::InvalidSession => (StatusCode::UNAUTHORIZED, "Invalid session".to_string()),
             AppError::EmailAlreadyInUse(email) => (
@@ -136,6 +137,23 @@ impl IntoResponse for AppError {
             AppError::EmailNotVerified => (
                 StatusCode::FORBIDDEN,
                 "Email not verified by provider".to_string(),
+            ),
+            AppError::Unauthorized => (StatusCode::UNAUTHORIZED, "Unauthorized".to_string()),
+            AppError::UserAlreadyAddedToCommunity(id) => (
+                StatusCode::CONFLICT,
+                format!("User already added to community: {}", id),
+            ),
+            AppError::ManagerAlreadyAddedToCommunity(id) => (
+                StatusCode::CONFLICT,
+                format!("Manager already added to community: {}", id),
+            ),
+            AppError::UserNotInCommunity(id) => (
+                StatusCode::FORBIDDEN,
+                format!("User not in community: {}", id),
+            ),
+            AppError::ManagerNotInCommunity(id) => (
+                StatusCode::FORBIDDEN,
+                format!("Manager not in community: {}", id),
             ),
         };
 

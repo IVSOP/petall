@@ -1,6 +1,6 @@
 use crate::AppState;
 use crate::error::{AppError, AppResult};
-use crate::models::{Community, EnergyRecord, UserCommunity};
+use crate::models::{Community, EnergyRecord, User, UserCommunity};
 use crate::router::{EnergyStats, OrderDirection, StatsFilter, StatsGranularity};
 use chrono::{Duration, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -17,6 +17,7 @@ pub struct PaginatedEnergyRecords {
 
 impl AppState {
     pub async fn get_communities_from_user(&self, user_id: Uuid) -> sqlx::Result<Vec<Community>> {
+        // TODO: show this to use energy records
         let rows = sqlx::query!(
             r#"
             SELECT c.id, c.name, c.description, c.image FROM community c
@@ -98,37 +99,91 @@ impl AppState {
         Ok(community)
     }
 
-    pub async fn get_community_by_id(
+    pub async fn update_community(
         &self,
-        user_id: Uuid,
         id: Uuid,
-    ) -> sqlx::Result<Option<Community>> {
-        let rows = sqlx::query!(
-            r#"
-            SELECT c.id, c.name, c.description, c.image FROM community c
-            JOIN community_user uc ON c.id = uc.community_id
-            WHERE c.id = $1 AND uc.user_id = $2
-            "#,
-            id,
-            user_id
-        )
-        .fetch_optional(&self.pg_pool)
-        .await?;
+        name: Option<String>,
+        description: Option<String>,
+        image: Option<String>,
+    ) -> sqlx::Result<()> {
+        let mut query_builder = QueryBuilder::new("UPDATE community SET ");
+        let mut has_updates = false;
 
-        Ok(rows.map(|row| Community {
-            id: row.id,
-            name: row.name,
-            description: row.description,
-            image: row.image,
-        }))
+        let mut add_field = |field_name: &str, value: Option<String>| {
+            if let Some(value) = value {
+                if has_updates {
+                    query_builder.push(", ");
+                }
+                query_builder.push(field_name);
+                query_builder.push(" = ");
+                query_builder.push_bind(value.clone());
+                has_updates = true;
+            }
+        };
+
+        add_field("name", name);
+        add_field("description", description);
+        add_field("image", image);
+
+        if !has_updates {
+            // If no updates, just return
+            return Ok(());
+        }
+
+        query_builder.push(" WHERE id = ");
+        query_builder.push_bind(id);
+
+        query_builder.build().execute(&self.pg_pool).await?;
+
+        Ok(())
     }
 
-    // FIX: ISTO NUNCA É USADO
-    pub async fn register_user_community(
+    pub async fn get_community_by_id(&self, id: Uuid) -> sqlx::Result<Option<Community>> {
+        sqlx::query_as!(
+            Community,
+            r#"
+            SELECT id, name, description, image FROM community
+            WHERE id = $1
+            "#,
+            id,
+        )
+        .fetch_optional(&self.pg_pool)
+        .await
+    }
+
+    pub async fn get_users_from_community(&self, community_id: Uuid) -> sqlx::Result<Vec<User>> {
+        sqlx::query_as!(
+            User,
+            r#"
+            SELECT u.id, u.name, u.email, u.is_admin FROM "user" u
+            JOIN community_user cu ON u.id = cu.user_id
+            WHERE cu.community_id = $1
+            "#,
+            community_id,
+        )
+        .fetch_all(&self.pg_pool)
+        .await
+    }
+
+    pub async fn get_managers_from_community(&self, community_id: Uuid) -> sqlx::Result<Vec<User>> {
+        sqlx::query_as!(
+            User,
+            r#"
+            SELECT u.id, u.name, u.email, u.is_admin FROM "user" u
+            JOIN community_manager cm ON u.id = cm.user_id
+            WHERE cm.community_id = $1
+            "#,
+            community_id,
+        )
+        .fetch_all(&self.pg_pool)
+        .await
+    }
+
+    pub async fn add_user_to_community(
         &self,
-        community: &Uuid,
+        community: Uuid,
         user: Uuid,
-    ) -> sqlx::Result<UserCommunity> {
+    ) -> AppResult<UserCommunity> {
         sqlx::query_as!(
             UserCommunity,
             r#"
@@ -143,6 +198,86 @@ impl AppState {
         )
         .fetch_one(&self.pg_pool)
         .await
+        .map_err(|e| match e {
+            sqlx::Error::Database(db_err) if db_err.is_unique_violation() => {
+                AppError::UserAlreadyAddedToCommunity(user)
+            }
+            other => other.into(),
+        })
+
+        // TODO: missing seeding
+    }
+
+    pub async fn remove_user_from_community(
+        &self,
+        community_id: Uuid,
+        user_id: Uuid,
+    ) -> AppResult<()> {
+        let result = sqlx::query!(
+            r#"
+            DELETE FROM community_user
+            WHERE community_id = $1 AND user_id = $2
+            "#,
+            community_id,
+            user_id,
+        )
+        .execute(&self.pg_pool)
+        .await?;
+
+        if result.rows_affected() == 0 {
+            return Err(AppError::ManagerNotInCommunity(user_id));
+        }
+
+        Ok(())
+    }
+
+    pub async fn add_manager_to_community(
+        &self,
+        community_id: Uuid,
+        user_id: Uuid,
+    ) -> AppResult<()> {
+        sqlx::query!(
+            r#"
+            INSERT INTO community_manager
+            (community_id, user_id)
+            VALUES ($1, $2)
+            "#,
+            community_id,
+            user_id,
+        )
+        .execute(&self.pg_pool)
+        .await
+        .map_err(|e| match e {
+            sqlx::Error::Database(db_err) if db_err.is_unique_violation() => {
+                AppError::ManagerAlreadyAddedToCommunity(user_id)
+            }
+            other => other.into(),
+        })?;
+
+        Ok(())
+    }
+
+    pub async fn remove_manager_from_community(
+        &self,
+        community_id: Uuid,
+        user_id: Uuid,
+    ) -> AppResult<()> {
+        let result = sqlx::query!(
+            r#"
+            DELETE FROM community_manager
+            WHERE community_id = $1 AND user_id = $2
+            "#,
+            community_id,
+            user_id,
+        )
+        .execute(&self.pg_pool)
+        .await?;
+
+        if result.rows_affected() == 0 {
+            return Err(AppError::ManagerNotInCommunity(user_id));
+        }
+
+        Ok(())
     }
 
     pub async fn add_energy_records(&self, records: &Vec<EnergyRecord>) -> sqlx::Result<()> {

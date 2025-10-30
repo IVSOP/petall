@@ -16,6 +16,20 @@ pub struct AdminListCommunityView {
 }
 
 impl AppState {
+    pub async fn get_admins(&self) -> sqlx::Result<Vec<User>> {
+        sqlx::query_as!(
+            User,
+            r#"
+            SELECT id, name, email, is_admin
+            FROM "user"
+            WHERE is_admin = TRUE
+            "#
+        )
+        .fetch_all(&self.pg_pool)
+        .await
+        .map_err(Into::into)
+    }
+
     /// Determines if a user has access to the admin view in the frontend.
     /// Users can access the admin view if they are either:
     /// - An admin (with access to all communities)
@@ -28,6 +42,24 @@ impl AppState {
         let count = sqlx::query!(
             "SELECT COUNT(*) FROM community_manager WHERE user_id = $1",
             user.id
+        )
+        .fetch_one(&self.pg_pool)
+        .await?
+        .count
+        .unwrap_or(0);
+
+        Ok(count > 0)
+    }
+
+    pub async fn can_manage_community(&self, user: &User, community_id: Uuid) -> AppResult<bool> {
+        if user.is_admin {
+            return Ok(true);
+        }
+
+        let count = sqlx::query!(
+            "SELECT COUNT(*) FROM community_manager WHERE user_id = $1 AND community_id = $2",
+            user.id,
+            community_id
         )
         .fetch_one(&self.pg_pool)
         .await?
