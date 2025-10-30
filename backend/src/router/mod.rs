@@ -1,8 +1,6 @@
 use crate::AppState;
 use crate::auth;
 use axum::Router;
-use axum::routing::delete;
-use axum::routing::patch;
 use axum::routing::put;
 use axum::routing::{get, post};
 use tower_http::trace::TraceLayer;
