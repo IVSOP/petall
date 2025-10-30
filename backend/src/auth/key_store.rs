@@ -1,4 +1,8 @@
-use crate::{AppState, error::AppResult, models::{AuthProvider, Key}};
+use crate::{
+    AppState,
+    error::AppResult,
+    models::{AuthProvider, Key},
+};
 use uuid::Uuid;
 
 impl AppState {

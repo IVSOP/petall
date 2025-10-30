@@ -1,7 +1,7 @@
 use crate::AppState;
 use crate::error::{AppError, AppResult};
 use crate::models::{Community, EnergyRecord, User, UserCommunity};
-use crate::router::{EnergyStats, OrderDirection, StatsFilter, StatsGranularity};
+use crate::router::community::{EnergyStats, OrderDirection, StatsFilter, StatsGranularity};
 use chrono::{Duration, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{QueryBuilder, Row};
