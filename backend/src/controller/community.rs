@@ -2,7 +2,7 @@ use crate::AppState;
 use crate::error::{AppError, AppResult};
 use crate::models::{Community, EnergyRecord, User, UserCommunity};
 use crate::router::community::{EnergyStats, OrderDirection, StatsFilter, StatsGranularity};
-use chrono::NaiveDateTime;
+use chrono::{Duration, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{QueryBuilder, Row};
 use uuid::Uuid;
@@ -151,10 +151,10 @@ impl AppState {
 
     pub async fn add_user_to_community(
         &self,
-        community: Uuid,
-        user: Uuid,
+        community_id: Uuid,
+        user_id: Uuid,
     ) -> AppResult<UserCommunity> {
-        sqlx::query_as!(
+        let user = sqlx::query_as!(
             UserCommunity,
             r#"
             INSERT INTO community_user
@@ -163,19 +163,52 @@ impl AppState {
             RETURNING
             community_id, user_id
             "#,
-            community,
-            user,
+            community_id,
+            user_id,
         )
         .fetch_one(&self.pg_pool)
         .await
         .map_err(|e| match e {
             sqlx::Error::Database(db_err) if db_err.is_unique_violation() => {
-                AppError::UserAlreadyAddedToCommunity(user)
+                AppError::UserAlreadyAddedToCommunity(user_id)
             }
             other => other.into(),
-        })
+        })?;
 
-        // TODO: missing seeding
+        // Only for demonstration purposes
+        // This will make data duplicated if the user already has energy records for this community
+        let now = Utc::now().naive_utc();
+        let start = now - Duration::days(30);
+
+        let random_records = EnergyRecord::random_vec(user_id, community_id, start, now);
+
+        self.insert_energy_records(&random_records).await?;
+
+        Ok(user)
+    }
+
+    async fn insert_energy_records(&self, records: &Vec<EnergyRecord>) -> sqlx::Result<()> {
+        const CHUNK_SIZE: usize = 1000; // estava a chegar a limite de argumentos para a query
+
+        for chunk in records.chunks(CHUNK_SIZE) {
+            let mut query_builder = QueryBuilder::new(
+                "INSERT INTO energy_record (user_id, community_id, generated, consumed, consumer_price, seller_price, start) ",
+            );
+
+            query_builder.push_values(chunk, |mut b, record| {
+                b.push_bind(record.user_id)
+                    .push_bind(record.community_id)
+                    .push_bind(record.generated.clone())
+                    .push_bind(record.consumed.clone())
+                    .push_bind(record.consumer_price.clone())
+                    .push_bind(record.seller_price.clone())
+                    .push_bind(record.start);
+            });
+
+            query_builder.build().execute(&self.pg_pool).await?;
+        }
+
+        Ok(())
     }
 
     pub async fn remove_user_from_community(
@@ -245,30 +278,6 @@ impl AppState {
 
         if result.rows_affected() == 0 {
             return Err(AppError::ManagerNotInCommunity(user_id));
-        }
-
-        Ok(())
-    }
-
-    pub async fn add_energy_records(&self, records: &Vec<EnergyRecord>) -> sqlx::Result<()> {
-        const CHUNK_SIZE: usize = 1000; // estava a chegar a limite de argumentos para a query
-
-        for chunk in records.chunks(CHUNK_SIZE) {
-            let mut query_builder = QueryBuilder::new(
-                "INSERT INTO energy_record (user_id, community_id, generated, consumed, consumer_price, seller_price, start) ",
-            );
-
-            query_builder.push_values(chunk, |mut b, record| {
-                b.push_bind(record.user_id)
-                    .push_bind(record.community_id)
-                    .push_bind(record.generated.clone())
-                    .push_bind(record.consumed.clone())
-                    .push_bind(record.consumer_price.clone())
-                    .push_bind(record.seller_price.clone())
-                    .push_bind(record.start);
-            });
-
-            query_builder.build().execute(&self.pg_pool).await?;
         }
 
         Ok(())
