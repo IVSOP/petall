@@ -72,12 +72,12 @@ pub struct EnergyStats {
 }
 
 #[debug_handler]
-pub async fn get_communities_from_user(
+pub async fn get_communities_with_user_energy_records(
     ExtractSession(session): ExtractSession,
     State(state): State<AppState>,
 ) -> AppResult<impl IntoResponse> {
     let communities = state
-        .get_communities_from_user(session.user_id)
+        .get_communities_with_user_energy_records(session.user_id)
         .await?
         .into_iter()
         .map(|community| UserCommunityResponse { community })

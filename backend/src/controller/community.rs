@@ -15,28 +15,25 @@ pub struct PaginatedEnergyRecords {
 }
 
 impl AppState {
-    pub async fn get_communities_from_user(&self, user_id: Uuid) -> sqlx::Result<Vec<Community>> {
-        // TODO: show this to use energy records
-        let rows = sqlx::query!(
+    pub async fn get_communities_with_user_energy_records(
+        &self,
+        user_id: Uuid,
+    ) -> sqlx::Result<Vec<Community>> {
+        sqlx::query_as!(
+            Community,
             r#"
-            SELECT c.id, c.name, c.description, c.image FROM community c
-            JOIN community_user uc ON c.id = uc.community_id
-            WHERE uc.user_id = $1
+            SELECT c.id, c.name, c.description, c.image
+            FROM community c
+            WHERE EXISTS (
+                SELECT 1 FROM energy_record er
+                WHERE er.community_id = c.id
+                AND er.user_id = $1
+            )
             "#,
             user_id
         )
         .fetch_all(&self.pg_pool)
-        .await?;
-
-        Ok(rows
-            .into_iter()
-            .map(|row| Community {
-                id: row.id,
-                name: row.name,
-                description: row.description,
-                image: row.image,
-            })
-            .collect())
+        .await
     }
 
     pub async fn create_community(

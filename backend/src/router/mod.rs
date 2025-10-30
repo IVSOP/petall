@@ -26,7 +26,10 @@ pub fn router(state: AppState) -> Router {
             "/admin/community/{id}/user",
             put(admin::add_user_to_community).delete(admin::remove_user_from_community),
         )
-        .route("/community", get(community::get_communities_from_user))
+        .route(
+            "/community",
+            get(community::get_communities_with_user_energy_records),
+        )
         .route("/community/{id}", get(community::get_community_by_id))
         .route(
             "/community/{id}/energy",
