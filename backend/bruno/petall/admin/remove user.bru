@@ -1,0 +1,26 @@
+meta {
+  name: remove user
+  type: http
+  seq: 1
+}
+
+delete {
+  url: {{host}}/admin/community/:id/user
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: bd63473f-35b3-40b4-afa9-d471f25f79d0
+}
+
+body:json {
+  {
+    "user_email": "diogo@mail.com"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

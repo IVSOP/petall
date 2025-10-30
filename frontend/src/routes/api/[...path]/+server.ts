@@ -26,3 +26,11 @@ export const GET: RequestHandler = async ({ params, request }) => {
 export const POST: RequestHandler = async ({ params, request }) => {
 	return await proxyRequest('POST', params.path, request);
 };
+
+export const PUT: RequestHandler = async ({ params, request }) => {
+	return await proxyRequest('PUT', params.path, request);
+};
+
+export const DELETE: RequestHandler = async ({ params, request }) => {
+	return await proxyRequest('DELETE', params.path, request);
+};

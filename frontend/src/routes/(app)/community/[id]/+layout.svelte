@@ -16,10 +16,9 @@
 	let { data, children }: LayoutProps = $props();
 
 	let open = $state(false);
-	let value = $state(data.communities.filter((c) => c.id === data.community.id)[0].name);
-
 	let triggerRef = $state<HTMLButtonElement>(null!);
 
+	let value = $state(data.community.name);
 	const selectedValue = $derived(data.communities.find((c) => c.name === value)?.name);
 
 	function closeAndFocusTrigger() {
@@ -35,9 +34,6 @@
 		goto(`/community/${community.id}`);
 	}
 
-	function joinCommunity(community: Community) {
-		console.log(community.name);
-	}
 </script>
 
 <div class="flex flex-col gap-4 pb-4 md:flex-row md:justify-between">

@@ -20,7 +20,7 @@
 								variant="ghost"
 								class="cursor-pointer items-end bg-transparent pb-0 pl-0 text-3xl leading-none font-semibold transition-opacity hover:bg-transparent hover:opacity-70"
 							>
-								<img src="/favicon.ico" alt="PeTall" class="h-8 w-8" />
+								<img src="/favicon.ico" alt="PeTall" class="h-8 w-11" />
 								PeTall
 							</Button>
 						</NavigationMenu.Item>

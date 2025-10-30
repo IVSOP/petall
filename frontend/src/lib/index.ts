@@ -9,6 +9,19 @@ export type UserCommunity = {
 	community_id: string;
 };
 
+export type ManagerCommunity = {
+	manager_id: string;
+	community_id: string;
+};
+
+export type Community = {
+	id: string;
+	name: string;
+	image?: string;
+	description: string;
+	// rule: string;
+};
+
 export type EnergyRecord = {
 	id: string;
 	userId: string;
@@ -26,23 +39,4 @@ export type EnergyStats = {
 	consumedSum: number;
 	generatedPrice: number;
 	consumedPrice: number;
-};
-
-export type ProcessedEnergy = {
-	id: string;
-	user: string;
-	community: string;
-	generated: number;
-	consumed: number;
-	coefficient: number;
-	start: Date;
-	end: Date;
-	delta: number;
-};
-
-export type Community = {
-	id: string;
-	name: string;
-	supplier: string;
-	description: string;
 };
