@@ -57,6 +57,6 @@ export const actions = {
 		}
 
 		const community: CommunityCreateResponse = await response.json();
-		redirect(302, `/community/${community.id}`);
+		redirect(302, `/admin/community/${community.id}/settings`);
 	}
 } satisfies Actions;
