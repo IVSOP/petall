@@ -56,7 +56,15 @@
 						<span class="font-medium">{user.email}</span>
 					</div>
 
-					{#if admins.some((u) => u.id !== user.id) || user_type === 'user'}
+					{#if admins.some((u) => u.id === user.id) && user_type !== 'user'}
+						<Button
+							variant="destructive"
+							class="cursor-not-allowed text-sm font-medium opacity-50 hover:cursor-not-allowed"
+						>
+							<Trash_2 class="mr-1" />
+							Remove
+						</Button>
+					{:else}
 						<form method="POST" action="?/removeUser">
 							<Input type="hidden" name="user_type" value={user_type} />
 							<Input type="hidden" name="user_email" value={user.email} />
@@ -69,14 +77,6 @@
 								Remove
 							</Button>
 						</form>
-					{:else}
-						<Button
-							variant="destructive"
-							class="cursor-not-allowed text-sm font-medium opacity-50 hover:cursor-not-allowed"
-						>
-							<Trash_2 class="mr-1" />
-							Remove
-						</Button>
 					{/if}
 				</div>
 			{/each}

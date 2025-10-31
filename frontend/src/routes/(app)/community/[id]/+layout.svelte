@@ -2,13 +2,11 @@
 	import type { LayoutProps } from './$types';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
 	import CheckIcon from '@lucide/svelte/icons/check';
-	import Plus from '@lucide/svelte/icons/plus';
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
 	import { tick } from 'svelte';
 	import * as Command from '$lib/components/ui/command/index.js';
 	import * as Popover from '$lib/components/ui/popover/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import Settings from '@lucide/svelte/icons/settings';
 	import { cn } from '$lib/utils.js';
 	import { goto } from '$app/navigation';
 	import type { Community } from '$lib';

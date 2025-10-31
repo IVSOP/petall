@@ -76,7 +76,7 @@
 			/>
 			<ManageMembers
 				bind:open={addManagerDialogOpen}
-				users={data.admin_community_info.managers}
+				users={data.admin_community_info.managers.concat(data.admin_community_info.admins)}
 				admins={data.admin_community_info.admins}
 				user_type="manager"
 				title="Managers"

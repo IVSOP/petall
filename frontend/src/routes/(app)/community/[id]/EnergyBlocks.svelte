@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { EnergyRecord } from '$lib';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import TrendingDown from '@lucide/svelte/icons/trending-down';
