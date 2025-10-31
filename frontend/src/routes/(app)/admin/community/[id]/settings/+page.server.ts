@@ -17,6 +17,10 @@ export const load: PageServerLoad = async ({ fetch, params, cookies }) => {
 		}
 	});
 
+	if (response.status === 401) {
+		throw redirect(303, '/');
+	}
+
 	if (!response.ok) {
 		throw new Error('Failed to fetch community');
 	}

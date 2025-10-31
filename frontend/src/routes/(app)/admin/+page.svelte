@@ -21,10 +21,12 @@
 				{data.communities.length}
 			</span>
 		</div>
+		{#if data.user?.isAdmin}
 		<Button href="/admin/community/new" class="cursor-pointer">
 			<HousePlus />
 			Create community
 		</Button>
+		{/if}
 	</Card.Header>
 
 	<Card.Content>

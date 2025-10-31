@@ -1,7 +1,19 @@
 import { fail, redirect } from '@sveltejs/kit';
-import type { Actions } from './$types';
+import type { PageServerLoad, Actions } from './$types';
 import type { ErrorResponse } from '$lib/api';
 import type { CommunityCreateRequest, CommunityCreateResponse } from '$lib/api/community';
+
+export const load: PageServerLoad = async ({ cookies, locals }) => {
+	const sessionId = cookies.get('sessionId');
+
+	if (!sessionId) {
+		throw redirect(302, '/login');
+	}
+
+	if (!locals.user || !locals.user.isAdmin) {
+		throw redirect(302, '/');
+	}
+};
 
 export const actions = {
 	default: async ({ cookies, request, fetch }) => {
