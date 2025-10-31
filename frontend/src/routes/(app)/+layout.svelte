@@ -18,7 +18,7 @@
 							<Button
 								href="/"
 								variant="ghost"
-								class="cursor-pointer items-end bg-transparent pb-0 pl-0 text-3xl leading-none font-semibold transition-opacity hover:bg-transparent hover:opacity-70"
+								class="cursor-pointer bg-transparent pb-0 pl-0 text-3xl font-semibold transition-opacity hover:bg-transparent hover:opacity-70"
 							>
 								<img src="/favicon.ico" alt="PeTall" class="h-8 w-11" />
 								PeTall
@@ -29,7 +29,7 @@
 								<Button
 									href="/admin"
 									variant="ghost"
-									class="cursor-pointer items-end bg-transparent pb-1 text-lg leading-none font-semibold transition-opacity hover:bg-transparent hover:opacity-70"
+									class="cursor-pointer bg-transparent pb-1 text-lg font-semibold transition-opacity hover:bg-transparent hover:opacity-70"
 								>
 									Admin view
 								</Button>

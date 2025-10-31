@@ -13,8 +13,8 @@
 	<title>New Community</title>
 </svelte:head>
 
-<div class="mx-auto max-w-2xl space-y-4 py-12">
-	<h1 class="text-2xl font-semibold text-gray-900">Create Community</h1>
+<div class="mx-auto max-w-2xl space-y-4">
+	<!-- <h1 class="text-2xl font-semibold text-gray-900">Create Community</h1> -->
 
 	<form method="POST" class="space-y-4">
 		<div class="space-y-2">

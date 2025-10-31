@@ -66,7 +66,7 @@ export const actions: Actions = {
 
 		return { success: true };
 	},
-	
+
 	removeUser: async ({ request, params, cookies, fetch }) => {
 		const data = await request.formData();
 		const user_type = data.get('user_type')?.toString();
@@ -98,7 +98,7 @@ export const actions: Actions = {
 			return fail(response.status, { user_email, error: error.error });
 		}
 
-		console.log("aqui");
+		console.log('aqui');
 
 		return { success: true };
 	}

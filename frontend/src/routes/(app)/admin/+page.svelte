@@ -6,6 +6,7 @@
 	import Settings from '@lucide/svelte/icons/settings';
 	import Zap from '@lucide/svelte/icons/zap';
 	import Users from '@lucide/svelte/icons/users';
+	import HousePlus from '@lucide/svelte/icons/house-plus';
 	import Badge from '$lib/components/ui/badge/badge.svelte';
 
 	const { data } = $props();
@@ -20,6 +21,10 @@
 				{data.communities.length}
 			</span>
 		</div>
+		<Button href="/admin/community/new" class="cursor-pointer">
+			<HousePlus />
+			Create community
+		</Button>
 	</Card.Header>
 
 	<Card.Content>
@@ -51,7 +56,7 @@
 								</div>
 							</div>
 
-							<Button href="/community/{community.id}/settings">
+							<Button href="/admin/community/{community.id}/settings">
 								<Settings /> Settings
 							</Button>
 						</div>

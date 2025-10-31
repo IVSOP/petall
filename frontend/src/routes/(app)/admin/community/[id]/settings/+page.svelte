@@ -1,10 +1,10 @@
 <script lang="ts">
-	import type { PageProps } from './$types';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import AddUserDialog from './AddUserDialog.svelte';
 	import ManageMembers from './ManageUsers.svelte';
 	import Zap from '@lucide/svelte/icons/zap';
 	import ErrorDialog from '$lib/components/ErrorDialog.svelte';
+	import type { PageProps } from './$types';
 
 	const { data, form }: PageProps = $props();
 
@@ -16,15 +16,15 @@
 
 <div class="container">
 	<div class="w-full space-y-6">
-		<Card.Root class="relative w-full overflow-hidden p-0">
+		<Card.Root class="w-full overflow-hidden p-0">
 			<div
 				class="grid w-full md:grid-cols-[minmax(300px,1fr)_2fr] md:gap-4 lg:grid-cols-[minmax(400px,1fr)_3fr]"
 			>
-				<div class="relative aspect-[4/3] w-full md:aspect-auto">
-					{#if data.community.image}
+				<div class="aspect-[4/3] w-full md:aspect-auto">
+					{#if data.admin_community_info.community.image}
 						<img
-							src={data.community.image}
-							alt={`Image of ${data.community.name}`}
+							src={data.admin_community_info.community.image}
+							alt={`Image of ${data.admin_community_info.community.name}`}
 							class="h-full w-full object-cover"
 						/>
 					{:else}
@@ -42,12 +42,12 @@
 				<div class="flex w-full flex-col justify-center gap-6 p-6">
 					<div>
 						<h2 class="mb-1 text-sm font-medium text-muted-foreground">Name</h2>
-						<p class="text-xl font-bold">{data.community.name}</p>
+						<p class="text-xl font-bold">{data.admin_community_info.community.name}</p>
 					</div>
 
 					<div>
 						<h2 class="mb-1 text-sm font-medium text-muted-foreground">Description</h2>
-						<p class="text-md">{data.community.description}</p>
+						<p class="text-md">{data.admin_community_info.community.description}</p>
 					</div>
 
 					<div>

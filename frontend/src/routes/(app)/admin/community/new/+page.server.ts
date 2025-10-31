@@ -1,6 +1,6 @@
-import type { ErrorResponse } from '$lib/api';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
+import type { ErrorResponse } from '$lib/api';
 import type { CommunityCreateRequest, CommunityCreateResponse } from '$lib/api/community';
 
 export const actions = {
@@ -26,7 +26,7 @@ export const actions = {
 			image
 		};
 
-		const response = await fetch('/api/community', {
+		const response = await fetch('/api/admin/community', {
 			method: 'POST',
 			headers: {
 				Authorization: sessionId,

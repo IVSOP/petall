@@ -33,7 +33,6 @@
 		closeAndFocusTrigger();
 		goto(`/community/${community.id}`);
 	}
-
 </script>
 
 <div class="flex flex-col gap-4 pb-4 md:flex-row md:justify-between">
@@ -85,19 +84,6 @@
 				</Breadcrumb.Item>
 			</Breadcrumb.List>
 		</Breadcrumb.Root>
-
-		<div class="flex gap-2">
-			<Button variant="destructive" href="/community/{data.community.id}/settings">
-				<Settings /> Admin Settings
-			</Button>
-		</div>
-	</div>
-
-	<div class="flex flex-col gap-2 md:flex-row">
-		<Button href="/community/new">
-			<Plus />
-			New Community
-		</Button>
 	</div>
 </div>
 

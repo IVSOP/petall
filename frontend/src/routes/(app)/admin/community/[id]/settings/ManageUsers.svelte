@@ -14,7 +14,7 @@
 		users,
 		admins,
 		title,
-		user_type,
+		user_type
 	}: {
 		open: boolean;
 		users: User[];
@@ -22,7 +22,6 @@
 		title: string;
 		user_type: string;
 	} = $props();
-
 </script>
 
 <Card.Root class="w-full gap-0 pb-0 lg:w-1/2">
@@ -42,8 +41,8 @@
 		</Button>
 	</Card.Header>
 
-	<Card.Content class="max-h-[400px] overflow-hidden p-0">
-		<ScrollArea class="h-[400px] w-full rounded-lg">
+	<Card.Content class="max-h-[325px] overflow-hidden p-0">
+		<ScrollArea class="h-[325px] w-full rounded-lg">
 			{#each users as user}
 				<div
 					class="flex items-center justify-between gap-3 border-b p-3 transition-colors hover:bg-accent/50"
@@ -58,18 +57,18 @@
 					</div>
 
 					{#if admins.some((u) => u.id !== user.id) || user_type === 'user'}
-					<form method="POST" action="?/removeUser">
-						<Input type="hidden" name="user_type" value={user_type} />
-						<Input type="hidden" name="user_email" value={user.email} />
-						<Button
-							type="submit"
-							variant="destructive"
-							class="cursor-pointer text-sm font-medium"
-						>
-							<Trash_2 class="mr-1" />
-							Remove
-						</Button>
-					</form>
+						<form method="POST" action="?/removeUser">
+							<Input type="hidden" name="user_type" value={user_type} />
+							<Input type="hidden" name="user_email" value={user.email} />
+							<Button
+								type="submit"
+								variant="destructive"
+								class="cursor-pointer text-sm font-medium"
+							>
+								<Trash_2 class="mr-1" />
+								Remove
+							</Button>
+						</form>
 					{:else}
 						<Button
 							variant="destructive"

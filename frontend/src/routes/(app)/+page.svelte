@@ -7,8 +7,4 @@
 		You don't have records of any community
 	</p>
 	<p class="text-muted-foreground">Wait for an administrator to add you to a community.</p>
-
-	<Button class="mt-4" variant="destructive" size="lg" href="/community/new">
-		As this is a demo build, you can create a community here
-	</Button>
 </div>
