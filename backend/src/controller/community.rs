@@ -136,7 +136,7 @@ impl AppState {
         // Only for demonstration purposes
         // This will make data duplicated if the user already has energy records for this community
         let now = Utc::now().naive_utc();
-        let start = now - Duration::days(30);
+        let start = now - Duration::days(90);
 
         let random_records = EnergyRecord::random_vec(user_id, community_id, start, now);
 
@@ -145,7 +145,7 @@ impl AppState {
         Ok(user)
     }
 
-    async fn insert_energy_records(&self, records: &Vec<EnergyRecord>) -> sqlx::Result<()> {
+    pub async fn insert_energy_records(&self, records: &Vec<EnergyRecord>) -> sqlx::Result<()> {
         const CHUNK_SIZE: usize = 1000; // estava a chegar a limite de argumentos para a query
 
         for chunk in records.chunks(CHUNK_SIZE) {

@@ -1,9 +1,11 @@
 use crate::seed::SeedSettings;
 use anyhow::{Context, Result};
+use chrono::{Timelike, Utc};
 use clap::{Parser, Subcommand};
 use sqlx::PgPool;
-use std::net::IpAddr;
-use tracing::info;
+use tokio::time::{self, Instant};
+use std::{net::IpAddr, time::Duration};
+use tracing::{info, error};
 
 mod auth;
 mod controller;
@@ -58,6 +60,41 @@ pub struct AppState {
     google_oauth: auth::oauth::GoogleOAuthClient,
 }
 
+/// Starts a scheduler that runs every quarter-hour (00, 15, 30, 45)
+pub async fn periodic_seed(state: AppState) -> sqlx::Result<()> {
+    // --- Compute the first tick aligned to next quarter-hour ---
+    let now = Utc::now();
+    let minutes = now.minute();
+    let seconds = now.second();
+
+    // Compute how many minutes until the next multiple of 15
+    // This means this is only accurate to the minute. However, when records are inserted, seconds are always zeroed out
+    let next_quarter = ((minutes / 15) + 1) * 15 % 60;
+    let minutes_until_next = if next_quarter > minutes {
+        next_quarter - minutes
+    } else {
+        60 - minutes
+    };
+
+    let initial_delay_secs = (minutes_until_next * 60 - seconds as u32) as u64;
+    let start_instant = Instant::now() + Duration::from_secs(initial_delay_secs);
+
+    // Create a 15-minute interval aligned to that start time
+    let mut interval = time::interval_at(start_instant, Duration::from_secs(15 * 60));
+
+    info!(
+        "Scheduler will start in {:?} (at next quarter-hour boundary)",
+        Duration::from_secs(initial_delay_secs)
+    );
+
+    loop {
+        interval.tick().await;
+        info!("Seeding records");
+
+        state.insert_random_energy_records().await?;
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
@@ -99,10 +136,13 @@ async fn main() -> Result<()> {
                 google_oauth,
             };
 
+            let seeder = tokio::spawn(periodic_seed(state.clone()));
+
             info!("Starting server on {}", listener.local_addr().unwrap());
 
             tokio::select! {
                 _ = axum::serve(listener, router::router(state)) => {}
+                _ = seeder => {},
                 _ = tokio::signal::ctrl_c() => {}
             }
         }
