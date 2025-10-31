@@ -1,8 +1,6 @@
-use crate::error::AppResult;
-use crate::models::{AuthProvider, EnergyRecord, User, UserCommunity};
-use crate::{AppState, auth};
-use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime, Timelike, Utc};
-use uuid::Uuid;
+use crate::models::EnergyRecord;
+use crate::AppState;
+use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike, Utc};
 
 impl AppState {
     pub async fn insert_random_energy_records(&self) -> sqlx::Result<()> {

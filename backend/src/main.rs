@@ -61,7 +61,7 @@ pub struct AppState {
 }
 
 /// Starts a scheduler that runs every quarter-hour (00, 15, 30, 45)
-pub async fn periodic_seed(state: AppState) -> sqlx::Result<()> {
+pub async fn periodic_seed(state: AppState) {
     // --- Compute the first tick aligned to next quarter-hour ---
     let now = Utc::now();
     let minutes = now.minute();
@@ -91,7 +91,9 @@ pub async fn periodic_seed(state: AppState) -> sqlx::Result<()> {
         interval.tick().await;
         info!("Seeding records");
 
-        state.insert_random_energy_records().await?;
+        if let Err(e) = state.insert_random_energy_records().await {
+            error!("Error inserting random energy records: {}", e);
+        }
     }
 }
 
