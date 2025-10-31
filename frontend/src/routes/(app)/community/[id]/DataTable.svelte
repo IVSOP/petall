@@ -1,19 +1,13 @@
 <script lang="ts">
-	import {
-		getCoreRowModel,
-		getFacetedRowModel,
-		getFacetedUniqueValues,
-		type ColumnDef,
-		type Row,
-		type VisibilityState
-	} from '@tanstack/table-core';
-	import type { Schema } from './schemas.js';
+	import type { PaginatedEnergyRecords } from '$lib/api/community.js';
+	import type { ColumnDef, Row, VisibilityState } from '@tanstack/table-core';
+	import { getCoreRowModel } from '@tanstack/table-core';
 	import { createSvelteTable } from '$lib/components/ui/data-table/data-table.svelte.js';
 	import * as Tabs from '$lib/components/ui/tabs/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
-	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { FlexRender, renderSnippet } from '$lib/components/ui/data-table/index.js';
@@ -24,55 +18,52 @@
 	import ChevronLeftIcon from '@tabler/icons-svelte/icons/chevron-left';
 	import ChevronRightIcon from '@tabler/icons-svelte/icons/chevron-right';
 	import ChevronsRightIcon from '@tabler/icons-svelte/icons/chevrons-right';
-	import type { PaginatedEnergyRecords } from '$lib/api/community.js';
+	import type { EnergyRecord } from '$lib';
 
-	const columns: ColumnDef<Schema>[] = [
+	const columns: ColumnDef<EnergyRecord>[] = [
 		{
-			accessorKey: 'time',
+			accessorKey: 'start',
 			header: 'Time',
 			cell: ({ row }) => renderSnippet(DataTableTime, { row }),
 			enableHiding: true
 		},
 		{
-			accessorKey: 'consumed energy',
+			accessorKey: 'consumed',
 			header: 'Consumed Energy (kWh)',
-			cell: ({ row }) => renderSnippet(DataTableEnergyConsumed, { row }),
 			enableHiding: true
 		},
 		{
-			accessorKey: 'energy generated',
+			accessorKey: 'generated',
 			header: 'Generated Energy (kWh)',
-			cell: ({ row }) => renderSnippet(DataTableEnergyGenerated, { row }),
 			enableHiding: true
 		},
 		{
-			accessorKey: 'consumer price',
+			accessorKey: 'consumerPrice',
 			header: 'Consumer Price (€/kWh)',
-			cell: ({ row }) => renderSnippet(DataTableConsumerPrice, { row }),
 			enableHiding: true
 		},
 		{
-			accessorKey: 'seller price',
+			accessorKey: 'sellerPrice',
 			header: 'Seller Price (€/kWh)',
-			cell: ({ row }) => renderSnippet(DataTableSellerPrice, { row }),
 			enableHiding: true
 		},
 		{
-			accessorKey: 'energy balance',
+			accessorFn: (row) => row.generated - row.consumed,
+			id: 'energyBalance',
 			header: 'Energy Balance (kWh)',
 			cell: ({ row }) => renderSnippet(DataTableEnergyBalance, { row }),
 			enableHiding: true
 		},
 		{
-			accessorKey: 'profit',
+			accessorFn: (row) => row.generated * row.sellerPrice - row.consumed * row.consumerPrice,
+			id: 'profit',
 			header: 'Profit (€)',
 			cell: ({ row }) => renderSnippet(DataTableProfit, { row }),
 			enableHiding: true
 		},
 		{
 			id: 'actions',
-			cell: () => renderSnippet(DataTableActions),
-			enableHiding: false
+			cell: () => renderSnippet(DataTableActions)
 		}
 	];
 
@@ -107,10 +98,8 @@
 				return columnVisibility;
 			}
 		},
-		getRowId: (row) => row.id.toString(),
+		getRowId: (row) => row.id,
 		getCoreRowModel: getCoreRowModel(),
-		getFacetedRowModel: getFacetedRowModel(),
-		getFacetedUniqueValues: getFacetedUniqueValues(),
 		onColumnVisibilityChange: (updater) => {
 			columnVisibility = typeof updater === 'function' ? updater(columnVisibility) : updater;
 		}
@@ -118,29 +107,16 @@
 
 	let views = [
 		{
-			id: 'detailed information',
+			id: 'energy_records_table',
 			label: 'Detailed Information',
 			badge: 0
 		}
 	];
 
-	let view = $state('detailed information');
-	let viewLabel = $derived(views.find((v) => view === v.id)?.label ?? 'Select a view');
 </script>
 
-<Tabs.Root value="detailed information" class="w-full flex-col justify-start gap-4">
+<Tabs.Root value="energy_records_table" class="w-full flex-col justify-start gap-4">
 	<div class="flex items-center justify-between">
-		<Label for="view-selector" class="sr-only">View</Label>
-		<Select.Root type="single" bind:value={view}>
-			<Select.Trigger class="flex w-fit @4xl/main:hidden" size="sm" id="view-selector">
-				{viewLabel}
-			</Select.Trigger>
-			<Select.Content>
-				{#each views as view (view.id)}
-					<Select.Item value={view.id}>{view.label}</Select.Item>
-				{/each}
-			</Select.Content>
-		</Select.Root>
 		<Tabs.List
 			class="hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:bg-muted-foreground/30 **:data-[slot=badge]:px-1 @4xl/main:flex"
 		>
@@ -181,7 +157,7 @@
 			</DropdownMenu.Root>
 		</div>
 	</div>
-	<Tabs.Content value="detailed information" class="relative flex flex-col gap-4 overflow-auto">
+	<Tabs.Content value="energy_records_table" class="relative flex flex-col gap-4 overflow-auto">
 		<div class="overflow-hidden rounded-lg border">
 			<Table.Root>
 				<Table.Header class="sticky top-0 z-10 bg-muted">
@@ -283,7 +259,17 @@
 	</Tabs.Content>
 </Tabs.Root>
 
-{#snippet DataTableTime({ row }: { row: Row<Schema> })}
+{#snippet TableRow({ row }: { row: Row<EnergyRecord> })}
+	<Table.Row>
+		{#each row.getVisibleCells() as cell (cell.id)}
+			<Table.Cell>
+				<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
+			</Table.Cell>
+		{/each}
+	</Table.Row>
+{/snippet}
+
+{#snippet DataTableTime({ row }: { row: Row<EnergyRecord> })}
 	<div class="text-muted-foreground">
 		{new Date(row.original.start).toLocaleString('en-US', {
 			year: 'numeric',
@@ -296,31 +282,7 @@
 	</div>
 {/snippet}
 
-{#snippet DataTableEnergyGenerated({ row }: { row: Row<Schema> })}
-	<div class="w-32 text-muted-foreground">
-		{row.original.generated}
-	</div>
-{/snippet}
-
-{#snippet DataTableEnergyConsumed({ row }: { row: Row<Schema> })}
-	<div class="w-32 text-muted-foreground">
-		{row.original.consumed}
-	</div>
-{/snippet}
-
-{#snippet DataTableConsumerPrice({ row }: { row: Row<Schema> })}
-	<div class="w-32 text-muted-foreground">
-		{row.original.consumerPrice}
-	</div>
-{/snippet}
-
-{#snippet DataTableSellerPrice({ row }: { row: Row<Schema> })}
-	<div class="w-32 text-muted-foreground">
-		{row.original.sellerPrice}
-	</div>
-{/snippet}
-
-{#snippet DataTableEnergyBalance({ row }: { row: Row<Schema> })}
+{#snippet DataTableEnergyBalance({ row }: { row: Row<EnergyRecord> })}
 	<div
 		class="w-32 rounded px-2 py-1 text-center {row.original.generated - row.original.consumed < 0
 			? 'bg-red-200 text-red-800'
@@ -330,7 +292,7 @@
 	</div>
 {/snippet}
 
-{#snippet DataTableProfit({ row }: { row: Row<Schema> })}
+{#snippet DataTableProfit({ row }: { row: Row<EnergyRecord> })}
 	<div
 		class="w-32 rounded px-2 py-1 text-center {row.original.generated * row.original.sellerPrice -
 			row.original.consumed * row.original.consumerPrice <
@@ -343,16 +305,6 @@
 			row.original.consumed * row.original.consumerPrice
 		).toFixed(4)}
 	</div>
-{/snippet}
-
-{#snippet TableRow({ row }: { row: Row<Schema> })}
-	<Table.Row>
-		{#each row.getVisibleCells() as cell (cell.id)}
-			<Table.Cell>
-				<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
-			</Table.Cell>
-		{/each}
-	</Table.Row>
 {/snippet}
 
 {#snippet DataTableActions()}
