@@ -12,6 +12,10 @@
 	const { data } = $props();
 </script>
 
+<svelte:head>
+	<title>Admin View</title>
+</svelte:head>
+
 <Card.Root class="w-full gap-4">
 	<Card.Header class="flex items-center justify-between border-b">
 		<div class="flex items-center gap-2">

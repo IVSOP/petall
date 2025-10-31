@@ -14,6 +14,10 @@
 	let addManagerDialogOpen: boolean = $state(false);
 </script>
 
+<svelte:head>
+	<title>{data.admin_community_info.community.name} - Settings</title>
+</svelte:head>
+
 <div class="container">
 	<div class="w-full space-y-6">
 		<Card.Root class="w-full overflow-hidden p-0">
