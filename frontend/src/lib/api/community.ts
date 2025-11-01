@@ -8,7 +8,7 @@ export type CommunityCreateRequest = {
 
 export type CommunityCreateResponse = Community;
 
-export type GetCommunitiesResponse = Community[];
+export type GetCommunitiesResponse = (Community & { isPresent: boolean })[];
 
 export type PaginatedEnergyRecords = {
 	records: EnergyRecord[];

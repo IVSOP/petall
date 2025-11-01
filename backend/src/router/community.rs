@@ -1,9 +1,10 @@
 use crate::AppState;
 use crate::auth::extractor::ExtractSession;
+use crate::controller::community::PaginatedEnergyRecords;
 use crate::error::{AppError, AppResult, ValidatedJson};
 use crate::models::Community;
 use axum::extract::Path;
-use axum::{Json, debug_handler, extract::State, response::IntoResponse};
+use axum::{Json, debug_handler, extract::State};
 use bigdecimal::BigDecimal;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
@@ -11,9 +12,11 @@ use uuid::Uuid;
 use validator::Validate;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UserCommunityResponse {
     #[serde(flatten)]
     pub community: Community,
+    pub is_present: bool,
 }
 
 #[derive(Debug, Deserialize, Default)]
@@ -75,12 +78,15 @@ pub struct EnergyStats {
 pub async fn get_communities_with_user_energy_records(
     ExtractSession(session): ExtractSession,
     State(state): State<AppState>,
-) -> AppResult<impl IntoResponse> {
+) -> AppResult<Json<Vec<UserCommunityResponse>>> {
     let communities = state
         .get_communities_with_user_energy_records(session.user_id)
         .await?
         .into_iter()
-        .map(|community| UserCommunityResponse { community })
+        .map(|(community, is_present)| UserCommunityResponse {
+            community,
+            is_present,
+        })
         .collect::<Vec<_>>();
 
     Ok(Json(communities))
@@ -91,7 +97,7 @@ pub async fn get_community_by_id(
     ExtractSession(_session): ExtractSession,
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
-) -> AppResult<impl IntoResponse> {
+) -> AppResult<Json<Community>> {
     // TODO: idk if we need authentication here but whatever
     let response = state.get_community_by_id(id).await?;
 
@@ -99,9 +105,7 @@ pub async fn get_community_by_id(
         return Err(AppError::CommunityNotFound(id));
     };
 
-    Ok(Json(UserCommunityResponse {
-        community: response,
-    }))
+    Ok(Json(response))
 }
 
 #[debug_handler]
@@ -110,7 +114,7 @@ pub async fn list_user_energy_records(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
     ValidatedJson(query): ValidatedJson<EnergyFilter>,
-) -> AppResult<impl IntoResponse> {
+) -> AppResult<Json<PaginatedEnergyRecords>> {
     let energy = state
         .get_user_energy_records(
             session.user_id,
@@ -131,7 +135,7 @@ pub async fn get_stats(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
     Json(query): Json<StatsFilter>,
-) -> AppResult<impl IntoResponse> {
+) -> AppResult<Json<Vec<EnergyStats>>> {
     let stats = state
         .get_energy_records_stats(session.user_id, id, &query)
         .await?;

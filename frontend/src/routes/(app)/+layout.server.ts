@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
-import type { GetCommunitiesResponse as CommunityResponse } from '$lib/api/community';
+import type { GetCommunitiesResponse } from '$lib/api/community';
 
 export const load: LayoutServerLoad = async ({ fetch, locals, cookies, url }) => {
 	const sessionId = cookies.get('sessionId');
@@ -20,13 +20,11 @@ export const load: LayoutServerLoad = async ({ fetch, locals, cookies, url }) =>
 		throw redirect(302, '/login');
 	}
 
-	const communities: CommunityResponse = await response.json();
-	const pathParts = url.pathname.split('/');
+	const communities: GetCommunitiesResponse = await response.json();
 
-	console.log(pathParts);
-
-	if (communities.length >= 1 && pathParts.length == 2 && pathParts[1] === '') {
-		throw redirect(307, `/community/${communities[0].id}`);
+	// Redirect to first community if at root path
+	if (communities.length > 0 && url.pathname === '/') {
+		throw redirect(302, `/community/${communities[0].id}`);
 	}
 
 	return {

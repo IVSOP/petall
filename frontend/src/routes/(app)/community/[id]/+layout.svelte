@@ -7,6 +7,7 @@
 	import * as Command from '$lib/components/ui/command/index.js';
 	import * as Popover from '$lib/components/ui/popover/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { cn } from '$lib/utils.js';
 	import { goto } from '$app/navigation';
 	import type { Community } from '$lib';
@@ -17,7 +18,9 @@
 	let triggerRef = $state<HTMLButtonElement>(null!);
 
 	let value = $state(data.community.name);
-	const selectedValue = $derived(data.communities.find((c) => c.name === value)?.name);
+	const selectedCommunity = $derived(data.communities.find((c) => c.name === value));
+	const selectedValue = $derived(selectedCommunity?.name);
+	const selectedIsPresent = $derived(selectedCommunity?.isPresent);
 
 	function closeAndFocusTrigger() {
 		open = false;
@@ -49,16 +52,21 @@
 									<Button
 										{...props}
 										variant="outline"
-										class="w-[210px] justify-between"
+										class="w-auto max-w-full min-w-[210px] justify-between"
 										role="combobox"
 										aria-expanded={open}
 									>
-										{selectedValue || 'Select community...'}
+										<span class="flex items-center gap-2">
+											{selectedValue || 'Select community...'}
+											{#if selectedIsPresent === false}
+												<Badge variant="outline" class="text-xs">Not present</Badge>
+											{/if}
+										</span>
 										<ChevronsUpDownIcon class="opacity-50" />
 									</Button>
 								{/snippet}
 							</Popover.Trigger>
-							<Popover.Content class="w-[210px] p-0">
+							<Popover.Content class="w-auto max-w-full min-w-[210px] p-0">
 								<Command.Root>
 									<Command.Input placeholder="Search community..." />
 									<Command.List>
@@ -71,6 +79,9 @@
 												>
 													<CheckIcon class={cn(value !== community.name && 'text-transparent')} />
 													{community.name}
+													{#if !community.isPresent}
+														<Badge variant="outline" class="ml-auto">Not present</Badge>
+													{/if}
 												</Command.Item>
 											{/each}
 										</Command.Group>

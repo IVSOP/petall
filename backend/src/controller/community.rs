@@ -18,11 +18,19 @@ impl AppState {
     pub async fn get_communities_with_user_energy_records(
         &self,
         user_id: Uuid,
-    ) -> sqlx::Result<Vec<Community>> {
-        sqlx::query_as!(
-            Community,
+    ) -> sqlx::Result<Vec<(Community, bool)>> {
+        let rows = sqlx::query!(
             r#"
-            SELECT c.id, c.name, c.description, c.image
+            SELECT
+                c.id,
+                c.name,
+                c.description,
+                c.image,
+                EXISTS (
+                    SELECT 1 FROM community_user cu
+                    WHERE cu.community_id = c.id
+                    AND cu.user_id = $1
+                ) as "is_present!"
             FROM community c
             WHERE EXISTS (
                 SELECT 1 FROM energy_record er
@@ -33,7 +41,22 @@ impl AppState {
             user_id
         )
         .fetch_all(&self.pg_pool)
-        .await
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|row| {
+                (
+                    Community {
+                        id: row.id,
+                        name: row.name,
+                        description: row.description,
+                        image: row.image,
+                    },
+                    row.is_present,
+                )
+            })
+            .collect())
     }
 
     pub async fn create_community(
