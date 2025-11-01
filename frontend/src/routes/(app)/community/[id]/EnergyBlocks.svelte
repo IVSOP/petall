@@ -96,21 +96,6 @@
 			100
 		);
 	});
-
-	$effect(() => {
-		// console.log(`total_price ${total_price} and has type ${typeof total_price}`);
-		// console.log(`statsAll is ${JSON.stringify(statsAll)}`);
-		// console.log(`stats last 30 ${JSON.stringify(statsLast60)}`)
-		console.log(`price last 60 to 30 ${JSON.stringify(price_last_60_to_last_30)}`);
-		console.log(`price last 30 ${JSON.stringify(price_last_30)}`);
-		console.log(`delta last 60 to 30 ${JSON.stringify(delta_last_60_to_last_30)}`);
-		console.log(`delta last 30 ${JSON.stringify(delta_last_30)}`);
-	});
-
-	//   $effect(() => {
-	//     console.log('Prices:', prices);
-	//     console.log('Total Price:', total_price);
-	//   });
 </script>
 
 <div

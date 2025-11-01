@@ -64,7 +64,6 @@ export const actions: Actions = {
 
 		if (!response.ok) {
 			const error: ErrorResponse = await response.json();
-			console.log(error);
 			return fail(response.status, { user_email, error: error.error });
 		}
 
@@ -98,11 +97,8 @@ export const actions: Actions = {
 
 		if (!response.ok) {
 			const error: ErrorResponse = await response.json();
-			console.log(error);
 			return fail(response.status, { user_email, error: error.error });
 		}
-
-		console.log('aqui');
 
 		return { success: true };
 	}

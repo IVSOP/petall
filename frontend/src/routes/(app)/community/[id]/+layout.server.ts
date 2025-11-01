@@ -27,8 +27,6 @@ export const load: LayoutServerLoad = async ({ fetch, params, cookies }) => {
 
 	const community: Community = await communityResponse.json();
 
-	console.log(community);
-
 	return {
 		community
 	};

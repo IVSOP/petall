@@ -8,8 +8,6 @@
 
 	const { data, form }: PageProps = $props();
 
-	console.log(data.admin_community_info);
-
 	let addUserDialogOpen: boolean = $state(false);
 	let addManagerDialogOpen: boolean = $state(false);
 </script>

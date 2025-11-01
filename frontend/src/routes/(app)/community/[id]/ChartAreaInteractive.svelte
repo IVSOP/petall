@@ -60,10 +60,6 @@
 		}
 	});
 
-	$effect(() => {
-		console.log(JSON.stringify(filteredData));
-	});
-
 	const chartConfig = {
 		generated: { label: 'Generated kWh', color: '#3b82f6' }, // blue-500
 		consumed: { label: 'Consumed kWh', color: '#ef4444' } // red-500

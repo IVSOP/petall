@@ -27,10 +27,6 @@
 			})
 		});
 
-		console.log(`index: ${page}`);
-		console.log(`size: ${size}`);
-		console.log(response.ok);
-
 		if (response.ok) {
 			paginatedEnergyRecords = await response.json();
 		}
