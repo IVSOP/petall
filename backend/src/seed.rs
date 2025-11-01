@@ -1,227 +1,72 @@
-use crate::models::AuthProvider;
-use bigdecimal::BigDecimal;
-use chrono::{Duration, Utc};
-use fake::{Fake, faker::internet::pt_pt::FreeEmail};
-use names::Generator;
-use rand::{Rng, seq::IteratorRandom};
-use sqlx::postgres::PgPool;
-use std::{collections::HashMap, str::FromStr};
-use uuid::Uuid;
+use std::time::Duration;
 
-#[derive(Debug, Clone, clap::Parser)]
-pub struct SeedSettings {
-    #[arg(long, default_value_t = 5)]
-    users: usize,
-    #[arg(long, default_value_t = 3)]
-    suppliers: usize,
-    #[arg(long, default_value_t = 10)]
-    communities: usize,
-    #[arg(long, default_value_t = 5)]
-    communities_per_user: usize,
-    #[arg(long, default_value_t = 1)]
-    energy_days: i64,
-    #[arg(long, default_value_t = 15)]
-    energy_interval: i64,
-}
+use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike, Utc};
+use tokio::time::Instant;
+use tracing::{error, info};
 
-pub async fn run_seed(pg_pool: &PgPool, seed_settings: SeedSettings) -> anyhow::Result<()> {
-    // let suppliers = seed_supplier(pg_pool, &seed_settings.suppliers).await?;
+use crate::{AppState, models::EnergyRecord};
 
-    // let users = seed_user(pg_pool, &seed_settings.users, &suppliers).await?;
-    let users = seed_user(pg_pool, &seed_settings.users).await?;
+/// Starts a scheduler that runs every quarter-hour (00, 15, 30, 45)
+pub async fn run_periodic_seed_task(state: AppState) {
+    // --- Compute the first tick aligned to next quarter-hour ---
+    let now = Utc::now();
+    let minutes = now.minute();
+    let seconds = now.second();
 
-    let communitied = seed_community(pg_pool, &seed_settings.communities).await?;
+    // Compute how many minutes until the next multiple of 15
+    // This means this is only accurate to the minute. However, when records are inserted, seconds are always zeroed out
+    let next_quarter = ((minutes / 15) + 1) * 15 % 60;
+    let minutes_until_next = if next_quarter > minutes {
+        next_quarter - minutes
+    } else {
+        60 - minutes
+    };
 
-    let user_communities_map = seed_user_community(
-        pg_pool,
-        &seed_settings.communities_per_user,
-        &users,
-        &communitied,
-    )
-    .await?;
+    let initial_delay_secs = minutes_until_next * 60 - seconds;
+    let initial_delay = Duration::from_secs(initial_delay_secs as u64);
+    let start_instant = Instant::now() + initial_delay;
 
-    seed_energy_record(
-        pg_pool,
-        &seed_settings.energy_days,
-        &seed_settings.energy_interval,
-        &user_communities_map,
-    )
-    .await?;
+    // Create a 15-minute interval aligned to that start time
+    let mut interval = tokio::time::interval_at(start_instant, Duration::from_secs(15 * 60));
 
-    Ok(())
-}
+    info!("Scheduler will start in {initial_delay:?} (at next quarter-hour boundary)");
 
-// pub async fn seed_supplier(pool: &PgPool, count: &usize) -> anyhow::Result<Vec<Uuid>> {
-//     let mut generator = Generator::default();
-//     let mut suppliers = Vec::new();
+    loop {
+        interval.tick().await;
+        info!("Seeding records");
 
-//     for _ in 0..*count {
-//         suppliers.push(
-//             sqlx::query_scalar!(
-//                 r#"
-//                 INSERT INTO "supplier" ("email", "name")
-//                 VALUES ($1, $2)
-//                 RETURNING id
-//                 "#,
-//                 FreeEmail().fake::<String>(),
-//                 generator.next().unwrap()
-//             )
-//             .fetch_one(pool)
-//             .await?,
-//         )
-//     }
-
-//     Ok(suppliers)
-// }
-
-pub async fn seed_user(
-    pool: &PgPool,
-    count: &usize,
-    // suppliers: &[Uuid],
-) -> anyhow::Result<Vec<Uuid>> {
-    // let mut rng = rand::rng();
-    let mut generator = Generator::default();
-    let mut users = Vec::new();
-
-    for _ in 0..*count {
-        let email = FreeEmail().fake::<String>();
-        let name = generator.next().unwrap();
-
-        let user_id =
-            // sqlx::query_scalar!(
-            //     r#"
-            //     INSERT INTO "user" ("email", "name", "supplier", "password")
-            //     VALUES ($1, $2, $3, $4)
-            //     RETURNING id
-            //     "#,
-            //     FreeEmail().fake::<String>(),
-            //     generator.next().unwrap(),
-            //     suppliers.iter().choose(&mut rng).unwrap(),
-            //     "password"
-            // )
-            sqlx::query_scalar!(
-                r#"
-                INSERT INTO "user" ("email", "name")
-                VALUES ($1, $2)
-                RETURNING id
-                "#,
-                email,
-                name
-            )
-            .fetch_one(pool)
-            .await?;
-
-        let hashed_password = crate::auth::password::hash_password("password")?;
-
-        sqlx::query!(
-            r#"
-            INSERT INTO "key" ("provider", "id", "user_id", "hashed_password")
-            VALUES ($1, $2, $3, $4)
-            "#,
-            AuthProvider::Email as AuthProvider,
-            email,
-            user_id,
-            hashed_password
-        )
-        .execute(pool)
-        .await?;
-
-        users.push(user_id);
-    }
-
-    Ok(users)
-}
-
-pub async fn seed_community(pool: &PgPool, count: &usize) -> anyhow::Result<Vec<Uuid>> {
-    let mut generator = Generator::default();
-    let mut communities = Vec::new();
-
-    for _ in 0..*count {
-        let description = format!("Comunidade Energética");
-        communities.push(
-            sqlx::query_scalar!(
-                r#"
-                INSERT INTO "community" ("name", "description")
-                VALUES ($1, $2)
-                RETURNING id
-                "#,
-                generator.next().unwrap(),
-                description,
-            )
-            .fetch_one(pool)
-            .await?,
-        )
-    }
-
-    Ok(communities)
-}
-
-pub async fn seed_user_community(
-    pool: &PgPool,
-    communities_per_user: &usize,
-    users: &[Uuid],
-    communities: &[Uuid],
-) -> anyhow::Result<HashMap<Uuid, Vec<Uuid>>> {
-    let mut rng = rand::thread_rng();
-    let mut user_community_map: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
-
-    for &user in users {
-        for community in communities
-            .iter()
-            .choose_multiple(&mut rng, *communities_per_user)
-        {
-            sqlx::query!(
-                r#"
-                INSERT INTO "community_user" ("user_id", "community_id")
-                VALUES ($1, $2)
-                "#,
-                user,
-                community,
-            )
-            .execute(pool)
-            .await?;
-
-            user_community_map.entry(user).or_default().push(*community);
+        if let Err(e) = insert_random_energy_records(&state).await {
+            error!("Error inserting random energy records: {}", e);
         }
     }
-
-    Ok(user_community_map)
 }
 
-pub async fn seed_energy_record(
-    pool: &PgPool,
-    energy_days: &i64,
-    energy_interval: &i64,
-    user_communities_map: &HashMap<Uuid, Vec<Uuid>>,
-) -> anyhow::Result<()> {
-    let mut rng = rand::thread_rng();
-    let start = Utc::now().naive_utc();
-    let end = (Utc::now() + Duration::days(*energy_days)).naive_utc();
+async fn insert_random_energy_records(state: &AppState) -> sqlx::Result<()> {
+    // clamp current time to nearest 15-minute mark
+    let now = Utc::now();
+    let minutes = now.minute() - (now.minute() % 15);
+    let date = NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).expect("valid date");
+    let time = NaiveTime::from_hms_opt(now.hour(), minutes, 0).expect("valid time");
+    let start_rounded: NaiveDateTime = date.and_time(time);
 
-    for (user, communities) in user_communities_map.iter() {
-        let mut current = start;
-        while current < end {
-            for community in communities {
-                sqlx::query!(
-                    r#"
-                    INSERT INTO "energy_record" ("user_id", "community_id", "generated", "consumed", "consumer_price", "seller_price", "start")
-                    VALUES ($1, $2, $3, $4, $5, $6, $7)
-                    "#,
-                    user,
-                    community,
-                    BigDecimal::from_str(&rng.gen_range(0.0..5000.0).to_string()).unwrap(),
-                    BigDecimal::from_str(&rng.gen_range(0.0..5000.0).to_string()).unwrap(),
-                    BigDecimal::from_str(&rng.gen_range(0.0..20.0).to_string()).unwrap(),
-                    BigDecimal::from_str(&rng.gen_range(0.0..20.0).to_string()).unwrap(),
-                    current,
-                )
-                .execute(pool)
-                .await
-                .unwrap();
-            }
-            current += Duration::minutes(*energy_interval);
-        }
+    // get user/community pairs
+    let pairs = sqlx::query!(
+        r#"
+        SELECT user_id, community_id
+        FROM community_user
+        "#
+    )
+    .fetch_all(&state.pg_pool)
+    .await?;
+
+    let mut random_records = Vec::with_capacity(pairs.len());
+    for pair in pairs.iter() {
+        random_records.push(EnergyRecord::random(
+            pair.user_id,
+            pair.community_id,
+            start_rounded,
+        ));
     }
 
-    Ok(())
+    state.insert_energy_records(&random_records).await
 }
