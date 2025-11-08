@@ -10,7 +10,7 @@ jobs:
   backend:
     name: Backend
     runs-on: ubuntu-latest
-    
+
     services:
       postgres:
         image: postgres:17
@@ -25,13 +25,13 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
-      
+
       - name: Cache cargo dependencies
         uses: actions/cache@v4
         with:
@@ -44,7 +44,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('community-backend/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-      
+
       - name: Run migrations
         working-directory: community-backend
         env:
@@ -52,13 +52,13 @@ jobs:
         run: |
           cargo install sqlx-cli --no-default-features --features postgres || true
           sqlx migrate run
-      
+
       - name: Build backend
         working-directory: community-backend
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/petall_test
         run: cargo build --verbose
-      
+
       - name: Run tests
         working-directory: community-backend
         env:
@@ -70,16 +70,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-      
+
       - name: Install dependencies
-        working-directory: frontend
+        working-directory: community-frontend
         run: bun install
-      
+
       - name: Build frontend
-        working-directory: frontend
+        working-directory: community-frontend
         run: bun run build
