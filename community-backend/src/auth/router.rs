@@ -329,14 +329,19 @@ async fn me_handler(
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use axum::http::StatusCode;
     use axum_test::TestServer;
     use sqlx::PgPool;
     use tower_http::trace::TraceLayer;
     use tracing_test::traced_test;
 
-    use crate::auth::router::{
-        ChangePasswordRequest, LoginRequest, MeResponse, RegisterRequest, RegisterResponse,
+    use crate::{
+        auth::router::{
+            ChangePasswordRequest, LoginRequest, MeResponse, RegisterRequest, RegisterResponse,
+        },
+        sign::ValidationSigner,
     };
     fn server(pg_pool: PgPool) -> TestServer {
         let google_oauth = crate::auth::oauth::GoogleOAuthClient::new(
@@ -349,6 +354,7 @@ mod tests {
         let state = crate::AppState {
             pg_pool,
             google_oauth,
+            validation_signer: Arc::new(ValidationSigner::test_new()),
         };
         let router = crate::auth::router::router()
             .with_state(state)

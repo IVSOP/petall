@@ -70,6 +70,10 @@ pub enum AppError {
     UserNotInCommunity(Uuid),
     #[error("manager not in community: {0}")]
     ManagerNotInCommunity(Uuid),
+    #[error("json web token error: {0}")]
+    JsonWebTokenError(#[from] jsonwebtoken::errors::Error),
+    #[error("energy record not found")]
+    EnergyRecordNotFound(Uuid),
 }
 
 impl IntoResponse for AppError {
@@ -154,6 +158,14 @@ impl IntoResponse for AppError {
             AppError::ManagerNotInCommunity(id) => (
                 StatusCode::FORBIDDEN,
                 format!("Manager not in community: {}", id),
+            ),
+            AppError::JsonWebTokenError(err) => {
+                error!("Internal JWT error occurred: {err:?}");
+                internal_server_error
+            }
+            AppError::EnergyRecordNotFound(uuid) => (
+                StatusCode::NOT_FOUND,
+                format!("Energy record not found: {}", uuid),
             ),
         };
 

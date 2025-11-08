@@ -1,9 +1,11 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use jsonwebtoken::{DecodingKey, EncodingKey};
+use jsonwebtoken::EncodingKey;
 use sqlx::PgPool;
-use std::net::IpAddr;
+use std::{net::IpAddr, sync::Arc, time::Duration};
 use tracing::info;
+
+use crate::sign::ValidationSigner;
 
 mod auth;
 mod controller;
@@ -11,6 +13,7 @@ mod error;
 mod models;
 mod router;
 mod seed;
+mod sign;
 
 #[derive(Parser)]
 #[command(name = "petall")]
@@ -49,24 +52,21 @@ pub struct Config {
     pub google_client_secret: String,
     #[arg(long, env)]
     pub google_redirect_url: String,
-    #[arg(long, env, value_parser = load_decoding_key_from_file)]
-    pub validation_public_key: DecodingKey,
     #[arg(long, env, value_parser = load_encoding_key_from_file)]
     pub validation_private_key: EncodingKey,
+    #[arg(long, env, default_value_t = 10)]
+    pub validation_token_max_age_seconds: u64,
 }
 
-fn load_decoding_key_from_file(path: &str) -> Result<DecodingKey, std::io::Error> {
-    Ok(DecodingKey::from_rsa_pem(&std::fs::read(path)?).unwrap())
-}
-
-fn load_encoding_key_from_file(path: &str) -> Result<EncodingKey, std::io::Error> {
-    Ok(EncodingKey::from_rsa_pem(&std::fs::read(path)?).unwrap())
+fn load_encoding_key_from_file(path: &str) -> anyhow::Result<EncodingKey> {
+    Ok(EncodingKey::from_rsa_pem(&std::fs::read(path)?)?)
 }
 
 #[derive(Clone)]
 pub struct AppState {
     pg_pool: PgPool,
     google_oauth: auth::oauth::GoogleOAuthClient,
+    validation_signer: Arc<ValidationSigner>,
 }
 
 #[tokio::main]
@@ -99,6 +99,12 @@ async fn main() -> Result<()> {
     )
     .context("Failed to initialize Google OAuth client")?;
 
+    let validation_signer = ValidationSigner::new(
+        config.validation_private_key,
+        Duration::from_secs(config.validation_token_max_age_seconds),
+    );
+    let validation_signer = Arc::new(validation_signer);
+
     match cli.command {
         Command::Run { bind_ip, bind_port } => {
             let listener = tokio::net::TcpListener::bind((bind_ip, bind_port))
@@ -108,6 +114,7 @@ async fn main() -> Result<()> {
             let state = AppState {
                 pg_pool,
                 google_oauth,
+                validation_signer,
             };
 
             let seeder = tokio::spawn(seed::run_periodic_seed_task(state.clone()));

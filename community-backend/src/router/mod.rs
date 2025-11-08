@@ -1,5 +1,6 @@
 use crate::AppState;
 use crate::auth;
+use crate::sign;
 use axum::Router;
 use axum::routing::put;
 use axum::routing::{get, post};
@@ -36,6 +37,10 @@ pub fn router(state: AppState) -> Router {
             post(community::list_user_energy_records),
         )
         .route("/community/{id}/stats", post(community::get_stats))
+        .route(
+            "/sign-energy-record-validation",
+            get(sign::sign_energy_record_validation_request),
+        )
         .nest("/auth", auth::router::router().with_state(state.clone()))
         .with_state(state.clone())
         .layer(TraceLayer::new_for_http())
@@ -43,10 +48,12 @@ pub fn router(state: AppState) -> Router {
 
 #[cfg(test)]
 pub(crate) mod test_utils {
+    use std::sync::Arc;
+
     use axum_test::TestServer;
     use sqlx::PgPool;
 
-    use crate::{AppState, router::router};
+    use crate::{AppState, router::router, sign::ValidationSigner};
 
     pub(crate) fn test_server(pg_pool: PgPool) -> TestServer {
         let google_oauth = crate::auth::oauth::GoogleOAuthClient::new(
@@ -59,6 +66,7 @@ pub(crate) mod test_utils {
         let state = AppState {
             pg_pool,
             google_oauth,
+            validation_signer: Arc::new(ValidationSigner::test_new()),
         };
         let router = router(state);
 
