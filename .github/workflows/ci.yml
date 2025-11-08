@@ -40,13 +40,13 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            backend/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
+            community-backend/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('community-backend/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
       
       - name: Run migrations
-        working-directory: backend
+        working-directory: community-backend
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/petall_test
         run: |
@@ -54,13 +54,13 @@ jobs:
           sqlx migrate run
       
       - name: Build backend
-        working-directory: backend
+        working-directory: community-backend
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/petall_test
         run: cargo build --verbose
       
       - name: Run tests
-        working-directory: backend
+        working-directory: community-backend
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/petall_test
         run: cargo test --verbose

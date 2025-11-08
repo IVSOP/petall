@@ -1,0 +1,6 @@
+[workspace]
+members = ["community-backend"]
+resolver = "3"
+
+[workspace.dependencies]
+

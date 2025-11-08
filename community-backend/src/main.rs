@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
+use jsonwebtoken::{DecodingKey, EncodingKey};
 use sqlx::PgPool;
 use std::net::IpAddr;
 use tracing::info;
@@ -48,6 +49,18 @@ pub struct Config {
     pub google_client_secret: String,
     #[arg(long, env)]
     pub google_redirect_url: String,
+    #[arg(long, env, value_parser = load_decoding_key_from_file)]
+    pub validation_public_key: DecodingKey,
+    #[arg(long, env, value_parser = load_encoding_key_from_file)]
+    pub validation_private_key: EncodingKey,
+}
+
+fn load_decoding_key_from_file(path: &str) -> Result<DecodingKey, std::io::Error> {
+    Ok(DecodingKey::from_rsa_pem(&std::fs::read(path)?).unwrap())
+}
+
+fn load_encoding_key_from_file(path: &str) -> Result<EncodingKey, std::io::Error> {
+    Ok(EncodingKey::from_rsa_pem(&std::fs::read(path)?).unwrap())
 }
 
 #[derive(Clone)]
