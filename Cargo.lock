@@ -490,6 +490,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b05b61dc5112cbb17e4b6cd61790d9845d13888356391624cbe7e41efeac1e75"
 
 [[package]]
+name = "common"
+version = "0.1.0"
+dependencies = [
+ "bigdecimal",
+ "chrono",
+ "rand 0.8.5",
+ "serde",
+ "sqlx",
+ "uuid",
+]
+
+[[package]]
 name = "concurrent-queue"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2047,6 +2059,7 @@ dependencies = [
  "bigdecimal",
  "chrono",
  "clap",
+ "common",
  "dotenv",
  "fake",
  "itertools",
@@ -4351,4 +4364,25 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.109",
+]
+
+[[package]]
+name = "zk-poc-service"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "bigdecimal",
+ "clap",
+ "common",
+ "dotenv",
+ "rand 0.8.5",
+ "reqwest 0.12.24",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "uuid",
 ]

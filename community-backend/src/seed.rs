@@ -1,10 +1,11 @@
 use std::time::Duration;
 
 use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike, Utc};
+use common::EnergyRecord;
 use tokio::time::Instant;
 use tracing::{error, info};
 
-use crate::{AppState, models::EnergyRecord};
+use crate::AppState;
 
 /// Starts a scheduler that runs every quarter-hour (00, 15, 30, 45)
 pub async fn run_periodic_seed_task(state: AppState) {

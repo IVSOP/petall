@@ -2,12 +2,12 @@ use axum::{
     Json, debug_handler,
     extract::{Path, State},
 };
+use common::EnergyRecord;
 use uuid::Uuid;
 
 use crate::{
     AppState,
     error::{AppError, AppResult},
-    models::EnergyRecord,
 };
 
 /// Temporary endpoint for the Proof of Concept zero-knowledge service.
