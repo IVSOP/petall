@@ -78,9 +78,11 @@ pub async fn sign_energy_record_validation_request(
     State(state): State<AppState>,
 ) -> AppResult<Json<SignEnergyRecordValidationResponse>> {
     let user_id = session.user_id;
-    let energy_record = state.get_energy_record(user_id, energy_record_id).await?;
+    let Some(energy_record) = state.get_energy_record(energy_record_id).await? else {
+        return Err(AppError::EnergyRecordNotFound(energy_record_id));
+    };
 
-    if let None = energy_record {
+    if energy_record.user_id != user_id {
         return Err(AppError::EnergyRecordNotFound(energy_record_id));
     }
 

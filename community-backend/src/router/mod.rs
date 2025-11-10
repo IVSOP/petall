@@ -8,6 +8,7 @@ use tower_http::trace::TraceLayer;
 
 pub mod admin;
 pub mod community;
+pub mod temp;
 
 pub fn router(state: AppState) -> Router {
     Router::new()
@@ -40,6 +41,10 @@ pub fn router(state: AppState) -> Router {
         .route(
             "/sign-energy-record-validation",
             get(sign::sign_energy_record_validation_request),
+        )
+        .route(
+            "/energy-record-unauthenticated/{id}",
+            get(temp::get_energy_record_unauthenticated),
         )
         .nest("/auth", auth::router::router().with_state(state.clone()))
         .with_state(state.clone())

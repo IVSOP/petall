@@ -420,13 +420,11 @@ impl AppState {
 
     pub async fn get_energy_record(
         &self,
-        user_id: Uuid,
         energy_record_id: Uuid,
     ) -> AppResult<Option<EnergyRecord>> {
         sqlx::query_as!(
             EnergyRecord,
-            "SELECT * FROM energy_record WHERE user_id = $1 AND id = $2",
-            user_id,
+            "SELECT * FROM energy_record WHERE id = $1",
             energy_record_id
         )
         .fetch_optional(&self.pg_pool)
