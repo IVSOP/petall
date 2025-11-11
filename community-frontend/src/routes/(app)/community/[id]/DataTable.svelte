@@ -11,10 +11,10 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { FlexRender, renderSnippet } from '$lib/components/ui/data-table/index.js';
+	import CircleCkeck from '@lucide/svelte/icons/circle-check'
 	import LayoutColumnsIcon from '@tabler/icons-svelte/icons/layout-columns';
 	import ChevronDownIcon from '@tabler/icons-svelte/icons/chevron-down';
 	import ChevronsLeftIcon from '@tabler/icons-svelte/icons/chevrons-left';
-	import DotsVerticalIcon from '@tabler/icons-svelte/icons/dots-vertical';
 	import ChevronLeftIcon from '@tabler/icons-svelte/icons/chevron-left';
 	import ChevronRightIcon from '@tabler/icons-svelte/icons/chevron-right';
 	import ChevronsRightIcon from '@tabler/icons-svelte/icons/chevrons-right';
@@ -63,7 +63,7 @@
 		},
 		{
 			id: 'actions',
-			cell: () => renderSnippet(DataTableActions)
+			cell: ({ row }) => renderSnippet(DataTableActions, { row })
 		}
 	];
 
@@ -71,12 +71,32 @@
 		data,
 		pageIndex = $bindable(),
 		pageSize = $bindable(),
+		session_id,
 		...props
 	}: {
 		data: PaginatedEnergyRecords;
 		pageIndex: number;
 		pageSize: number;
+		session_id: string;
 	} = $props();
+
+	async function handleValidate(record: EnergyRecord) {
+		const response = await fetch(`/api/sign-energy-record-validation/${record.id}`, {
+			method: 'GET',
+			headers: {
+				Authorization: session_id,
+				'Content-Type': 'application/json'
+			},
+		});
+
+		if (!response.ok) {
+			console.error('Validation failed');
+		} else {
+			const token: { signedRequest: string } = await response.json(); 
+			console.log('Validated:', record.id);
+			console.log('Signature:', token.signedRequest);
+		}
+	}
 
 	const totalPages = $derived(Math.ceil(data.totalCount / pageSize));
 
@@ -307,20 +327,13 @@
 	</div>
 {/snippet}
 
-{#snippet DataTableActions()}
-	<DropdownMenu.Root>
-		<DropdownMenu.Trigger
-			class="flex size-8 cursor-pointer text-muted-foreground data-[state=open]:bg-muted"
-		>
-			{#snippet child({ props })}
-				<Button variant="ghost" size="icon" {...props}>
-					<DotsVerticalIcon />
-					<span class="sr-only">Open menu</span>
-				</Button>
-			{/snippet}
-		</DropdownMenu.Trigger>
-		<DropdownMenu.Content align="end" class="w-32">
-			<DropdownMenu.Item class="cursor-pointer">Validate</DropdownMenu.Item>
-		</DropdownMenu.Content>
-	</DropdownMenu.Root>
+{#snippet DataTableActions({ row }: { row: Row<EnergyRecord> })}
+	<Button
+		variant="outline"
+		size="sm"
+		class="cursor-pointer"
+		onclick={() => handleValidate(row.original)}
+	>
+		<CircleCkeck />
+	</Button>
 {/snippet}

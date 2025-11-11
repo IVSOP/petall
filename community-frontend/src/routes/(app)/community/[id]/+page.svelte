@@ -86,7 +86,7 @@
 			<div class="flex flex-col gap-6">
 				<EnergyBlocks statsLast60={stats_last_60} />
 				<ChartAreaInteractive statsLast60={stats_last_60} />
-				<DataTable data={paginatedEnergyRecords} bind:pageIndex bind:pageSize />
+				<DataTable session_id={data.sessionId} data={paginatedEnergyRecords} bind:pageIndex bind:pageSize />
 			</div>
 		</div>
 	</div>

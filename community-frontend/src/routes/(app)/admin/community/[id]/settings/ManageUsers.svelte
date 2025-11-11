@@ -59,7 +59,7 @@
 					{#if admins.some((u) => u.id === user.id) && user_type !== 'user'}
 						<Button
 							variant="destructive"
-							class="cursor-not-allowed text-sm font-medium opacity-50 hover:cursor-not-allowed"
+							class="cursor-not-allowed text-sm font-medium opacity-50"
 						>
 							<Trash_2 class="mr-1" />
 							Remove

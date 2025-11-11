@@ -39,7 +39,7 @@ pub fn router(state: AppState) -> Router {
         )
         .route("/community/{id}/stats", post(community::get_stats))
         .route(
-            "/sign-energy-record-validation",
+            "/sign-energy-record-validation/{id}",
             get(sign::sign_energy_record_validation_request),
         )
         .route(
