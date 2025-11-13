@@ -11,7 +11,7 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { FlexRender, renderSnippet } from '$lib/components/ui/data-table/index.js';
-	import CircleCkeck from '@lucide/svelte/icons/circle-check'
+	import CircleCkeck from '@lucide/svelte/icons/circle-check';
 	import LayoutColumnsIcon from '@tabler/icons-svelte/icons/layout-columns';
 	import ChevronDownIcon from '@tabler/icons-svelte/icons/chevron-down';
 	import ChevronsLeftIcon from '@tabler/icons-svelte/icons/chevrons-left';
@@ -19,6 +19,7 @@
 	import ChevronRightIcon from '@tabler/icons-svelte/icons/chevron-right';
 	import ChevronsRightIcon from '@tabler/icons-svelte/icons/chevrons-right';
 	import type { EnergyRecord } from '$lib';
+	import { handleValidate } from '$lib/api/validate';
 
 	const columns: ColumnDef<EnergyRecord>[] = [
 		{
@@ -80,24 +81,6 @@
 		session_id: string;
 	} = $props();
 
-	async function handleValidate(record: EnergyRecord) {
-		const response = await fetch(`/api/sign-energy-record-validation/${record.id}`, {
-			method: 'GET',
-			headers: {
-				Authorization: session_id,
-				'Content-Type': 'application/json'
-			},
-		});
-
-		if (!response.ok) {
-			console.error('Validation failed');
-		} else {
-			const token: { signedRequest: string } = await response.json(); 
-			console.log('Validated:', record.id);
-			console.log('Signature:', token.signedRequest);
-		}
-	}
-
 	const totalPages = $derived(Math.ceil(data.totalCount / pageSize));
 
 	$effect(() => {
@@ -132,7 +115,6 @@
 			badge: 0
 		}
 	];
-
 </script>
 
 <Tabs.Root value="energy_records_table" class="w-full flex-col justify-start gap-4">
@@ -332,7 +314,7 @@
 		variant="outline"
 		size="sm"
 		class="cursor-pointer"
-		onclick={() => handleValidate(row.original)}
+		onclick={() => handleValidate(row.original, session_id)}
 	>
 		<CircleCkeck />
 	</Button>

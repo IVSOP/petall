@@ -80,6 +80,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct ValidateResponse {
     proof: String,
     #[serde(with = "bigdecimal::serde::json_num")]

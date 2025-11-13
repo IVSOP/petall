@@ -2,7 +2,7 @@ import { v4 as randomUUID } from 'uuid';
 
 export interface ValidationResult {
 	proof: string;
-	energy_record_cost: string; // BigDecimal as string
+	energyRecordCost: string; // BigDecimal as string
 }
 
 export interface Session {

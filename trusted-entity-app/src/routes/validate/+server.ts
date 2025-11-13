@@ -1,4 +1,4 @@
-import { error, redirect } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { validateJWT } from '$lib/jwt';
 import { getOrCreateSession, SESSION_DURATION_MS } from '$lib/sessions';
@@ -6,19 +6,42 @@ import { getOrCreateSession, SESSION_DURATION_MS } from '$lib/sessions';
 const ZK_POC_SERVICE_URL =
 	process.env.ZK_POC_SERVICE_URL || 'http://localhost:3002';
 
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'http://localhost:5173';
+
 interface ValidateRequest {
 	token: string;
 }
 
 interface ZKValidateResponse {
 	proof: string;
-	energy_record_cost: string;
+	energyRecordCost: string;
 }
 
+function setCorsHeaders(response: Response, origin: string | null): void {
+	if (!origin || origin !== ALLOWED_ORIGIN) {
+		return;
+	}
+
+	response.headers.set('Access-Control-Allow-Origin', origin);
+	response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+	response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+	response.headers.set('Access-Control-Allow-Credentials', 'true');
+}
+
+export const OPTIONS: RequestHandler = async ({ request }) => {
+	const origin = request.headers.get('origin');
+	const response = new Response(null, { status: 204 });
+	setCorsHeaders(response, origin);
+	return response;
+};
+
 export const POST: RequestHandler = async ({ request, cookies }) => {
+	const origin = request.headers.get('origin');
 	const body: ValidateRequest = await request.json();
 	if (!body.token) {
-		return error(400, 'Missing token in request body');
+		const errorResponse = json({ error: 'Missing token in request body' }, { status: 400 });
+		setCorsHeaders(errorResponse, origin);
+		return errorResponse;
 	}
 
 	const claims = await validateJWT(body.token);
@@ -38,23 +61,26 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 	);
 
 	if (!zkResponse.ok) {
-		return error(500, 'Failed to query zk-poc-service');
+		const errorResponse = json({ error: 'Failed to query zk-poc-service' }, { status: 500 });
+		setCorsHeaders(errorResponse, origin);
+		return errorResponse;
 	}
 
 	const zkResult: ZKValidateResponse = await zkResponse.json();
 
 	session.queries.set(energyRecordId, {
 		proof: zkResult.proof,
-		energy_record_cost: zkResult.energy_record_cost
+		energyRecordCost: zkResult.energyRecordCost
 	});
-	cookies.set('session_id', session.id, {
+
+	// Not sure if this works with different domains but whatever...
+	cookies.set('trustedEntitySessionId', session.id, {
 		path: '/',
-		httpOnly: true,
-		sameSite: 'lax',
-		secure: process.env.NODE_ENV === 'production',
 		maxAge: SESSION_DURATION_MS / 1000 // Convert milliseconds to seconds
 	});
 
-	throw redirect(302, `/validate?query=${energyRecordId}`);
+	const successResponse = json({ query: energyRecordId }, { status: 200 });
+	setCorsHeaders(successResponse, origin);
+	return successResponse;
 };
 
