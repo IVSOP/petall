@@ -10,7 +10,8 @@ export interface ValidationClaims {
 
 function loadPublicKeyPEM(): string {
 	const publicKeyPath =
-		process.env.VALIDATION_PUBLIC_KEY_PATH || join(process.cwd(), '..', 'keys', 'validation.key.pub');
+		process.env.VALIDATION_PUBLIC_KEY_PATH ||
+		join(process.cwd(), '..', 'keys', 'validation.key.pub');
 	return readFileSync(publicKeyPath, 'utf-8');
 }
 
@@ -27,4 +28,3 @@ export async function validateJWT(token: string): Promise<ValidationClaims> {
 		exp: payload.exp as number
 	};
 }
-

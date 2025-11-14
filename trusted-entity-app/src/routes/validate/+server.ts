@@ -3,8 +3,7 @@ import type { RequestHandler } from './$types';
 import { validateJWT } from '$lib/jwt';
 import { getOrCreateSession, SESSION_DURATION_MS } from '$lib/sessions';
 
-const ZK_POC_SERVICE_URL =
-	process.env.ZK_POC_SERVICE_URL || 'http://localhost:3002';
+const ZK_POC_SERVICE_URL = process.env.ZK_POC_SERVICE_URL || 'http://localhost:3002';
 
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'http://localhost:5173';
 
@@ -50,15 +49,12 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 
 	const session = getOrCreateSession(userId);
 
-	const zkResponse = await fetch(
-		`${ZK_POC_SERVICE_URL}/validate/${energyRecordId}`,
-		{
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json'
-			}
+	const zkResponse = await fetch(`${ZK_POC_SERVICE_URL}/validate/${energyRecordId}`, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json'
 		}
-	);
+	});
 
 	if (!zkResponse.ok) {
 		const errorResponse = json({ error: 'Failed to query zk-poc-service' }, { status: 500 });
@@ -83,4 +79,3 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 	setCorsHeaders(successResponse, origin);
 	return successResponse;
 };
-

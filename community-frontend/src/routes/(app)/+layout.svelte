@@ -4,6 +4,7 @@
 	import type { LayoutProps } from './$types';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import Leaf from '@tabler/icons-svelte/icons/leaf';
 
 	let { data, children }: LayoutProps = $props();
 </script>
@@ -15,21 +16,22 @@
 				<NavigationMenu.Root>
 					<NavigationMenu.List>
 						<NavigationMenu.Item>
-							<Button
-								href="/"
-								variant="ghost"
-								class="cursor-pointer bg-transparent pb-0 pl-0 text-3xl font-semibold transition-opacity hover:bg-transparent hover:opacity-70"
-							>
-								<img src="/favicon.ico" alt="PeTall" class="h-8 w-11" />
-								PeTall
-							</Button>
+							<a href="/" class="cursor-pointer flex items-center hover:bg-transparent hover:opacity-70">
+								<Leaf />
+								<Button
+									variant="ghost"
+									class="cursor-pointer pl-1 text-3xl font-semibold transition-opacity hover:bg-transparent"
+								>
+									PeTall
+								</Button>
+							</a>
 						</NavigationMenu.Item>
 						{#if data.user?.canAccessAdminView}
 							<NavigationMenu.Item>
 								<Button
 									href="/admin"
 									variant="ghost"
-									class="cursor-pointer bg-transparent pb-1 text-lg font-semibold transition-opacity hover:bg-transparent hover:opacity-70"
+									class="cursor-pointer bg-transparent text-lg font-semibold transition-opacity hover:bg-transparent hover:opacity-70"
 								>
 									Admin view
 								</Button>
