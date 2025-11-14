@@ -15,6 +15,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Petall - {data.energyRecordData.id}</title>
+</svelte:head>
+
 <div>
 	<div class="space-y-6 rounded-xl border-1 p-6 shadow-lg">
 		<div class="flex items-start justify-between border-b border-slate-200 pb-4">

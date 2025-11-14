@@ -1,7 +1,3 @@
-<script lang="ts">
-	import { Button } from '$lib/components/ui/button/index.js';
-</script>
-
 <div class="flex flex-col items-center justify-center space-y-2 py-12 text-center">
 	<p class="text-lg font-medium text-primary sm:text-2xl">
 		You don't have records of any community
