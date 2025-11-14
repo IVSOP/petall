@@ -22,7 +22,7 @@
 									variant="ghost"
 									class="cursor-pointer pl-1 text-3xl font-semibold transition-opacity hover:bg-transparent"
 								>
-									PeTall
+									EnerJizz
 								</Button>
 							</a>
 						</NavigationMenu.Item>

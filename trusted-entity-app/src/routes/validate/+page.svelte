@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import Zap from '@lucide/svelte/icons/zap';
+	import CircleDashed from '@lucide/svelte/icons/circle-dashed';
 
 	let { data }: { data: PageData } = $props();
 
@@ -16,7 +18,7 @@
 </script>
 
 <svelte:head>
-	<title>Petall - {data.energyRecordData.id}</title>
+	<title>PeTall - {data.energyRecordData.id}</title>
 </svelte:head>
 
 <div>
@@ -30,18 +32,11 @@
 				Validated
 			</div>
 		</div>
-
+		
 		<div class="grid grid-cols-2 gap-4">
 			<div class="rounded-lg bg-green-50 p-4">
 				<div class="mb-2 flex items-center gap-2">
-					<svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M13 10V3L4 14h7v7l9-11h-7z"
-						/>
-					</svg>
+					<Zap class="h-5 w-5 text-green-600" />
 					<span class="text-sm font-medium text-green-900">Generated</span>
 				</div>
 				<p class="text-2xl font-bold text-green-700">{data.energyRecordData.generated}</p>
@@ -50,19 +45,7 @@
 
 			<div class="rounded-lg bg-orange-50 p-4">
 				<div class="mb-2 flex items-center gap-2">
-					<svg
-						class="h-5 w-5 text-orange-600"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"
-						/>
-					</svg>
+					<CircleDashed class="h-5 w-5 text-orange-600" />
 					<span class="text-sm font-medium text-orange-900">Consumed</span>
 				</div>
 				<p class="text-2xl font-bold text-orange-700">{data.energyRecordData.consumed}</p>
