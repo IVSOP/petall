@@ -41,25 +41,41 @@
 
 = Introduction
 
-A desenvolver um sistema de base de dados tal tal, como integrar isto num funcionamento seguro e user friendly
+//A desenvolver um sistema de base de dados tal tal, como integrar isto num funcionamento seguro e user friendly
 
-este projeto esta a desenvolver um sistema de base de dados que tem X caracteristicas
+//este projeto esta a desenvolver um sistema de base de dados que tem X caracteristicas
 
-é preciso perceber como é que se consegue integrar esta sistema de base de dados num funcionamento que seja seguro por um lado e agradavel de utilizar por outro
+//é preciso perceber como é que se consegue integrar esta sistema de base de dados num funcionamento que seja seguro por um lado e agradavel de utilizar por outro
 
-== Case Study
+= Case Study
 
-usar como caso de uso, uma comunidade de energia
+//usar como caso de uso, uma comunidade de energia
 
-quem são os atores maliciosos?
+Residential adoption of solar photovoltaic systems has increased significantly over the past few years. Although these households frequently produce surplus energy, a substantial portion of this energy is wasted due to limitations in storage or local consumption. Energy Communities address this inefficiency by enabling households to share excess production with other members, improving sustainability and reducing collective energy costs.
 
-usar zero knowledge para dizer que isto é justo
+However, sharing energy fairly within a community is non-trivial. Different households exhibit distinct production and consumption patterns, and a naive distribution mechanism may favor certain members disproportionately. For instance, users who consistently produce more energy could repeatedly contribute more than they receive, resulting in systematic unfairness. These fairness concerns motivate the need for transparent and auditable rules governing energy allocation.
 
-vamos fazer uma aplicação que permita um utilizador normal tirar partido disso
+== Problem 
+
+One straightforward solution to guaranteeing fairness is to make all production and consumption records publicly available. If every household can inspect every other household’s energy history, then each member can verify whether distributions were performed correctly and whether they have received an equitable share.
+
+While effective from a transparency perspective, this approach severely compromises privacy. Energy usage patterns reveal highly sensitive information, including when residents are home, asleep, at work, or away on vacation. Such information could be exploited by malicious actors, including burglars or other adversaries seeking to infer occupancy schedules or household routines. Therefore, any realistic system must balance auditability with strong privacy guarantees.
+
+//TODO: quem são os atores maliciosos?
+
+//usar zero knowledge para dizer que isto é justo
+
+== Zero-Knowledge as a Solution
+
+To reconcile fairness with privacy, the case study relies on zero-knowledge proofs (ZKPs). PETALL’s verifiable DBMS produces cryptographic proofs over immutable snapshots of the database. These proofs allow each participant to verify the correctness of the computed energy distribution without learning the individual production or consumption values of other households.
+
+For example, if a user contributed 10 kWh to the community, the system can produce a proof that they are entitled to receive at least 10 kWh at a later time, while not revealing how much energy any other user contributed or consumed.
+
+//vamos fazer uma aplicação que permita um utilizador normal tirar partido disso
 
 = Application
 
-Aplicação , explicar interações (petall - comunidade) (utilizador - comunidade), modularidade das regras de pagamento (regra simplista que usa os dados que lá estão), explicar como é feita comunicação (falar das tecnologias) 
+//Aplicação , explicar interações (petall - comunidade) (utilizador - comunidade), modularidade das regras de pagamento (regra simplista que usa os dados que lá estão), explicar como é feita comunicação (falar das tecnologias) 
 
 == Components
 
@@ -67,4 +83,4 @@ Aplicação , explicar interações (petall - comunidade) (utilizador - comunida
 
 = Key Findings
 
-remover utilizadores não dá direito, os dados tem que estar la sempre para provar coisas (dados imutaveis). o snapshot vai ter sempre um delay até algumas records poderem ser provados
+//remover utilizadores não dá direito, os dados tem que estar la sempre para provar coisas (dados imutaveis). o snapshot vai ter sempre um delay até algumas records poderem ser provados
