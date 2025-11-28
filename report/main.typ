@@ -7,11 +7,11 @@
   ],
   authors: (
     (
-      name: "XXXXXX",
+      name: "Ivan Sérgio Rocha Ribeiro",
       department: [Master's Student],
       organization: [University of Minho],
       location: [Braga, Portugal],
-      email: "pgXXXXX@uminho.pt",
+      email: "pg55950@uminho.pt",
     ),
     (
       name: "Francisco Macedo Ferreira",
@@ -53,13 +53,13 @@
 
 Residential adoption of solar photovoltaic systems has increased significantly over the past few years. Although these households frequently produce surplus energy, a substantial portion of this energy is wasted due to limitations in storage or local consumption. Energy Communities address this inefficiency by enabling households to share excess production with other members, improving sustainability and reducing collective energy costs.
 
-However, sharing energy fairly within a community is non-trivial. Different households exhibit distinct production and consumption patterns, and a naive distribution mechanism may favor certain members disproportionately. For instance, users who consistently produce more energy could repeatedly contribute more than they receive, resulting in systematic unfairness. These fairness concerns motivate the need for transparent and auditable rules governing energy allocation.
+However, sharing energy fairly within a community is non-trivial. Different households exhibit distinct production and consumption patterns, and a naive distribution mechanism may favor certain members disproportionately. For instance, users who consistently produce more energy could repeatedly contribute more than they receive, resulting in systematic unfairness. The energy distribution must also be provable; otherwise, the energy providers themselves might fabricate or omit data to the user for their own financial gain, possibly controling when energy is shared or sold. These fairness concerns motivate the need for transparent and auditable rules governing energy allocation.
 
 == Problem 
 
-One straightforward solution to guaranteeing fairness is to make all production and consumption records publicly available. If every household can inspect every other household’s energy history, then each member can verify whether distributions were performed correctly and whether they have received an equitable share.
+One straightforward solution to guaranteeing fairness is to make all production and consumption records publicly available. If every household can inspect every other household's energy history, then each member can verify whether distributions were performed correctly and whether they have received an equitable share.
 
-While effective from a transparency perspective, this approach severely compromises privacy. Energy usage patterns reveal highly sensitive information, including when residents are home, asleep, at work, or away on vacation. Such information could be exploited by malicious actors, including burglars or other adversaries seeking to infer occupancy schedules or household routines. Therefore, any realistic system must balance auditability with strong privacy guarantees.
+While an effective solution, this approach introduces a new problem regarding the privacy of the users. Energy usage patterns may reveal highly sensitive information about the occupancy status of the household, such as when residents are home, asleep, at work, or away on vacation, or the type of devices that are being powered. Such information could be exploited by malicious actors, including burglars or other adversaries seeking to infer schedules, household routines, profile households based on estimated wealth or asset levels, or any other sensitive information. Therefore, any realistic system must balance auditability with strong privacy guarantees.
 
 //TODO: quem são os atores maliciosos?
 
@@ -67,9 +67,9 @@ While effective from a transparency perspective, this approach severely compromi
 
 == Zero-Knowledge as a Solution
 
-To reconcile fairness with privacy, the case study relies on zero-knowledge proofs (ZKPs). PETALL’s verifiable DBMS produces cryptographic proofs over immutable snapshots of the database. These proofs allow each participant to verify the correctness of the computed energy distribution without learning the individual production or consumption values of other households.
+To reconcile fairness with privacy, the case study relies on zero-knowledge proofs (ZKPs). PETALL's verifiable DBMS produces cryptographic proofs over immutable snapshots of the database. These proofs allow each participant to verify the correctness of the computed energy distribution without learning the individual production or consumption values of other households.
 
-For example, if a user contributed 10 kWh to the community, the system can produce a proof that they are entitled to receive at least 10 kWh at a later time, while not revealing how much energy any other user contributed or consumed.
+For example, if a user contributed 10 kWh to the community, the system can produce a proof that they are entitled to receive at least 10 kWh at a later time, while not revealing to this user how much energy any other user contributed or consumed.
 
 //vamos fazer uma aplicação que permita um utilizador normal tirar partido disso
 
@@ -81,6 +81,9 @@ For example, if a user contributed 10 kWh to the community, the system can produ
 
 == Interactions between components
 
+// === Auth? em que se explica user vs admin vs super admin e o sistema de JWT
+
 = Key Findings
 
 //remover utilizadores não dá direito, os dados tem que estar la sempre para provar coisas (dados imutaveis). o snapshot vai ter sempre um delay até algumas records poderem ser provados
+// dizer JWT teve de ser feito daquela forma manhosa?
