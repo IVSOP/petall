@@ -5,9 +5,11 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const profit: number = Number(data.energyRecordCost);
-	const balance: number = data.energyRecordData.generated - data.energyRecordData.consumed;
-	const start_date = new Date(data.energyRecordData.start).toLocaleString('en-US', {
+	const record = data.energyRecord;
+	const profit = record.generated * record.sellerPrice - record.consumed * record.consumerPrice;
+	const balance = record.generated - record.consumed;
+	
+	const start_date = new Date(record.start).toLocaleString('en-US', {
 		year: 'numeric',
 		month: 'short',
 		day: 'numeric',
@@ -18,11 +20,11 @@
 </script>
 
 <svelte:head>
-	<title>PeTall - {data.energyRecordData.id}</title>
+	<title>PeTall - {data.energyRecord.id}</title>
 </svelte:head>
 
 <div>
-	<div class="space-y-6 rounded-xl border-1 p-6 shadow-lg">
+	<div class="space-y-6 rounded-xl border p-6 shadow-lg">
 		<div class="flex items-start justify-between border-b border-slate-200 pb-4">
 			<div>
 				<h2 class="text-lg font-semibold text-slate-900">Energy Report</h2>
@@ -32,14 +34,14 @@
 				Validated
 			</div>
 		</div>
-		
+
 		<div class="grid grid-cols-2 gap-4">
 			<div class="rounded-lg bg-green-50 p-4">
 				<div class="mb-2 flex items-center gap-2">
 					<Zap class="h-5 w-5 text-green-600" />
 					<span class="text-sm font-medium text-green-900">Generated</span>
 				</div>
-				<p class="text-2xl font-bold text-green-700">{data.energyRecordData.generated}</p>
+				<p class="text-2xl font-bold text-green-700">{record.generated}</p>
 				<p class="mt-1 text-xs text-green-600">kWh</p>
 			</div>
 
@@ -48,7 +50,7 @@
 					<CircleDashed class="h-5 w-5 text-orange-600" />
 					<span class="text-sm font-medium text-orange-900">Consumed</span>
 				</div>
-				<p class="text-2xl font-bold text-orange-700">{data.energyRecordData.consumed}</p>
+				<p class="text-2xl font-bold text-orange-700">{record.consumed}</p>
 				<p class="mt-1 text-xs text-orange-600">kWh</p>
 			</div>
 		</div>
@@ -78,11 +80,11 @@
 			<div class="grid grid-cols-2 gap-3">
 				<div class="flex items-center justify-between rounded-lg bg-blue-50 p-3">
 					<span class="text-sm text-blue-900">Consumer</span>
-					<span class="font-semibold text-blue-700">{data.energyRecordData.consumerPrice}/kWh</span>
+					<span class="font-semibold text-blue-700">{record.consumerPrice}/kWh</span>
 				</div>
 				<div class="flex items-center justify-between rounded-lg bg-purple-50 p-3">
 					<span class="text-sm text-purple-900">Seller</span>
-					<span class="font-semibold text-purple-700">{data.energyRecordData.sellerPrice}/kWh</span>
+					<span class="font-semibold text-purple-700">{record.sellerPrice}/kWh</span>
 				</div>
 			</div>
 		</div>
@@ -110,15 +112,15 @@
 		<div class="space-y-2 border-t border-slate-200 pt-4">
 			<div class="flex items-center justify-between text-xs">
 				<span class="text-slate-500">User</span>
-				<span class="font-mono text-slate-700">{data.energyRecordData.userId}</span>
+				<span class="font-mono text-slate-700">{record.userId}</span>
 			</div>
 			<div class="flex items-center justify-between text-xs">
 				<span class="text-slate-500">Community</span>
-				<span class="font-mono text-slate-700">{data.energyRecordData.communityId}</span>
+				<span class="font-mono text-slate-700">{record.communityId}</span>
 			</div>
 			<div class="flex items-center justify-between text-xs">
 				<span class="text-slate-500">Record</span>
-				<span class="font-mono text-slate-700">{data.energyRecordData.id}</span>
+				<span class="font-mono text-slate-700">{record.id}</span>
 			</div>
 			<div class="flex items-center justify-between text-xs">
 				<span class="text-slate-500">Proof</span>

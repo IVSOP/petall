@@ -1,8 +1,9 @@
+import type { EnergyRecord } from '$lib';
 import { v4 as randomUUID } from 'uuid';
 
 export interface ValidationResult {
 	proof: string;
-	energyRecordCost: string; // BigDecimal as string
+	energyRecord: EnergyRecord;
 }
 
 export interface Session {

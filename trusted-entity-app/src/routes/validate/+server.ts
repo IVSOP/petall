@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { validateJWT } from '$lib/jwt';
 import { getOrCreateSession, SESSION_DURATION_MS } from '$lib/sessions';
+import type { EnergyRecord } from '$lib';
 
 const ZK_POC_SERVICE_URL = process.env.ZK_POC_SERVICE_URL || 'http://localhost:3002';
 
@@ -13,7 +14,7 @@ interface ValidateRequest {
 
 interface ZKValidateResponse {
 	proof: string;
-	energyRecordCost: string;
+	energyRecord: EnergyRecord;
 }
 
 function setCorsHeaders(response: Response, origin: string | null): void {
@@ -66,7 +67,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 
 	session.queries.set(energyRecordId, {
 		proof: zkResult.proof,
-		energyRecordCost: zkResult.energyRecordCost
+		energyRecord: zkResult.energyRecord
 	});
 
 	// Not sure if this works with different domains but whatever...

@@ -7,7 +7,6 @@ use axum::{
     response::IntoResponse,
     routing::get,
 };
-use bigdecimal::BigDecimal;
 use common::EnergyRecord;
 use rand::distributions::{Alphanumeric, DistString};
 use reqwest::StatusCode;
@@ -83,8 +82,7 @@ async fn main() -> anyhow::Result<()> {
 #[serde(rename_all = "camelCase")]
 struct ValidateResponse {
     proof: String,
-    #[serde(with = "bigdecimal::serde::json_num")]
-    energy_record_cost: BigDecimal,
+    energy_record: EnergyRecord,
 }
 
 #[debug_handler]
@@ -98,12 +96,9 @@ async fn validate(
         return StatusCode::INTERNAL_SERVER_ERROR.into_response();
     };
 
-    let energy_record_cost = energy_record.generated * energy_record.seller_price
-        - energy_record.consumed * energy_record.consumer_price;
-
     Json(ValidateResponse {
         proof: random_proof_string,
-        energy_record_cost,
+        energy_record,
     })
     .into_response()
 }
