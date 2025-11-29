@@ -59,3 +59,22 @@ shadcn:
     - name: "shadcn"
   date: 2022
   note: "Collection of re-usable, unstyled components built on Radix UI and Tailwind CSS."
+
+postgres16:
+  type: web
+  title: "PostgreSQL 16"
+  url: "https://www.postgresql.org/docs/16/"
+  authors:
+    - name: "PostgreSQL Global Development Group"
+  date: 2023
+  note: "Major release of the PostgreSQL relational database system, focusing on performance improvements, query parallelism, and logical replication enhancements."
+
+
+docker:
+  type: web
+  title: "Docker"
+  url: "https://www.docker.com/"
+  authors:
+    - name: "Docker, Inc."
+  date: 2013
+  note: "Plataforma para criação, distribuição e execução de aplicações em contêineres."
