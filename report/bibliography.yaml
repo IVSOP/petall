@@ -1,0 +1,61 @@
+statista_residential_pv_europe_2025:
+  type: web
+  publisher: Statista Editorial Team
+  note: "Accessed: 2025-11-28"
+  url: https://www.statista.com/topics/13626/residential-solar-photovoltaics-in-europe/
+  date: 2025
+
+rust:
+  type: web
+  title: "Rust Programming Language"
+  url: "https://www.rust-lang.org/"
+  authors:
+    - name: "Rust Foundation"
+  date: 2010
+  note: "Systems programming language emphasizing safety, speed, and concurrency."
+
+axum:
+  type: web
+  title: "Axum"
+  url: "https://github.com/tokio-rs/axum"
+  authors:
+    - name: "Tokio Project"
+  date: 2021
+  note: "Ergonomic web framework built on Tokio and Tower."
+
+svelte:
+  type: web
+  title: "Svelte"
+  url: "https://svelte.dev/"
+  authors:
+    - name: "Rich Harris"
+  date: 2016
+  note: "Component framework compiling to minimal, highly optimized JavaScript."
+
+sqlx:
+  type: web
+  title: "SQLx"
+  url: "https://github.com/launchbadge/sqlx"
+  authors:
+    - name: "Launchbadge"
+  date: 2019
+  note: "Asynchronous, compile-time checked SQL toolkit for Rust."
+
+tailwind:
+  type: web
+  title: "Tailwind CSS"
+  url: "https://tailwindcss.com/"
+  authors:
+    - name: "Adam Wathan"
+    - name: "Steve Schoger"
+  date: 2017
+  note: "Utility-first CSS framework for rapidly building custom UIs."
+
+shadcn:
+  type: web
+  title: "shadcn/ui"
+  url: "https://ui.shadcn.com/"
+  authors:
+    - name: "shadcn"
+  date: 2022
+  note: "Collection of re-usable, unstyled components built on Radix UI and Tailwind CSS."
