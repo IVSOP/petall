@@ -1,0 +1,25 @@
+.git
+.gitignore
+
+# Rust artifacts
+target
+**/target
+
+# Node artifacts
+**/node_modules
+**/.svelte-kit
+**/.vite
+community-frontend/build
+trusted-entity-app/build
+
+# Editor and OS junk
+.DS_Store
+Thumbs.db
+
+# Generated reports/assets
+report
+
+# Local env/config overrides
+.env
+**/*.local
+

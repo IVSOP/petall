@@ -1,0 +1,93 @@
+name: petall
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-petall}
+      POSTGRES_USER: ${POSTGRES_USER:-petall}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-petall}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-petall} -d ${POSTGRES_DB:-petall}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  community-backend:
+    build:
+      context: .
+      dockerfile: community-backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-petall}
+      POSTGRES_USER: ${POSTGRES_USER:-petall}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-petall}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-local-dev-client-id}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-local-dev-secret}
+      GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL:-http://localhost:4173/callback}
+      VALIDATION_PRIVATE_KEY: ${VALIDATION_PRIVATE_KEY:-/keys/validation.key}
+      VALIDATION_TOKEN_MAX_AGE_SECONDS: ${VALIDATION_TOKEN_MAX_AGE_SECONDS:-600}
+      RUST_LOG: ${RUST_LOG:-info,sqlx=warn}
+    volumes:
+      - ./keys:/keys:ro
+
+  zk-poc-service:
+    build:
+      context: .
+      dockerfile: zk-poc-service/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      community-backend:
+        condition: service_started
+    environment:
+      LISTENER: 0.0.0.0:3002
+      URL: http://community-backend:8080/energy-record-unauthenticated/
+
+  trusted-entity-app:
+    build:
+      context: .
+      dockerfile: trusted-entity-app/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      zk-poc-service:
+        condition: service_started
+    environment:
+      PORT: 4174
+      HOST: 0.0.0.0
+      ZK_POC_SERVICE_URL: http://zk-poc-service:3002
+      ALLOWED_ORIGIN: http://localhost:4173
+      VALIDATION_PUBLIC_KEY_PATH: /keys/validation.key.pub
+    volumes:
+      - ./keys:/keys:ro
+    ports:
+      - "4174:4174"
+
+  community-frontend:
+    build:
+      context: .
+      dockerfile: community-frontend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      community-backend:
+        condition: service_started
+      trusted-entity-app:
+        condition: service_started
+    environment:
+      PORT: 4173
+      HOST: 0.0.0.0
+      BACKEND_URL: http://community-backend:8080
+      PUBLIC_TRUSTED_ENTITY_APP_URL: ${PUBLIC_TRUSTED_ENTITY_APP_URL:-http://localhost:4174}
+    ports:
+      - "4173:4173"
