@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                c.id,\n                c.name,\n                c.description,\n                c.image,\n                EXISTS (\n                    SELECT 1 FROM community_user cu\n                    WHERE cu.community_id = c.id\n                    AND cu.user_id = $1\n                ) as \"is_present!\"\n            FROM community c\n            WHERE EXISTS (\n                SELECT 1 FROM energy_record er\n                WHERE er.community_id = c.id\n                AND er.user_id = $1\n            )\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "image",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "is_present!",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      null
+    ]
+  },
+  "hash": "f72cb58504ba4b5ee10ac4d615203830be9f28fae5d8272f0797263a001af37e"
+}

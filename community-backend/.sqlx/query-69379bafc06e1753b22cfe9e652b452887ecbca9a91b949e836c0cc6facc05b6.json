@@ -1,0 +1,64 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM energy_record WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "community_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "generated",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 4,
+        "name": "consumed",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 5,
+        "name": "consumer_price",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 6,
+        "name": "seller_price",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 7,
+        "name": "start",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "69379bafc06e1753b22cfe9e652b452887ecbca9a91b949e836c0cc6facc05b6"
+}

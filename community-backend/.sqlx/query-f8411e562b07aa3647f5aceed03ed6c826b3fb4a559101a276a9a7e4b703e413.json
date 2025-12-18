@@ -1,0 +1,27 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE \"key\"\n            SET hashed_password = $3\n            WHERE provider = $1 AND id = $2\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "auth_provider",
+            "kind": {
+              "Enum": [
+                "email",
+                "github",
+                "google"
+              ]
+            }
+          }
+        },
+        "Text",
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f8411e562b07aa3647f5aceed03ed6c826b3fb4a559101a276a9a7e4b703e413"
+}
