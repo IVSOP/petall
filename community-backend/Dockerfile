@@ -12,7 +12,6 @@ COPY Cargo.toml Cargo.lock ./
 COPY common ./common
 COPY community-backend ./community-backend
 COPY zk-poc-service ./zk-poc-service
-COPY .sqlx ./.sqlx
 
 ENV SQLX_OFFLINE=true
 RUN cargo build -p petall --release
